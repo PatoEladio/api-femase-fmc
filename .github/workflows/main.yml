@@ -35,14 +35,17 @@ jobs:
         env:
           PM2_HOME: 'C:\pm2_home'
         run: |
-          :: 1. Actualizar/Reiniciar el daemon
-          call pm2 update
+          :: Forzar que PM2 use la carpeta y verificar permisos
+          if not exist C:\pm2_home mkdir C:\pm2_home
           
-          :: 2. Borrar el proceso anterior para liberar archivos en dist/
-          call pm2 delete api-femase || ver > nul
+          call pm2 kill
           
-          :: 3. Lanzar el archivo COMPILADO (.js)
+          :: Intentar arrancar y capturar salida
           call pm2 start dist/main.js --name "api-femase"
           
-          :: 4. Guardar configuración
-          call pm2 save
+          :: Esperar 2 segundos y mostrar la lista para confirmar en el log de GitHub
+          timeout /t 2 /nobreak > nul
+          call pm2 list
+          
+          :: Si la lista aquí sale vacía, es que no hubo permisos de escritura
+        call pm2 save
