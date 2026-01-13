@@ -16,3 +16,5 @@ jobs:
       run: |
         echo "Hello from the Windows VPS!"
         # Add your build/deployment commands here
+        npm i
+        npm run start
