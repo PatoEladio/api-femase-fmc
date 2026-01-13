@@ -28,8 +28,4 @@ jobs:
       - name: Restart Nest app with PM2
         shell: powershell
         run: |
-          if (pm2 describe api-femase) {
-            pm2 restart api-femase
-          } else {
-            pm2 start dist/main.js --name api-femase
-          }
+          pm2 start dist/main.ts --name api-fmc
