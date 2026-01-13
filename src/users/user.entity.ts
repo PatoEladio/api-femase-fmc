@@ -1,3 +1,4 @@
+import { Exclude } from 'class-transformer';
 import { Estado } from 'src/estado/estado.entity';
 import { Perfil } from 'src/users/perfil.entity';
 import { Entity, Column, PrimaryGeneratedColumn, OneToOne, JoinColumn } from 'typeorm';
@@ -10,6 +11,7 @@ export class User {
   @Column()
   username: string;
 
+  @Exclude()
   @Column()
   password: string;
 

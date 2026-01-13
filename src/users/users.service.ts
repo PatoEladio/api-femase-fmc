@@ -21,4 +21,19 @@ export class UsersService {
       relations: ['perfil', 'estado'],
     });
   }
+
+  async buscarEmpleadosPorEstado(estadoId: number): Promise<User[]> {
+    return this.usersRepository.find({
+      where: {
+        estado: {
+          estado_id: estadoId
+        }
+      },
+      relations: ['perfil', 'estado']
+    })
+  }
+
+  async buscarTodosLosEmpleados(): Promise<User[]> { 
+    return this.usersRepository.find();
+  }
 }
