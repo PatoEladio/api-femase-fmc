@@ -35,10 +35,14 @@ jobs:
         env:
           PM2_HOME: 'C:\pm2_home'
         run: |
-          :: Limpiar caché de PM2 y asegurar que el daemon responda
-          pm2 update
-          :: Intentar borrar si ya existe para evitar bloqueos de archivos en dist/
-          pm2 delete api-femase || ver > nul
-          :: Lanzar la app
-          pm2 start dist/main.js --name "api-femase"
-          pm2 save
+          :: 1. Actualizar/Reiniciar el daemon
+          call pm2 update
+          
+          :: 2. Borrar el proceso anterior para liberar archivos en dist/
+          call pm2 delete api-femase || ver > nul
+          
+          :: 3. Lanzar el archivo COMPILADO (.js)
+          call pm2 start dist/main.js --name "api-femase"
+          
+          :: 4. Guardar configuración
+          call pm2 save
