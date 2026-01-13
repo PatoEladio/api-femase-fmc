@@ -4,30 +4,27 @@ on:
   push:
     branches:
       - main
-  pull_request:
-    branches:
-      - main
 
 jobs:
-  build-and-test:
+  deploy:
     runs-on: self-hosted
 
     steps:
-    - name: Checkout repository
-      # Uses the actions/checkout action to download your repository's code
-      uses: actions/checkout@v4
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
-    - name: Set up Node.js
-      # Uses the actions/setup-node action to configure the Node.js environment
-      uses: actions/setup-node@v4
-      with:
-        node-version: '22.19' # Use a specific Node.js version, e.g., 20.x
-        cache: 'npm' # Caches npm dependencies to speed up subsequent runs
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22.19'
+          cache: 'npm'
 
-    - name: Install dependencies
-      # The 'npm ci' command is used for clean installs in CI environments
-      run: npm ci
+      - name: Install dependencies
+        run: npm ci
 
-    - name: Build application
-      # Runs the NestJS build command defined in your package.json
-      run: npm run build
+      - name: Build application
+        run: npm run build
+
+      - name: Restart Nest app with PM2
+        run: |
+          pm2 restart api-femase || pm2 start dist/main.js --name api-femase
