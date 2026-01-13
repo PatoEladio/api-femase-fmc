@@ -31,6 +31,17 @@ jobs:
         run: npm run build
 
       - name: Restart Nest app with PM2
-        shell: powershell
+        shell: cmd
+        env:
+          PM2_HOME: C:\pm2
+          HOMEPATH: C:\Users\Public
         run: |
-          pm2 start dist/main.ts --name api-fmc
+          if not exist C:\pm2 mkdir C:\pm2
+
+          pm2 describe api-femase >nul 2>&1
+          if %errorlevel% neq 0 (
+            pm2 start dist/main.js --name api-femase
+          ) else (
+            pm2 restart api-femase
+          )
+
