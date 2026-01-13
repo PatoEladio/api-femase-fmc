@@ -6,40 +6,39 @@ on:
 
 jobs:
   build-and-deploy:
-    runs-on: self-hosted # Tu servidor Windows
+    runs-on: self-hosted
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      # 1. Solución al error de gzip / tar
-      - name: Fix Path for Git Tools
-        run: echo "C:\Program Files\Git\usr\bin" >> $GITHUB_PATH
-        shell: bash
+      # 1. Arreglar PATH usando PowerShell (Nativo de Windows)
+      - name: Add Git Tools to PATH
+        run: |
+          $gitBin = "C:\Program Files\Git\usr\bin"
+          if (Test-Path $gitBin) {
+              $gitBin | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+              Write-Host "Path de Git añadido correctamente."
+          } else {
+              Write-Error "No se encontró la carpeta de Git en C:\Program Files\Git\usr\bin"
+          }
+        shell: powershell
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '22'
-          cache: 'npm' # Esto usa actions/cache internamente
-
-      # 2. Instalación y Build de NestJS
       - name: Install dependencies
         run: npm ci
 
-      - name: Build Application
+      - name: Build NestJS
         run: npm run build
 
-      # 3. Despliegue con PM2 (Solución al error EPERM)
-      - name: Deploy with PM2
+      # 2. Despliegue con PM2 usando CMD y ruta dedicada
+      - name: Deploy to PM2
         shell: cmd
         env:
-          PM2_HOME: 'C:\pm2_home' # Evita conflictos de permisos en C:\Users
+          PM2_HOME: 'C:\pm2_home'
         run: |
-          :: Intentar borrar el proceso previo para evitar bloqueos de rpc.sock
-          pm2 delete api-nest || ver > nul
-          
-          :: Iniciar la app apuntando al archivo generado en dist
-          pm2 start dist/main.ts --name "api-nest" --update-env
-          
-          :: Guardar la lista de procesos
+          :: Limpiar caché de PM2 y asegurar que el daemon responda
+          pm2 update
+          :: Intentar borrar si ya existe para evitar bloqueos de archivos en dist/
+          pm2 delete api-femase || ver > nul
+          :: Lanzar la app
+          pm2 start dist/main.ts --name "api-femase"
           pm2 save
