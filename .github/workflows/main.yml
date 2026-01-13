@@ -1,42 +1,45 @@
-name: Deploy to Windows VPS
+name: Deploy NestJS App
 
 on:
   push:
-    branches:
-      - master
+    branches: [ main ]
 
 jobs:
-  deploy:
-    runs-on: self-hosted
-
+  build-and-deploy:
+    runs-on: self-hosted # Tu servidor Windows
     steps:
-      - name: Checkout repository
+      - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Set up Node.js
+      # 1. Solución al error de gzip / tar
+      - name: Fix Path for Git Tools
+        run: echo "C:\Program Files\Git\usr\bin" >> $GITHUB_PATH
+        shell: bash
+
+      - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: "22.19"
-          cache: "npm"
+          node-version: '22'
+          cache: 'npm' # Esto usa actions/cache internamente
 
+      # 2. Instalación y Build de NestJS
       - name: Install dependencies
-        run:
-          npm ci;
+        run: npm ci
 
-      # 2. Instalar PM2 globalmente
-      - name: Install PM2
-        run: npm install -g pm2
-
-      - name: Build application
+      - name: Build Application
         run: npm run build
 
-      - name: Deploy to PM2
+      # 3. Despliegue con PM2 (Solución al error EPERM)
+      - name: Deploy with PM2
         shell: cmd
         env:
-          PM2_HOME: 'C:\.pm2' # Forzamos una ruta local
+          PM2_HOME: 'C:\pm2_home' # Evita conflictos de permisos en C:\Users
         run: |
-          npm install pm2 -g
-          pm2 update
-          pm2 kill
-          pm2 start dist/main.ts --name api-fmc || pm2 restart api-fmc
-
+          :: Intentar borrar el proceso previo para evitar bloqueos de rpc.sock
+          pm2 delete api-nest || ver > nul
+          
+          :: Iniciar la app apuntando al archivo generado en dist
+          pm2 start dist/main.ts --name "api-nest" --update-env
+          
+          :: Guardar la lista de procesos
+          pm2 save
