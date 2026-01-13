@@ -30,12 +30,13 @@ jobs:
       - name: Build application
         run: npm run build
 
-      - name: Restart Nest app with PM2
+      - name: Deploy to PM2
         shell: cmd
         env:
-          PM2_HOME: C:\pm2
-          HOMEPATH: C:\Users\Public
+          PM2_HOME: 'C:\.pm2' # Forzamos una ruta local
         run: |
-          if not exist C:\pm2 mkdir C:\pm2
-          pm2 start dist/main.ts --name api-fmc
+          npm install pm2 -g
+          pm2 update
+          pm2 kill
+          pm2 start dist/main.ts --name api-fmc || pm2 restart api-fmc
 
