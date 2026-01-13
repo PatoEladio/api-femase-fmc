@@ -1,9 +1,9 @@
-import { Controller, Get, Param, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Param, Post, UseGuards } from '@nestjs/common';
 import { UsersService } from './users.service';
-import { AuthGuard } from 'src/auth/auth.guard';
+import { User } from './user.entity';
 
 @Controller('users')
-@UseGuards(AuthGuard)
+//@UseGuards(AuthGuard)
 export class UsersController {
   constructor(private userService: UsersService) { }
   @Get('obtenerEmpleadosEstado/:estadoId')
@@ -14,5 +14,10 @@ export class UsersController {
   @Get('')
   buscarTodosLosEmpleados() {
     return this.userService.buscarTodosLosEmpleados();
+  }
+
+  @Post('crearUsuario')
+  crearCuenta(@Body() createUserDTO: User) {
+    return this.userService.crearUsuario(createUserDTO);
   }
 }

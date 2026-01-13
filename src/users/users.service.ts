@@ -34,6 +34,13 @@ export class UsersService {
   }
 
   async buscarTodosLosEmpleados(): Promise<User[]> { 
-    return this.usersRepository.find();
+    return this.usersRepository.find({
+      relations: ['perfil', 'estado']
+    });
+  }
+
+  async crearUsuario(usuario: User) {
+    const nuevoUsuario = this.usersRepository.create(usuario);
+    return await this.usersRepository.save(nuevoUsuario);
   }
 }

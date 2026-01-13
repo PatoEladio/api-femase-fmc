@@ -1,14 +1,14 @@
-import { Controller, Get, UseGuards } from '@nestjs/common';
+import { Controller, Get, Param, UseGuards } from '@nestjs/common';
 import { MenusService } from './menus.service';
 import { AuthGuard } from 'src/auth/auth.guard';
 
 @Controller('menus')
+//@UseGuards(AuthGuard)
 export class MenusController {
   constructor(private menuService: MenusService) { }
   
-  @UseGuards(AuthGuard)
-  @Get()
-  obtenerMenusPorPerfil() {
-    return this.menuService.obtenerMenusPorPerfil(1);
+  @Get(':perfilId')
+  obtenerMenusPorPerfil(@Param() params) {
+    return this.menuService.obtenerMenusPorPerfil(params.perfilId);
   }
 }
