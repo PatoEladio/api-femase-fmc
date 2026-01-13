@@ -1,20 +1,33 @@
-name: Deploy to Windows VPS
+name: Node.js CI
 
-on: [push]
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
 
 jobs:
-  deploy:
-    # Specifies the job should run on your self-hosted Windows runner
+  build-and-test:
     runs-on: self-hosted
 
     steps:
-    - name: Checkout code
+    - name: Checkout repository
+      # Uses the actions/checkout action to download your repository's code
       uses: actions/checkout@v4
 
-    # Add subsequent steps here to build, test, or deploy your application
-    - name: Run a script on Windows
-      run: |
-        echo "Hello from the Windows VPS!"
-        # Add your build/deployment commands here
-        npm i
-        npm run start
+    - name: Set up Node.js
+      # Uses the actions/setup-node action to configure the Node.js environment
+      uses: actions/setup-node@v4
+      with:
+        node-version: '22.19' # Use a specific Node.js version, e.g., 20.x
+        cache: 'npm' # Caches npm dependencies to speed up subsequent runs
+
+    - name: Install dependencies
+      # The 'npm ci' command is used for clean installs in CI environments
+      run: npm ci
+
+    - name: Build application
+      # Runs the NestJS build command defined in your package.json
+      run: npm run build
