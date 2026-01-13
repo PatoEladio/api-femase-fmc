@@ -40,5 +40,5 @@ jobs:
           :: Intentar borrar si ya existe para evitar bloqueos de archivos en dist/
           pm2 delete api-femase || ver > nul
           :: Lanzar la app
-          pm2 start dist/main.ts --name "api-femase"
+          pm2 start dist/main.js --name "api-femase"
           pm2 save
