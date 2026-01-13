@@ -1,0 +1,18 @@
+name: Deploy to Windows VPS
+
+on: [push]
+
+jobs:
+  deploy:
+    # Specifies the job should run on your self-hosted Windows runner
+    runs-on: self-hosted
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    # Add subsequent steps here to build, test, or deploy your application
+    - name: Run a script on Windows
+      run: |
+        echo "Hello from the Windows VPS!"
+        # Add your build/deployment commands here
