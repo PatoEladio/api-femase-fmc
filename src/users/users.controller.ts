@@ -16,7 +16,7 @@ export class UsersController {
     return this.userService.buscarTodosLosEmpleados();
   }
 
-  @Post('crearUsuario')
+  @Post('crear')
   crearCuenta(@Body() createUserDTO: User) {
     return this.userService.crearUsuario(createUserDTO);
   }
