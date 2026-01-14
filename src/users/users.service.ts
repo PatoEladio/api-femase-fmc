@@ -18,36 +18,33 @@ export class UsersService {
           estado_id: 1
         }
       },
-      relations: ['perfil', 'estado'],
-    });
-  }
-
-  async buscarEmpleadosPorEstado(estadoId: number): Promise<User[]> {
-    const busqueda = this.usersRepository.find({
-      where: {
-        estado: {
-          estado_id: estadoId
-        }
-      },
       relations: [
-        'perfil',
+        'perfil', 
         'estado'
-      ]
+      ],
     });
-
-    if ((await busqueda).length > 0) {
-      return busqueda;
-    } else {
-      throw new HttpException('No se encontraron usuarios', 400)
-    }
   }
 
   async buscarTodosLosUsuarios(): Promise<User[]> {
     const busqueda = this.usersRepository.find({
       relations: [
         'perfil',
-        'estado'
-      ]
+        'estado',
+        'empresa'
+      ],
+      select: {
+        usuario_id: true,
+        username: true,
+        nombres: true,
+        apellido_materno: true,
+        apellido_paterno: true,
+        empresa: {
+          empresa_id: true,
+          nombre_empresa: true
+        },
+        estado: true,
+        perfil: true
+      }
     });
 
     if ((await busqueda).length > 0) {
@@ -61,7 +58,12 @@ export class UsersService {
     return this.usersRepository.findOne({
       where: {
         usuario_id: usuarioId
-      }, relations: ['estado', 'perfil']
+      }, 
+      relations: [
+        'estado',
+        'perfil',
+        'empresa'
+      ]
     });
   }
 

@@ -6,11 +6,6 @@ import { User } from './user.entity';
 //@UseGuards(AuthGuard)
 export class UsersController {
   constructor(private userService: UsersService) { }
-  @Get('obtenerUsuariosEstado/:estadoId')
-  buscarEmpleadosPorEstado(@Param() params) {
-    return this.userService.buscarEmpleadosPorEstado(params.estadoId);
-  }
-
   @Get('')
   buscarTodosLosEmpleados() {
     return this.userService.buscarTodosLosUsuarios();
