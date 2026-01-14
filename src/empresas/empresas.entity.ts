@@ -1,6 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { Estado } from 'src/estado/estado.entity';
-import { Entity, Column, PrimaryGeneratedColumn, OneToOne } from 'typeorm';
+import { Entity, Column, PrimaryGeneratedColumn, OneToOne, JoinColumn } from 'typeorm';
 
 @Entity('db_fmc.empresa')
 export class Empresas {
@@ -14,12 +14,13 @@ export class Empresas {
   @Column()
   @ApiProperty({ description: "nombre_perfil", example: "77982123-4" })
   rut_empresa: string;
-  
+
   @Column()
   @ApiProperty({ description: "direccion_empresa", example: "Calle de prueba 2311" })
   direccion_empresa: string;
-  
-  @OneToOne(() => Estado, estado => estado.estado_id)
+
+  @OneToOne(() => Estado)
+  @JoinColumn({ name: 'estado_id' })
   @ApiProperty({ description: "estado", example: 1 })
-  estado_id: Estado;
+  estado: Estado;
 }

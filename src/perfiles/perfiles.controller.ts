@@ -17,10 +17,4 @@ export class PerfilesController {
   crearNuevoPerfil(@Body() crearPerfilDTO: Perfil) {
     return this.perfilService.crearPerfil(crearPerfilDTO);
   }
-
-  @Put('editar/:perfilId')
-  editarPerfil(@Param('perfilId') perfilId: number, @Body() actualizarPerfilDTO: Perfil) {
-    return this.perfilService.actualizarPerfil(perfilId, actualizarPerfilDTO);
-  }
-
 }

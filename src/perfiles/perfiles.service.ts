@@ -11,7 +11,7 @@ export class PerfilesService {
   ) { }
 
   async obtenerTodosLosPerfiles(): Promise<Perfil[]> {
-    return this.perfilRepository.find();
+    return this.perfilRepository.find({ relations: ['estado'] });
   }
 
   async crearPerfil(perfil: Perfil) {

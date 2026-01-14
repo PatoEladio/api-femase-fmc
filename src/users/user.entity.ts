@@ -43,4 +43,8 @@ export class User {
   @ApiProperty({ description: "perfil", example: 1 })
   @JoinColumn({ name: 'perfil_id' })
   perfil: Perfil;
+
+  @Column()
+  @ApiProperty({ description: "run_usuario", example: "21264235-5" })
+  run_usuario: string;
 }

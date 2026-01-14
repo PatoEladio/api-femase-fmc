@@ -1,8 +1,7 @@
-import { Injectable } from '@nestjs/common';
+import { HttpException, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { User } from './user.entity';
 import { Repository } from 'typeorm';
-import { Perfil } from '../perfiles/perfil.entity';
 
 @Injectable()
 export class UsersService {
@@ -24,19 +23,45 @@ export class UsersService {
   }
 
   async buscarEmpleadosPorEstado(estadoId: number): Promise<User[]> {
-    return this.usersRepository.find({
+    const busqueda = this.usersRepository.find({
       where: {
         estado: {
           estado_id: estadoId
         }
       },
-      relations: ['perfil', 'estado']
-    })
+      relations: [
+        'perfil',
+        'estado'
+      ]
+    });
+
+    if ((await busqueda).length > 0) {
+      return busqueda;
+    } else {
+      throw new HttpException('No se encontraron usuarios', 400)
+    }
   }
 
-  async buscarTodosLosEmpleados(): Promise<User[]> { 
-    return this.usersRepository.find({
-      relations: ['perfil', 'estado']
+  async buscarTodosLosUsuarios(): Promise<User[]> {
+    const busqueda = this.usersRepository.find({
+      relations: [
+        'perfil',
+        'estado'
+      ]
+    });
+
+    if ((await busqueda).length > 0) {
+      return busqueda;
+    } else {
+      throw new HttpException('No se encontraron usuarios', 400)
+    }
+  }
+
+  async buscarUsuarioPorId(usuarioId: number): Promise<User | null> {
+    return this.usersRepository.findOne({
+      where: {
+        usuario_id: usuarioId
+      }, relations: ['estado', 'perfil']
     });
   }
 
