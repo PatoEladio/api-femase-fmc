@@ -11,6 +11,7 @@ import { PerfilesService } from './perfiles/perfiles.service';
 import { PerfilesController } from './perfiles/perfiles.controller';
 import { PerfilesModule } from './perfiles/perfiles.module';
 import { EmpresasModule } from './empresas/empresas.module';
+import { Empresas } from './empresas/empresas.entity';
 
 @Module({
   imports: [
@@ -21,7 +22,7 @@ import { EmpresasModule } from './empresas/empresas.module';
       username: 'postgres',
       password: 'admin',
       database: 'postgres',
-      entities: [User, Perfil, Estado, Menu]
+      entities: [User, Perfil, Estado, Menu, Empresas]
     }),
     AuthModule,
     UsersModule,
