@@ -19,6 +19,14 @@ export class Empresas {
   @ApiProperty({ description: "direccion_empresa", example: "Calle de prueba 2311" })
   direccion_empresa: string;
 
+  @Column()
+  @ApiProperty({ description: "comuna_empresa", example: "Quinta Normal" })
+  comuna_empresa: string;
+
+  @Column()
+  @ApiProperty({ description: "email_empresa", example: "soporte@femase.cl" })
+  email_empresa: string;
+
   @OneToOne(() => Estado)
   @JoinColumn({ name: 'estado_id' })
   @ApiProperty({ description: "estado", example: 1 })

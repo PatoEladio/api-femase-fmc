@@ -12,6 +12,8 @@ import { PerfilesController } from './perfiles/perfiles.controller';
 import { PerfilesModule } from './perfiles/perfiles.module';
 import { EmpresasModule } from './empresas/empresas.module';
 import { Empresas } from './empresas/empresas.entity';
+import { DepartamentosModule } from './departamentos/departamentos.module';
+import { Departamento } from './departamentos/departamento.entity';
 
 @Module({
   imports: [
@@ -22,13 +24,14 @@ import { Empresas } from './empresas/empresas.entity';
       username: 'postgres',
       password: 'admin',
       database: 'postgres',
-      entities: [User, Perfil, Estado, Menu, Empresas]
+      entities: [User, Perfil, Estado, Menu, Empresas, Departamento]
     }),
     AuthModule,
     UsersModule,
     MenusModule,
     PerfilesModule,
-    EmpresasModule
+    EmpresasModule,
+    DepartamentosModule
   ],
   providers: [PerfilesService],
   controllers: [PerfilesController],

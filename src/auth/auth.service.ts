@@ -15,6 +15,8 @@ export class AuthService {
   ): Promise<{ token: string, username: string, profile: string, profile_id: number }> {
     const user = await this.usersService.searchActiveUser(username);
     
+    // Revisar comparación clave encriptada
+
     if (user?.password !== pass) {
       throw new UnauthorizedException();
     }
