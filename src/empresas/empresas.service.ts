@@ -16,7 +16,10 @@ export class EmpresasService {
     const busqueda = this.empresaRepository.find({
       relations: [
         'estado'
-      ]
+      ],
+      order: {
+        empresa_id: 'ASC'
+      }
     });
 
     if ((await busqueda).length > 0) {

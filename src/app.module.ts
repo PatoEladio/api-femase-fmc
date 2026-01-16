@@ -14,6 +14,7 @@ import { EmpresasModule } from './empresas/empresas.module';
 import { Empresas } from './empresas/empresas.entity';
 import { DepartamentosModule } from './departamentos/departamentos.module';
 import { Departamento } from './departamentos/departamento.entity';
+import { CencosModule } from './cencos/cencos.module';
 
 @Module({
   imports: [
@@ -31,7 +32,8 @@ import { Departamento } from './departamentos/departamento.entity';
     MenusModule,
     PerfilesModule,
     EmpresasModule,
-    DepartamentosModule
+    DepartamentosModule,
+    CencosModule
   ],
   providers: [PerfilesService],
   controllers: [PerfilesController],

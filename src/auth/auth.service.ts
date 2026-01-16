@@ -1,5 +1,6 @@
 import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
+import { Empresas } from 'src/empresas/empresas.entity';
 import { UsersService } from 'src/users/users.service';
 
 @Injectable()
@@ -12,9 +13,9 @@ export class AuthService {
   async signIn(
     username: string,
     pass: string
-  ): Promise<{ token: string, username: string, profile: string, profile_id: number }> {
+  ): Promise<{ token: string, username: string, profile: string, profile_id: number, empresa_id: number, empresa: string }> {
     const user = await this.usersService.searchActiveUser(username);
-    
+
     // Revisar comparación clave encriptada
 
     if (user?.password !== pass) {
@@ -27,7 +28,9 @@ export class AuthService {
       token: await this.jwtService.signAsync(payload),
       username: user.username,
       profile: user.perfil.nombre_perfil,
-      profile_id: user.perfil.perfil_id
+      profile_id: user.perfil.perfil_id,
+      empresa_id: user.empresa.empresa_id,
+      empresa: user.empresa.nombre_empresa
     }
   }
 }
