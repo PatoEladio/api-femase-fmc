@@ -1,6 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { Estado } from 'src/estado/estado.entity';
-import { Entity, Column, PrimaryGeneratedColumn, OneToOne, JoinColumn } from 'typeorm';
+import { User } from 'src/users/user.entity';
+import { Entity, Column, PrimaryGeneratedColumn, OneToOne, JoinColumn, ManyToMany } from 'typeorm';
 
 @Entity('db_fmc.empresa')
 export class Empresas {
@@ -31,4 +32,7 @@ export class Empresas {
   @JoinColumn({ name: 'estado_id' })
   @ApiProperty({ description: "estado", example: 1 })
   estado: Estado;
+
+  @ManyToMany(() => User, (usuario) => usuario.empresas)
+  usuario: User[]
 }

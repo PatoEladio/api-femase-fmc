@@ -3,7 +3,7 @@ import { Exclude } from 'class-transformer';
 import { Empresas } from 'src/empresas/empresas.entity';
 import { Estado } from 'src/estado/estado.entity';
 import { Perfil } from 'src/perfiles/perfil.entity';
-import { Entity, Column, PrimaryGeneratedColumn, OneToOne, JoinColumn } from 'typeorm';
+import { Entity, Column, PrimaryGeneratedColumn, OneToOne, JoinColumn, ManyToMany, JoinTable } from 'typeorm';
 
 @Entity('db_fmc.usuario')
 export class User {
@@ -13,7 +13,7 @@ export class User {
   @Column()
   @ApiProperty({ description: "username", example: "bcarrion" })
   username: string;
-  
+
   @Column()
   @ApiProperty({ description: "password", example: "123" })
   password: string;
@@ -48,8 +48,17 @@ export class User {
   @ApiProperty({ description: "run_usuario", example: "21264235-5" })
   run_usuario: string;
 
-  @OneToOne(() => Empresas)
-  @ApiProperty({ description: "empresa_id", example: 1 })
-  @JoinColumn({ name: 'empresa_id' })
-  empresa: Empresas;
+  @ManyToMany(() => Empresas, (empresa) => empresa.usuario)
+  @JoinTable({
+    name: 'db_fmc.usuario_has_empresa',
+    joinColumn: {
+      name: 'usuario_id',
+      referencedColumnName: 'usuario_id'
+    },
+    inverseJoinColumn: {
+      name: 'empresa_id',
+      referencedColumnName: 'empresa_id'
+    }
+  })
+  empresas: Empresas[]
 }

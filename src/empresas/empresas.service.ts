@@ -29,18 +29,26 @@ export class EmpresasService {
     }
   }
 
-  async buscarEmpresaPorId(empresaId: number): Promise<Empresas | null> {
-    const empresa = await this.empresaRepository.findOne({
+  async obtenerEmpresasPorUsuario(usuarioId: number): Promise<Empresas[]> {
+    const busqueda = this.empresaRepository.find({
+      relations: [
+        'estado'
+      ],
+      order: {
+        empresa_id: 'ASC'
+      },
       where: {
-        empresa_id: empresaId
+        usuario: {
+          usuario_id: usuarioId
+        }
       }
     });
 
-    if (!empresa) {
-      throw new NotFoundException('No se encontro una empresa con el ID proporcionado');
+    if ((await busqueda).length > 0) {
+      return busqueda;
+    } else {
+      throw new HttpException('No se encontraron empresas', 400)
     }
-
-    return empresa;
   }
 
   async crearEmpresa(empresa: Empresas): Promise<EmpresaCreadaDto> {

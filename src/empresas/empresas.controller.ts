@@ -14,9 +14,9 @@ export class EmpresasController {
     return this.empresaService.obtenerTodasLasEmpresas();
   }
 
-  @Get('buscarPorId/:id')
-  buscarPorId(@Param('id') id: string) {
-    return this.empresaService.buscarEmpresaPorId(+id);
+  @Get(':usuarioId')
+  obtenerEmpresaPorUsuario(@Param('usuarioId') id: string) {
+    return this.empresaService.obtenerEmpresasPorUsuario(+id);
   }
 
   @Post('crear')

@@ -39,7 +39,7 @@ export class UsersService {
         nombres: true,
         apellido_materno: true,
         apellido_paterno: true,
-        empresa: {
+        empresas: {
           empresa_id: true,
           nombre_empresa: true
         },

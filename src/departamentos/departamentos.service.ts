@@ -14,10 +14,18 @@ export class DepartamentosService {
 
   async buscarTodosLosDepartamentos(id: number): Promise<Departamento[]> {
     const busqueda = this.departamentoRepository.find({
-      relations: ['estado'],
+      relations: ['estado', 'empresa'],
       where: {
+        empresa: { empresa_id: id }
+      }, 
+      order: { departamento_id: 'ASC' },
+      select: {
+        departamento_id: true,
+        nombre_departamento: true,
+        estado: true,
         empresa: {
-          empresa_id: id
+          empresa_id: true,
+          nombre_empresa: true
         }
       }
     });
