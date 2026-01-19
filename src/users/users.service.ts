@@ -21,7 +21,7 @@ export class UsersService {
       relations: [
         'perfil', 
         'estado',
-        'empresa'
+        'empresas'
       ],
     });
   }
