@@ -15,6 +15,7 @@ import { Empresas } from './empresas/empresas.entity';
 import { DepartamentosModule } from './departamentos/departamentos.module';
 import { Departamento } from './departamentos/departamento.entity';
 import { CencosModule } from './cencos/cencos.module';
+import { Cenco } from './cencos/cenco.entity';
 
 @Module({
   imports: [
@@ -25,7 +26,7 @@ import { CencosModule } from './cencos/cencos.module';
       username: 'postgres',
       password: 'admin',
       database: 'postgres',
-      entities: [User, Perfil, Estado, Menu, Empresas, Departamento]
+      entities: [User, Perfil, Estado, Menu, Empresas, Departamento, Cenco]
     }),
     AuthModule,
     UsersModule,
