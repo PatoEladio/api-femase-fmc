@@ -31,7 +31,7 @@ export class UsersService {
       relations: [
         'perfil',
         'estado',
-        'empresa'
+        'empresas'
       ],
       select: {
         usuario_id: true,
@@ -63,7 +63,7 @@ export class UsersService {
       relations: [
         'estado',
         'perfil',
-        'empresa'
+        'empresas'
       ]
     });
   }
