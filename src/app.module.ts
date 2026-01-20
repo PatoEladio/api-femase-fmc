@@ -16,6 +16,9 @@ import { DepartamentosModule } from './departamentos/departamentos.module';
 import { Departamento } from './departamentos/departamento.entity';
 import { CencosModule } from './cencos/cencos.module';
 import { Cenco } from './cencos/cenco.entity';
+import { DispositivoModule } from './dispositivo/dispositivo.module';
+import { TipoDispositivoModule } from './tipo-dispositivo/tipo-dispositivo.module';
+import { TipoDispositivo } from './tipo-dispositivo/entities/tipo-dispositivo.entity';
 
 @Module({
   imports: [
@@ -26,7 +29,7 @@ import { Cenco } from './cencos/cenco.entity';
       username: 'postgres',
       password: 'admin',
       database: 'postgres',
-      entities: [User, Perfil, Estado, Menu, Empresas, Departamento, Cenco]
+      entities: [User, Perfil, Estado, Menu, Empresas, Departamento, Cenco, TipoDispositivo]
     }),
     AuthModule,
     UsersModule,
@@ -34,7 +37,9 @@ import { Cenco } from './cencos/cenco.entity';
     PerfilesModule,
     EmpresasModule,
     DepartamentosModule,
-    CencosModule
+    CencosModule,
+    DispositivoModule,
+    TipoDispositivoModule
   ],
   providers: [PerfilesService],
   controllers: [PerfilesController],
