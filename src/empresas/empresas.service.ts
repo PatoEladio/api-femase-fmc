@@ -12,13 +12,18 @@ export class EmpresasService {
     private empresaRepository: Repository<Empresas>
   ) { }
 
-  async obtenerTodasLasEmpresas(): Promise<Empresas[]> {
+  async obtenerTodasLasEmpresas(usuarioId: number): Promise<Empresas[]> {
     const busqueda = this.empresaRepository.find({
       relations: [
         'estado'
       ],
       order: {
         empresa_id: 'ASC'
+      },
+      where: {
+        usuario: {
+          usuario_id: usuarioId
+        }
       }
     });
 

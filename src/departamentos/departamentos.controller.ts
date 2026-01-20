@@ -1,22 +1,20 @@
-import { Body, Controller, Get, Param, Patch, Post } from '@nestjs/common';
+import { Body, Controller, Get, Param, Patch, Post, Req, UseGuards } from '@nestjs/common';
 import { DepartamentosService } from './departamentos.service';
 import { Departamento } from './departamento.entity';
 import { UpdateDepartamentoDto } from './dto/update-departamento.dto';
+import { AuthGuard } from 'src/auth/auth.guard';
 
 @Controller('departamentos')
+@UseGuards(AuthGuard)
 export class DepartamentosController {
   constructor(
     private departamentoService: DepartamentosService
   ) { }
 
-  @Get(':empresaId')
-  obtenerTodosLosDeptos(@Param('empresaId') id: number) {
-    return this.departamentoService.buscarTodosLosDepartamentos(+id);
-  }
-
-  @Get('buscarDeptoPorId/:deptoId')
-  buscarPorId(@Param('deptoId') id: string) {
-    return this.departamentoService.buscarDepartamentoPorId(+id);
+  @Get('')
+  obtenerTodosLosDeptos(@Req() req) {
+    const userId = req.user.sub;
+    return this.departamentoService.buscarTodosLosDepartamentos(userId);
   }
 
   @Post('crear')

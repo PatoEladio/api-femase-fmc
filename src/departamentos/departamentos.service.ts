@@ -12,12 +12,16 @@ export class DepartamentosService {
     private departamentoRepository: Repository<Departamento>
   ) { }
 
-  async buscarTodosLosDepartamentos(id: number): Promise<Departamento[]> {
+  async buscarTodosLosDepartamentos(userId: number): Promise<Departamento[]> {
     const busqueda = this.departamentoRepository.find({
       relations: ['estado', 'empresa'],
       where: {
-        empresa: { empresa_id: id }
-      }, 
+        empresa: {
+          usuario: {
+            usuario_id: userId
+          }
+        }
+      },
       order: { departamento_id: 'ASC' },
       select: {
         departamento_id: true,
@@ -35,29 +39,6 @@ export class DepartamentosService {
     } else {
       throw new HttpException('No se han encontrado departamentos para esta empresa', 400);
     }
-  }
-
-  async buscarDepartamentoPorId(id: number): Promise<Departamento | null> {
-    const departamento = await this.departamentoRepository.findOne({
-      where: {
-        departamento_id: id
-      }, relations: ['estado', 'empresa'],
-      select: {
-        departamento_id: true,
-        nombre_departamento: true,
-        estado: true,
-        empresa: {
-          empresa_id: true,
-          nombre_empresa: true
-        }
-      }
-    });
-
-    if (!departamento) {
-      throw new NotFoundException('No se encontro un departamento con el ID proporcionado');
-    }
-
-    return departamento;
   }
 
   async crearDepartamento(departamento: Departamento): Promise<DepartamentoCreatedDto> {

@@ -1,22 +1,20 @@
-import { Body, Controller, Get, Param, Patch, Post } from '@nestjs/common';
+import { Body, Controller, Get, Param, Patch, Post, Req, UseGuards } from '@nestjs/common';
 import { EmpresasService } from './empresas.service';
 import { Empresas } from './empresas.entity';
 import { UpdateEmpresaDto } from './dto/update-empresa.dto';
+import { AuthGuard } from 'src/auth/auth.guard';
 
 @Controller('empresas')
+@UseGuards(AuthGuard)
 export class EmpresasController {
   constructor(
     private empresaService: EmpresasService
   ) { }
 
   @Get('')
-  obtenerTodasLasEmpresas() {
-    return this.empresaService.obtenerTodasLasEmpresas();
-  }
-
-  @Get(':usuarioId')
-  obtenerEmpresaPorUsuario(@Param('usuarioId') id: string) {
-    return this.empresaService.obtenerEmpresasPorUsuario(+id);
+  obtenerTodasLasEmpresas(@Req() req) {
+    const usuarioId = req.user.sub;
+    return this.empresaService.obtenerTodasLasEmpresas(usuarioId);
   }
 
   @Post('crear')
