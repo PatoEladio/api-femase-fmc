@@ -4,6 +4,7 @@ import { Empresas } from './empresas.entity';
 import { Repository } from 'typeorm';
 import { EmpresaCreadaDto } from './dto/empresa-creada.dto';
 import { UpdateEmpresaDto } from './dto/update-empresa.dto';
+import { BuscarEmpresaDto } from './dto/search-empresa.dto';
 
 @Injectable()
 export class EmpresasService {
@@ -12,11 +13,9 @@ export class EmpresasService {
     private empresaRepository: Repository<Empresas>
   ) { }
 
-  async obtenerTodasLasEmpresas(usuarioId: number): Promise<Empresas[]> {
-    const busqueda = this.empresaRepository.find({
-      relations: [
-        'estado'
-      ],
+  async obtenerTodasLasEmpresas(usuarioId: number): Promise<BuscarEmpresaDto> {
+    const empresasEncontradas = await this.empresaRepository.find({
+      relations: ['estado'],
       order: {
         empresa_id: 'ASC'
       },
@@ -27,10 +26,16 @@ export class EmpresasService {
       }
     });
 
-    if ((await busqueda).length > 0) {
-      return busqueda;
+    if (empresasEncontradas.length > 0) {
+      return {
+        empresas: empresasEncontradas,
+        mensaje: "Se han encontrado empresas :)"
+      };
     } else {
-      throw new HttpException('No se encontraron empresas', 400)
+      return {
+        empresas: [],
+        mensaje: 'No se encontraron empresas'
+      };
     }
   }
 
