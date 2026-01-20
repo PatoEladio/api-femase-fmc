@@ -15,7 +15,8 @@ export class CencosService {
   async obtenerTodosLosCencos(): Promise<Cenco[]> {
       const busqueda = this.cencoRepository.find({
         relations: [
-          'estado'
+          'estado',
+          'depto_id'
         ],
         order: {
           empresa_id: 'ASC'
