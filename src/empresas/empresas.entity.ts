@@ -1,7 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { Estado } from 'src/estado/estado.entity';
 import { User } from 'src/users/user.entity';
-import { Entity, Column, PrimaryGeneratedColumn, OneToOne, JoinColumn, ManyToMany } from 'typeorm';
+import { Entity, Column, PrimaryGeneratedColumn, OneToOne, JoinColumn, ManyToMany, CreateDateColumn, UpdateDateColumn } from 'typeorm';
 
 @Entity('db_fmc.empresa')
 export class Empresas {
@@ -35,4 +35,21 @@ export class Empresas {
 
   @ManyToMany(() => User, (usuario) => usuario.empresas)
   usuario: User[]
+
+  @Column()
+  usuario_creador: string;
+
+  @CreateDateColumn({
+    type: 'timestamp', // O 'date' según prefieras
+    default: () => 'CURRENT_TIMESTAMP'
+  })
+  fecha_creacion: Date;
+
+  @UpdateDateColumn({
+    type: 'timestamp',
+    default: () => 'CURRENT_TIMESTAMP',
+    onUpdate: 'CURRENT_TIMESTAMP',
+    nullable: true
+  })
+  fecha_actualizacion: Date;
 }

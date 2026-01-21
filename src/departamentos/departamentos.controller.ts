@@ -18,8 +18,9 @@ export class DepartamentosController {
   }
 
   @Post('crear')
-  crear(@Body() crearDepto: Departamento) {
-    return this.departamentoService.crearDepartamento(crearDepto);
+  crear(@Body() crearDepto: Departamento, @Req() req) {
+    const usuario = req.user.username;
+    return this.departamentoService.crearDepartamento(crearDepto, usuario);
   }
 
   @Patch('actualizar/:deptoId')

@@ -13,9 +13,10 @@ export class TipoDispositivoService {
     private tipoDispositivoRepository: Repository<TipoDispositivo>
   ) { }
 
-  async create(createTipoDispositivoDto: TipoDispositivo): Promise<CreateTipoDispositivoDto> {
+  async create(createTipoDispositivoDto: TipoDispositivo, usuario: string): Promise<CreateTipoDispositivoDto> {
     try {
       const nuevo = this.tipoDispositivoRepository.create(createTipoDispositivoDto);
+      nuevo.usuario_creador = usuario;
       const guardada = this.tipoDispositivoRepository.save(nuevo);
 
       return {
@@ -25,17 +26,14 @@ export class TipoDispositivoService {
       }
 
     } catch (error) {
-      // Error de PostgreSQL/MySQL para "llave duplicada" (comúnmente código 23505)
       if (error.code === '23505') {
         throw new ConflictException('La empresa ya existe o el identificador está duplicado');
       }
 
-      // Error de validación de datos
       if (error.name === 'ValidationError') {
         throw new BadRequestException('Los datos proporcionados no son válidos');
       }
 
-      // Error genérico por si falla la conexión o algo inesperado
       throw new InternalServerErrorException('Error crítico al crear la empresa en la base de datos');
     }
   }

@@ -30,7 +30,10 @@ export class DepartamentosService {
         empresa: {
           empresa_id: true,
           nombre_empresa: true
-        }
+        },
+        usuario_creador: true,
+        fecha_creacion: true,
+        fecha_actualizacion: true
       }
     });
 
@@ -41,9 +44,10 @@ export class DepartamentosService {
     }
   }
 
-  async crearDepartamento(departamento: Departamento): Promise<DepartamentoCreatedDto> {
+  async crearDepartamento(departamento: Departamento, usuario: string): Promise<DepartamentoCreatedDto> {
     try {
       const nuevoDepartamento = this.departamentoRepository.create(departamento);
+      nuevoDepartamento.usuario_creador = usuario;
       const guardada = this.departamentoRepository.save(nuevoDepartamento);
 
       return {

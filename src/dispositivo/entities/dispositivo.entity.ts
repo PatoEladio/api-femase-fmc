@@ -1,20 +1,27 @@
 import { ApiProperty } from "@nestjs/swagger";
+import { Exclude } from "class-transformer";
 import { Estado } from "src/estado/estado.entity";
 import { TipoDispositivo } from "src/tipo-dispositivo/entities/tipo-dispositivo.entity";
-import { Column, Entity, JoinColumn, OneToOne, PrimaryGeneratedColumn } from "typeorm";
+import { Column, CreateDateColumn, Entity, JoinColumn, OneToOne, PrimaryGeneratedColumn, UpdateDateColumn } from "typeorm";
 
 @Entity('db_fmc.dispositivo')
 export class Dispositivo {
   @PrimaryGeneratedColumn()
   dispositivo_id: number;
 
-  @Column()
-  @ApiProperty({ description: 'fecha_ingreso', example: '2025-01-12 00:00:00' })
-  fecha_ingreso: string;
+  @CreateDateColumn({
+    type: 'timestamp', // O 'date' según prefieras
+    default: () => 'CURRENT_TIMESTAMP'
+  })
+  fecha_creacion: Date;
 
-  @Column()
-  @ApiProperty({ description: 'fecha_actualizacion', example: '2025-01-14 05:00:00' })
-  fecha_actualizacion: string;
+  @UpdateDateColumn({
+    type: 'timestamp',
+    default: () => 'CURRENT_TIMESTAMP',
+    onUpdate: 'CURRENT_TIMESTAMP',
+    nullable: true
+  })
+  fecha_actualizacion: Date;
 
   @Column()
   @ApiProperty({ description: 'ubicacion', example: 'La Rioja 2956 - Entrada B' })
@@ -48,7 +55,6 @@ export class Dispositivo {
   @ApiProperty({ description: 'dns', example: 'femase.cl' })
   dns: string;
 
-  // FALTAN LLAVES FORANEAS
   @OneToOne(() => Estado)
   @JoinColumn({ name: 'estado_id' })
   @ApiProperty({ description: "estado", example: 1 })

@@ -6,13 +6,13 @@ import { MenuTransformado } from './interfaces/menuTransformado.interface';
 import { AuthGuard } from 'src/auth/auth.guard';
 
 @Injectable()
+@UseGuards(AuthGuard)
 export class MenusService {
   constructor(
     @InjectRepository(Menu)
     private menuRepository: Repository<Menu>
   ) { }
 
-  @UseGuards(AuthGuard)
   async obtenerMenusPorPerfil(perfilId: number) {
     const respuesta: Menu[] = await this.menuRepository.query(
       'SELECT * FROM db_fmc.obtener_modulos_perfil($1)',

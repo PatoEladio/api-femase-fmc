@@ -20,6 +20,8 @@ import { DispositivoModule } from './dispositivo/dispositivo.module';
 import { TipoDispositivoModule } from './tipo-dispositivo/tipo-dispositivo.module';
 import { TipoDispositivo } from './tipo-dispositivo/entities/tipo-dispositivo.entity';
 import { Dispositivo } from './dispositivo/entities/dispositivo.entity';
+import { CargosModule } from './cargos/cargos.module';
+import { Cargo } from './cargos/entities/cargo.entity';
 
 @Module({
   imports: [
@@ -30,7 +32,7 @@ import { Dispositivo } from './dispositivo/entities/dispositivo.entity';
       username: 'postgres',
       password: 'admin',
       database: 'postgres',
-      entities: [User, Perfil, Estado, Menu, Empresas, Departamento, Cenco, TipoDispositivo, Dispositivo]
+      entities: [User, Perfil, Estado, Menu, Empresas, Departamento, Cenco, TipoDispositivo, Dispositivo, Cargo]
     }),
     AuthModule,
     UsersModule,
@@ -40,7 +42,8 @@ import { Dispositivo } from './dispositivo/entities/dispositivo.entity';
     DepartamentosModule,
     CencosModule,
     DispositivoModule,
-    TipoDispositivoModule
+    TipoDispositivoModule,
+    CargosModule
   ],
   providers: [PerfilesService],
   controllers: [PerfilesController],

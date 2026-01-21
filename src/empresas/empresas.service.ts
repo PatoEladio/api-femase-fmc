@@ -5,6 +5,7 @@ import { Repository } from 'typeorm';
 import { EmpresaCreadaDto } from './dto/empresa-creada.dto';
 import { UpdateEmpresaDto } from './dto/update-empresa.dto';
 import { BuscarEmpresaDto } from './dto/search-empresa.dto';
+import { log } from 'util';
 
 @Injectable()
 export class EmpresasService {
@@ -61,9 +62,10 @@ export class EmpresasService {
     }
   }
 
-  async crearEmpresa(empresa: Empresas): Promise<EmpresaCreadaDto> {
+  async crearEmpresa(empresa: Empresas, usuario: string): Promise<EmpresaCreadaDto> {
     try {
       const nuevaEmpresa = this.empresaRepository.create(empresa);
+      nuevaEmpresa.usuario_creador = usuario;
       const guardada = this.empresaRepository.save(nuevaEmpresa);
 
       return {
