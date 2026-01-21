@@ -2,14 +2,15 @@ import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/commo
 import { DispositivoService } from './dispositivo.service';
 import { CreateDispositivoDto } from './dto/create-dispositivo.dto';
 import { UpdateDispositivoDto } from './dto/update-dispositivo.dto';
+import { Dispositivo } from './entities/dispositivo.entity';
 
 @Controller('dispositivo')
 export class DispositivoController {
-  constructor(private readonly dispositivoService: DispositivoService) {}
+  constructor(private readonly dispositivoService: DispositivoService) { }
 
-  @Post()
-  create(@Body() createDispositivoDto: CreateDispositivoDto) {
-    return this.dispositivoService.create(createDispositivoDto);
+  @Post('crear')
+  create(@Body() createDispositivo: Dispositivo) {
+    return this.dispositivoService.create(createDispositivo);
   }
 
   @Get()
@@ -17,18 +18,10 @@ export class DispositivoController {
     return this.dispositivoService.findAll();
   }
 
-  @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.dispositivoService.findOne(+id);
-  }
 
-  @Patch(':id')
+  @Patch('actualizar/:id')
   update(@Param('id') id: string, @Body() updateDispositivoDto: UpdateDispositivoDto) {
     return this.dispositivoService.update(+id, updateDispositivoDto);
   }
 
-  @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.dispositivoService.remove(+id);
-  }
 }

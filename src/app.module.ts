@@ -19,6 +19,7 @@ import { Cenco } from './cencos/cenco.entity';
 import { DispositivoModule } from './dispositivo/dispositivo.module';
 import { TipoDispositivoModule } from './tipo-dispositivo/tipo-dispositivo.module';
 import { TipoDispositivo } from './tipo-dispositivo/entities/tipo-dispositivo.entity';
+import { Dispositivo } from './dispositivo/entities/dispositivo.entity';
 
 @Module({
   imports: [
@@ -29,7 +30,7 @@ import { TipoDispositivo } from './tipo-dispositivo/entities/tipo-dispositivo.en
       username: 'postgres',
       password: 'admin',
       database: 'postgres',
-      entities: [User, Perfil, Estado, Menu, Empresas, Departamento, Cenco, TipoDispositivo]
+      entities: [User, Perfil, Estado, Menu, Empresas, Departamento, Cenco, TipoDispositivo, Dispositivo]
     }),
     AuthModule,
     UsersModule,

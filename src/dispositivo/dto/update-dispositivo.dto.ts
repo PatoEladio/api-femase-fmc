@@ -1,4 +1,4 @@
 import { PartialType } from '@nestjs/swagger';
-import { CreateDispositivoDto } from './create-dispositivo.dto';
+import { Dispositivo } from '../entities/dispositivo.entity';
 
-export class UpdateDispositivoDto extends PartialType(CreateDispositivoDto) {}
+export class UpdateDispositivoDto extends PartialType(Dispositivo) {}
