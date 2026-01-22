@@ -4,7 +4,6 @@ import { Cenco } from './cenco.entity';
 import { Repository } from 'typeorm';
 import { CencoCreadoDTO } from './dto/created-cenco.dto';
 import { UpdateCencoDTO } from './dto/update-cenco.dto';
-import { AuthGuard } from 'src/auth/auth.guard';
 
 @Injectable()
 export class CencosService {
@@ -18,7 +17,10 @@ export class CencosService {
       relations: [
         'estado',
         'depto'
-      ]
+      ],
+      order: {
+        cenco_id: 'ASC'
+      }
     });
 
     if ((await busqueda).length > 0) {

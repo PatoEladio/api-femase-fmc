@@ -15,6 +15,7 @@ export class User {
   username: string;
 
   @Column()
+  @Exclude()
   @ApiProperty({ description: "password", example: "123" })
   password: string;
 

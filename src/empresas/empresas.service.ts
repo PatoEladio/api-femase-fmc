@@ -62,14 +62,17 @@ export class EmpresasService {
     }
   }
 
-  async crearEmpresa(empresa: Empresas, usuario: string): Promise<EmpresaCreadaDto> {
+  async crearEmpresa(empresa: Empresas, usuario: string, idUsuario: number): Promise<EmpresaCreadaDto> {
     try {
       const nuevaEmpresa = this.empresaRepository.create(empresa);
       nuevaEmpresa.usuario_creador = usuario;
       const guardada = this.empresaRepository.save(nuevaEmpresa);
 
       if (usuario == 'superadmin') {
-        // Asignar empresa a superadmin
+        await this.empresaRepository.query(
+          "INSERT INTO db_fmc.usuario_has_empresa (usuario_id, empresa_id) VALUES ($1, $2)",
+          [idUsuario, (await guardada).empresa_id]
+        );
       }
 
       return {

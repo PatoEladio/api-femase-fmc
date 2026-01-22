@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, ConflictException, Injectable, InternalServerErrorException } from '@nestjs/common';
 import { CreateCargoDto } from './dto/create-cargo.dto';
 import { UpdateCargoDto } from './dto/update-cargo.dto';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -13,8 +13,29 @@ export class CargosService {
     private cargoRepository: Repository<Cargo>
   ) { }
 
-  create(createCargoDto: CreateCargoDto) {
-    return 'This action adds a new cargo';
+  async create(createCargoDto: Cargo, usuario: string): Promise<CreateCargoDto> {
+    try {
+      const nuevo = this.cargoRepository.create(createCargoDto);
+      nuevo.usuario_creador = usuario;
+      const guardada = this.cargoRepository.save(nuevo);
+
+      return {
+        cargo_id: (await guardada).cargo_id,
+        nombre: (await guardada).nombre,
+        mensaje: 'Cargo creado correctamente'
+      }
+
+    } catch (error) {
+      if (error.code === '23505') {
+        throw new ConflictException('El cargo ya existe o el identificador está duplicado');
+      }
+
+      if (error.name === 'ValidationError') {
+        throw new BadRequestException('Los datos proporcionados no son válidos');
+      }
+
+      throw new InternalServerErrorException('Error crítico al crear el cargo en la base de datos');
+    }
   }
 
   async findAll(userId: number): Promise<SearchCargoDto> {

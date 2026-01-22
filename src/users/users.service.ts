@@ -1,7 +1,8 @@
-import { HttpException, Injectable } from '@nestjs/common';
+import { BadRequestException, ConflictException, HttpException, Injectable, InternalServerErrorException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { User } from './user.entity';
 import { Repository } from 'typeorm';
+import { CreateUserDto } from './dto/create-user.dto';
 
 @Injectable()
 export class UsersService {
@@ -19,7 +20,7 @@ export class UsersService {
         }
       },
       relations: [
-        'perfil', 
+        'perfil',
         'estado',
         'empresas'
       ],
@@ -32,20 +33,7 @@ export class UsersService {
         'perfil',
         'estado',
         'empresas'
-      ],
-      select: {
-        usuario_id: true,
-        username: true,
-        nombres: true,
-        apellido_materno: true,
-        apellido_paterno: true,
-        empresas: {
-          empresa_id: true,
-          nombre_empresa: true
-        },
-        estado: true,
-        perfil: true
-      }
+      ]
     });
 
     if ((await busqueda).length > 0) {
@@ -59,17 +47,16 @@ export class UsersService {
     return this.usersRepository.findOne({
       where: {
         usuario_id: usuarioId
-      }, 
+      },
       relations: [
         'estado',
         'perfil',
-        'empresas'
+        'empresa'
       ]
     });
   }
 
-  async crearUsuario(usuario: User) {
-    const nuevoUsuario = this.usersRepository.create(usuario);
-    return await this.usersRepository.save(nuevoUsuario);
+  async crearUsuario(usuario: User): Promise<any> {
+    return 'a';
   }
 }

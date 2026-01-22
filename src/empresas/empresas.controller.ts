@@ -20,7 +20,8 @@ export class EmpresasController {
   @Post('crear')
   crearEmpresa(@Body() crearEmpresa: Empresas, @Req() req) {
     const usuario = req.user.username;
-    return this.empresaService.crearEmpresa(crearEmpresa, usuario);
+    const id = req.user.sub;
+    return this.empresaService.crearEmpresa(crearEmpresa, usuario, id);
   }
 
   @Patch('actualizar/:id')

@@ -22,6 +22,7 @@ import { TipoDispositivo } from './tipo-dispositivo/entities/tipo-dispositivo.en
 import { Dispositivo } from './dispositivo/entities/dispositivo.entity';
 import { CargosModule } from './cargos/cargos.module';
 import { Cargo } from './cargos/entities/cargo.entity';
+import { TurnoModule } from './turno/turno.module';
 
 @Module({
   imports: [
@@ -43,7 +44,8 @@ import { Cargo } from './cargos/entities/cargo.entity';
     CencosModule,
     DispositivoModule,
     TipoDispositivoModule,
-    CargosModule
+    CargosModule,
+    TurnoModule
   ],
   providers: [PerfilesService],
   controllers: [PerfilesController],
