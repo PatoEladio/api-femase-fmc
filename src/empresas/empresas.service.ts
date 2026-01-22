@@ -68,12 +68,15 @@ export class EmpresasService {
       nuevaEmpresa.usuario_creador = usuario;
       const guardada = this.empresaRepository.save(nuevaEmpresa);
 
+      if (usuario == 'superadmin') {
+        // Asignar empresa a superadmin
+      }
+
       return {
         empresa_id: (await guardada).empresa_id,
         nombre_empresa: (await guardada).nombre_empresa,
         mensaje: 'Empresa creada correctamente'
       }
-
     } catch (error) {
       // Error de PostgreSQL/MySQL para "llave duplicada" (comúnmente código 23505)
       if (error.code === '23505') {

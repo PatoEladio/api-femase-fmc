@@ -1,9 +1,10 @@
-import { BadRequestException, ConflictException, HttpException, Injectable, InternalServerErrorException, NotFoundException } from '@nestjs/common';
+import { BadRequestException, ConflictException, HttpException, Injectable, InternalServerErrorException, NotFoundException, UseGuards } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Cenco } from './cenco.entity';
 import { Repository } from 'typeorm';
 import { CencoCreadoDTO } from './dto/created-cenco.dto';
 import { UpdateCencoDTO } from './dto/update-cenco.dto';
+import { AuthGuard } from 'src/auth/auth.guard';
 
 @Injectable()
 export class CencosService {
@@ -16,11 +17,8 @@ export class CencosService {
     const busqueda = this.cencoRepository.find({
       relations: [
         'estado',
-        'depto_id'
-      ],
-      order: {
-        empresa_id: 'ASC'
-      }
+        'depto'
+      ]
     });
 
     if ((await busqueda).length > 0) {
@@ -30,9 +28,10 @@ export class CencosService {
     }
   }
 
-  async crearCenco(cenco: Cenco): Promise<CencoCreadoDTO> {
+  async crearCenco(cenco: Cenco, usuario: string): Promise<CencoCreadoDTO> {
     try {
       const nuevo = this.cencoRepository.create(cenco);
+      nuevo.usuario_creador = usuario;
       const guardada = this.cencoRepository.save(nuevo);
 
       return {
@@ -55,7 +54,6 @@ export class CencosService {
   }
 
   async actualizarCenco(id: number, updateDto: UpdateCencoDTO): Promise<any> {
-    // 1. Preload busca por ID y "mezcla" los datos nuevos con los existentes
     const cenco = await this.cencoRepository.preload({
       cenco_id: id,
       ...updateDto,
