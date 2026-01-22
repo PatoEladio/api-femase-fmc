@@ -63,8 +63,4 @@ export class Cenco {
     nullable: true
   })
   fecha_actualizacion: Date;
-
-  @Column()
-  @ApiProperty({ description: "telefono", example: "921772304" })
-  telefono: string;
 }
