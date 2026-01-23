@@ -26,7 +26,7 @@ export class UsersService {
       ],
     });
   }
-
+  // IDEA NUEVA DEJAR LOS EMPLEADOS CON SU RESPECTIVA EMPRESA EN LA MISMA TABLA Y SI EL PERFIL DE USUARIO QUE INGRESA ES SUPERADMIN ENVIAR TODAS LAS EMPRESAS
   async buscarTodosLosUsuarios(): Promise<User[]> {
     const busqueda = this.usersRepository.find({
       relations: [
@@ -51,7 +51,7 @@ export class UsersService {
       relations: [
         'estado',
         'perfil',
-        'empresa'
+        'empresas'
       ]
     });
   }

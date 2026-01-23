@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, ConflictException, Injectable, InternalServerErrorException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Perfil } from './perfil.entity';
 import { Repository } from 'typeorm';
@@ -14,9 +14,28 @@ export class PerfilesService {
     return this.perfilRepository.find({ relations: ['estado'] });
   }
 
-  async crearPerfil(perfil: Perfil) {
-    const nuevoPerfil = this.perfilRepository.create(perfil);
-    return await this.perfilRepository.save(nuevoPerfil);
+  async crearPerfil(perfil: Perfil, usuario: string) {
+    try {
+      const nuevo = this.perfilRepository.create(perfil);
+      nuevo.usuario_creador = usuario;
+      const guardada = this.perfilRepository.save(nuevo);
+
+      return {
+        perfil_id: (await guardada).perfil_id,
+        nombre: (await guardada).nombre_perfil,
+        mensaje: 'Perfil creada correctamente'
+      }
+    } catch (error) {
+      if (error.code === '23505') {
+        throw new ConflictException('El perfil ya existe o el identificador está duplicado');
+      }
+
+      if (error.name === 'ValidationError') {
+        throw new BadRequestException('Los datos proporcionados no son válidos');
+      }
+
+      throw new InternalServerErrorException('Error crítico al crear el registro en la base de datos');
+    }
   }
 
   async actualizarPerfil(perfilId: number, infoActualizar: Perfil): Promise<Perfil | null> {
