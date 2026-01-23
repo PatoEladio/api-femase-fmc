@@ -1,7 +1,9 @@
-import { BadRequestException, ConflictException, Injectable, InternalServerErrorException } from '@nestjs/common';
+import { BadRequestException, ConflictException, Injectable, InternalServerErrorException, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Perfil } from './perfil.entity';
 import { Repository } from 'typeorm';
+import { CreatePerfilDto } from './dto/create-perfil.dto';
+import { UpdatePerfilDto } from './dto/update-perfil.dto';
 
 @Injectable()
 export class PerfilesService {
@@ -14,7 +16,7 @@ export class PerfilesService {
     return this.perfilRepository.find({ relations: ['estado'] });
   }
 
-  async crearPerfil(perfil: Perfil, usuario: string) {
+  async crearPerfil(perfil: Perfil, usuario: string): Promise<CreatePerfilDto> {
     try {
       const nuevo = this.perfilRepository.create(perfil);
       nuevo.usuario_creador = usuario;
@@ -23,7 +25,7 @@ export class PerfilesService {
       return {
         perfil_id: (await guardada).perfil_id,
         nombre: (await guardada).nombre_perfil,
-        mensaje: 'Perfil creada correctamente'
+        mensaje: 'Perfil creado correctamente'
       }
     } catch (error) {
       if (error.code === '23505') {
@@ -38,8 +40,33 @@ export class PerfilesService {
     }
   }
 
-  async actualizarPerfil(perfilId: number, infoActualizar: Perfil): Promise<Perfil | null> {
-    await this.perfilRepository.update(perfilId, infoActualizar);
-    return this.perfilRepository.findOne({ where: { perfil_id: perfilId } });
+  async actualizarPerfil(id: number, infoActualizar: UpdatePerfilDto): Promise<any> {
+    const perfil = await this.perfilRepository.preload({
+      perfil_id: id,
+      ...infoActualizar,
+    });
+
+    // 2. Si no existe el ID, lanzamos 404
+    if (!perfil) {
+      throw new NotFoundException(`EL perfil con ID ${id} no existe`);
+    }
+
+    try {
+      // 3. Guardamos los cambios (esto disparará validaciones de BD)
+      const actualizada = await this.perfilRepository.save(perfil);
+
+      // 4. Retornamos respuesta personalizada
+      return {
+        mensaje: 'Perfil actualizado con éxito',
+        id: actualizada.perfil_id,
+        nombre: actualizada.nombre_perfil
+      };
+    } catch (error) {
+      // Manejo de error por si el RUT duplicado choca
+      if (error.code === '23505') {
+        throw new ConflictException('El nombre ya pertenece a otro perfil');
+      }
+      throw new InternalServerErrorException('Error al actualizar el perfil');
+    }
   }
 }
