@@ -13,7 +13,10 @@ export class PerfilesService {
   ) { }
 
   async obtenerTodosLosPerfiles(): Promise<Perfil[]> {
-    return this.perfilRepository.find({ relations: ['estado'] });
+    return this.perfilRepository.find({
+      relations: ['estado'],
+      order: { perfil_id: 'asc' }
+    });
   }
 
   async crearPerfil(perfil: Perfil, usuario: string): Promise<CreatePerfilDto> {

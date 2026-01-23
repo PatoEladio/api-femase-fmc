@@ -21,7 +21,7 @@ export class CargosController {
     return this.cargosService.findAll(userId);
   }
 
-  @Patch(':id')
+  @Patch('actualizar/:id')
   update(@Param('id') id: string, @Body() updateCargoDto: UpdateCargoDto) {
     return this.cargosService.update(+id, updateCargoDto);
   }

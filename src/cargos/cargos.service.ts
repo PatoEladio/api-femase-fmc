@@ -1,12 +1,14 @@
-import { BadRequestException, ConflictException, Injectable, InternalServerErrorException } from '@nestjs/common';
+import { BadRequestException, ConflictException, Injectable, InternalServerErrorException, NotFoundException, UseGuards } from '@nestjs/common';
 import { CreateCargoDto } from './dto/create-cargo.dto';
 import { UpdateCargoDto } from './dto/update-cargo.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Cargo } from './entities/cargo.entity';
 import { Repository } from 'typeorm';
 import { SearchCargoDto } from './dto/search-cargo.dto';
+import { AuthGuard } from 'src/auth/auth.guard';
 
 @Injectable()
+@UseGuards(AuthGuard)
 export class CargosService {
   constructor(
     @InjectRepository(Cargo)
@@ -42,10 +44,14 @@ export class CargosService {
     const busqueda = await this.cargoRepository.find({
       where: {
         empresa: {
-          usuario: { usuario_id: userId }
+          usuario: {
+            usuario_id: userId
+          }
         }
-      }
-    })
+      }, order: {
+        cargo_id: 'asc'
+      }, relations: ['estado', 'empresa']
+    });
 
     if (busqueda.length > 0) {
       return {
@@ -61,7 +67,33 @@ export class CargosService {
 
   }
 
-  update(id: number, updateCargoDto: UpdateCargoDto) {
-    return `This action updates a #${id} cargo`;
+  async update(id: number, updateCargoDto: UpdateCargoDto): Promise<any> {
+    const cargo = await this.cargoRepository.preload({
+      cargo_id: id,
+      ...updateCargoDto,
+    });
+    
+    // 2. Si no existe el ID, lanzamos 404
+    if (!cargo) {
+      throw new NotFoundException(`El cargo con ID ${id} no existe`);
+    }
+
+    try {
+      // 3. Guardamos los cambios (esto disparará validaciones de BD)
+      const actualizada = await this.cargoRepository.save(cargo);
+
+      // 4. Retornamos respuesta personalizada
+      return {
+        mensaje: 'Cargo actualizado con éxito',
+        id: actualizada.cargo_id,
+        nombre: actualizada.nombre
+      };
+    } catch (error) {
+      // Manejo de error por si el RUT duplicado choca
+      if (error.code === '23505') {
+        throw new ConflictException('El nombre ya pertenece a otro cargo');
+      }
+      throw new InternalServerErrorException('Error al actualizar el cargo');
+    }
   }
 }
