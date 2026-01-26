@@ -31,4 +31,9 @@ export class UsersController {
     const { run, codigo, nuevaClave } = body;
     return await this.userService.actualizarClave(run, codigo, nuevaClave);
   }
+
+  @Get('crear-usuario-dt/:correoDT')
+  async crearFiscalizador(@Param('correoDT') correoDT: string) {
+    return await this.userService.crearUsuarioDT(correoDT);
+  }
 }

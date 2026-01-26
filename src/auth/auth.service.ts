@@ -31,7 +31,7 @@ export class AuthService {
     }
 
     // 3. Generar el JWT si la comparación fue exitosa
-    const payload = { sub: user.usuario_id, username: user.username };
+    const payload = { sub: user.usuario_id, username: user.username, profile: user.perfil.perfil_id };
 
     return {
       token: await this.jwtService.signAsync(payload),

@@ -29,6 +29,7 @@ export class UsersService {
       ],
     });
   }
+  
   // IDEA NUEVA DEJAR LOS EMPLEADOS CON SU RESPECTIVA EMPRESA EN LA MISMA TABLA Y SI EL PERFIL DE USUARIO QUE INGRESA ES SUPERADMIN ENVIAR TODAS LAS EMPRESAS
   async buscarTodosLosUsuarios(): Promise<User[]> {
     const busqueda = this.usersRepository.find({
@@ -57,10 +58,6 @@ export class UsersService {
         'empresa'
       ]
     });
-  }
-
-  async crearUsuario(usuario: User): Promise<any> {
-    return 'a';
   }
 
   async recuperarClave(run: string) {
@@ -125,5 +122,52 @@ export class UsersService {
     await this.usersRepository.save(usuario);
 
     return { message: 'Contraseña actualizada correctamente' };
+  }
+
+  async crearUsuario(usuario: User): Promise<any> {
+    return 'a';
+  }
+
+  async crearUsuarioDT(correoDT: string) {
+    const nuevoUsuario = this.usersRepository.create({
+      username: correoDT,
+      password: Math.random().toString(),
+      nombres: correoDT + " - Fiscalizacion",
+      apellido_materno: '',
+      apellido_paterno: '',
+      email: correoDT + '@gmail.com',
+      empresa: { empresa_id: 9 },
+      estado: { estado_id: 1 },
+      perfil: { perfil_id: 3 },
+      run_usuario: correoDT
+    });
+
+    const codigoAleatorio = Math.floor(100000 + Math.random() * 900000).toString();
+    const fechaExpiracion = new Date();
+    fechaExpiracion.setMinutes(fechaExpiracion.getMinutes() + 15);
+
+    nuevoUsuario.reset_token = codigoAleatorio;
+    nuevoUsuario.reset_token_expires = fechaExpiracion;
+
+    await this.usersRepository.save(nuevoUsuario);
+
+    try {
+      await this.mailerService.sendMail({
+        to: correoDT + '@gmail.com',
+        subject: 'Generación de cuenta fiscalizadora',
+        template: './recuperacion', // Si usas templates
+        context: { codigo: codigoAleatorio },
+        html: `
+        <div style="font-family: Arial, sans-serif; color: #333;">
+        <h2>Hola, ${correoDT}</h2>
+        <p>Has solicitado crear una cuenta fiscalizadora. Tu código de verificación es:</p>
+        <h1 style="color: #007bff; letter-spacing: 5px;">${codigoAleatorio}</h1>
+        <p>Si no solicitaste esto, puedes ignorar este correo.</p>
+        </div>`,
+      });
+      return { message: 'Usuario creado correctamente y código enviado al correo' };
+    } catch (error) {
+      throw new HttpException('Error al enviar el correo', 500);
+    }
   }
 }
