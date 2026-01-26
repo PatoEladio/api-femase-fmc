@@ -1,6 +1,7 @@
-import { Body, Controller, Get, Param, Post, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Param, Patch, Post, UseGuards } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { User } from './user.entity';
+import { UpdateUsuarioDto } from './dto/update-user.dto';
 
 @Controller('users')
 //@UseGuards(AuthGuard)
@@ -35,5 +36,10 @@ export class UsersController {
   @Get('crear-usuario-dt/:correoDT')
   async crearFiscalizador(@Param('correoDT') correoDT: string) {
     return await this.userService.crearUsuarioDT(correoDT);
+  }
+
+  @Patch('actualizar/:id')
+  actualizar(@Param('id') id: string, @Body() updateDto: UpdateUsuarioDto) {
+    return this.userService.actualizarUsuario(+id, updateDto);
   }
 }
