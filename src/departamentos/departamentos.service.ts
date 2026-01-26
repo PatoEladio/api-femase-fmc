@@ -15,13 +15,6 @@ export class DepartamentosService {
   async buscarTodosLosDepartamentos(userId: number): Promise<Departamento[]> {
     const busqueda = this.departamentoRepository.find({
       relations: ['estado', 'empresa'],
-      where: {
-        empresa: {
-          usuario: {
-            usuario_id: userId
-          }
-        }
-      },
       order: { departamento_id: 'ASC' },
       select: {
         departamento_id: true,

@@ -42,13 +42,7 @@ export class CargosService {
 
   async findAll(userId: number): Promise<SearchCargoDto> {
     const busqueda = await this.cargoRepository.find({
-      where: {
-        empresa: {
-          usuario: {
-            usuario_id: userId
-          }
-        }
-      }, order: {
+      order: {
         cargo_id: 'asc'
       }, relations: ['estado', 'empresa']
     });
@@ -72,24 +66,20 @@ export class CargosService {
       cargo_id: id,
       ...updateCargoDto,
     });
-    
+
     // 2. Si no existe el ID, lanzamos 404
     if (!cargo) {
       throw new NotFoundException(`El cargo con ID ${id} no existe`);
     }
 
     try {
-      // 3. Guardamos los cambios (esto disparará validaciones de BD)
       const actualizada = await this.cargoRepository.save(cargo);
-
-      // 4. Retornamos respuesta personalizada
       return {
         mensaje: 'Cargo actualizado con éxito',
         id: actualizada.cargo_id,
         nombre: actualizada.nombre
       };
     } catch (error) {
-      // Manejo de error por si el RUT duplicado choca
       if (error.code === '23505') {
         throw new ConflictException('El nombre ya pertenece a otro cargo');
       }

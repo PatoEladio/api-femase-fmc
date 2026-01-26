@@ -49,17 +49,8 @@ export class User {
   @ApiProperty({ description: "run_usuario", example: "21264235-5" })
   run_usuario: string;
 
-  @ManyToMany(() => Empresas, (empresa) => empresa.usuario)
-  @JoinTable({
-    name: 'db_fmc.usuario_has_empresa',
-    joinColumn: {
-      name: 'usuario_id',
-      referencedColumnName: 'usuario_id'
-    },
-    inverseJoinColumn: {
-      name: 'empresa_id',
-      referencedColumnName: 'empresa_id'
-    }
-  })
-  empresas: Empresas[]
+  @OneToOne(() => Empresas)
+  @ApiProperty({ description: "empresa", example: 1 })
+  @JoinColumn({ name: 'empresa_id' })
+  empresa: Empresas;
 }

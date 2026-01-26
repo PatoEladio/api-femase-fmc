@@ -22,7 +22,7 @@ export class UsersService {
       relations: [
         'perfil',
         'estado',
-        'empresas'
+        'empresa'
       ],
     });
   }
@@ -32,7 +32,7 @@ export class UsersService {
       relations: [
         'perfil',
         'estado',
-        'empresas'
+        'empresa'
       ]
     });
 
@@ -51,7 +51,7 @@ export class UsersService {
       relations: [
         'estado',
         'perfil',
-        'empresas'
+        'empresa'
       ]
     });
   }

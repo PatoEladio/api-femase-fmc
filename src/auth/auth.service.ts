@@ -13,7 +13,7 @@ export class AuthService {
   async signIn(
     username: string,
     pass: string
-  ): Promise<{ token: string, username: string, profile: string, profile_id: number }> {
+  ): Promise<{ token: string, username: string, profile: string, profile_id: number, empresa_id: number, empresa: string }> {
     const user = await this.usersService.searchActiveUser(username);
 
     // Revisar comparación clave encriptada
@@ -27,8 +27,10 @@ export class AuthService {
     return {
       token: await this.jwtService.signAsync(payload),
       username: user.username,
+      profile_id: user.perfil.perfil_id,
       profile: user.perfil.nombre_perfil,
-      profile_id: user.perfil.perfil_id
+      empresa_id: user.empresa.empresa_id,
+      empresa: user.empresa.nombre_empresa
     }
   }
 }

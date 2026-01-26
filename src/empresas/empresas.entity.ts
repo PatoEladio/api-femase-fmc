@@ -33,9 +33,6 @@ export class Empresas {
   @ApiProperty({ description: "estado", example: 1 })
   estado: Estado;
 
-  @ManyToMany(() => User, (usuario) => usuario.empresas)
-  usuario: User[]
-
   @Column()
   usuario_creador: string;
 

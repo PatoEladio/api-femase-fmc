@@ -14,29 +14,38 @@ export class EmpresasService {
     private empresaRepository: Repository<Empresas>
   ) { }
 
-  async obtenerTodasLasEmpresas(usuarioId: number): Promise<BuscarEmpresaDto> {
-    const empresasEncontradas = await this.empresaRepository.find({
+  async obtenerTodasLasEmpresas(usuarioId: number, usuario: string): Promise<BuscarEmpresaDto> {
+    const allEmpresas = await this.empresaRepository.find({
       relations: ['estado'],
-      order: {
-        empresa_id: 'ASC'
-      },
-      where: {
-        usuario: {
-          usuario_id: usuarioId
-        }
-      }
+      order: { empresa_id: 'asc' }
     });
 
-    if (empresasEncontradas.length > 0) {
-      return {
-        empresas: empresasEncontradas,
-        mensaje: "Se han encontrado empresas :)"
-      };
+
+
+    if (allEmpresas.length > 0) {
+      if (usuario == "superadmin") {
+        return {
+          empresas: allEmpresas,
+          mensaje: 'Usuario superadmin, se envian todas las empresas'
+        }
+      } else {
+        const filteredEmpresas = await this.empresaRepository.query(`
+          select e.empresa_id, e.nombre_empresa, e.rut_empresa, e.direccion_empresa, e.estado_id, e.comuna_empresa, e.email_empresa, e.usuario_creador, e.fecha_creacion, e.fecha_actualizacion
+          from db_fmc.empresa as e
+          join db_fmc.usuario as u 
+          on u.empresa_id = e.empresa_id
+          where u.usuario_id = $1`
+          , [usuarioId]);
+        return {
+          empresas: filteredEmpresas,
+          mensaje: 'Se envia la empresa del usuario'
+        }
+      }
     } else {
       return {
         empresas: [],
-        mensaje: 'No se encontraron empresas'
-      };
+        mensaje: 'No hay empresas'
+      }
     }
   }
 
@@ -47,11 +56,6 @@ export class EmpresasService {
       ],
       order: {
         empresa_id: 'ASC'
-      },
-      where: {
-        usuario: {
-          usuario_id: usuarioId
-        }
       }
     });
 

@@ -14,7 +14,8 @@ export class EmpresasController {
   @Get('')
   obtenerTodasLasEmpresas(@Req() req) {
     const usuarioId = req.user.sub;
-    return this.empresaService.obtenerTodasLasEmpresas(usuarioId);
+    const usuario = req.user.username;
+    return this.empresaService.obtenerTodasLasEmpresas(usuarioId, usuario);
   }
 
   @Post('crear')
