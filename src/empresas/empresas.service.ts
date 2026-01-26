@@ -20,8 +20,6 @@ export class EmpresasService {
       order: { empresa_id: 'asc' }
     });
 
-
-
     if (allEmpresas.length > 0) {
       if (usuario == "superadmin") {
         return {
@@ -46,23 +44,6 @@ export class EmpresasService {
         empresas: [],
         mensaje: 'No hay empresas'
       }
-    }
-  }
-
-  async obtenerEmpresasPorUsuario(usuarioId: number): Promise<Empresas[]> {
-    const busqueda = this.empresaRepository.find({
-      relations: [
-        'estado'
-      ],
-      order: {
-        empresa_id: 'ASC'
-      }
-    });
-
-    if ((await busqueda).length > 0) {
-      return busqueda;
-    } else {
-      throw new HttpException('No se encontraron empresas', 400)
     }
   }
 

@@ -53,4 +53,18 @@ export class User {
   @ApiProperty({ description: "empresa", example: 1 })
   @JoinColumn({ name: 'empresa_id' })
   empresa: Empresas;
+
+  @Column({
+    type: 'varchar',      // Especificamos que es un texto
+    nullable: true,
+    name: 'reset_token'
+  })
+  reset_token: string | null;
+
+  @Column({
+    type: 'timestamp',    // Especificamos que es fecha y hora
+    nullable: true,
+    name: 'reset_token_expires'
+  })
+  reset_token_expires: Date | null;
 }

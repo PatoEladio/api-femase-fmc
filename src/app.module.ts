@@ -23,9 +23,12 @@ import { Dispositivo } from './dispositivo/entities/dispositivo.entity';
 import { CargosModule } from './cargos/cargos.module';
 import { Cargo } from './cargos/entities/cargo.entity';
 import { TurnoModule } from './turno/turno.module';
+import { MailerModule } from '@nestjs-modules/mailer';
+import { ConfigModule } from '@nestjs/config';
 
 @Module({
   imports: [
+    ConfigModule.forRoot(),
     TypeOrmModule.forRoot({
       type: 'postgres',
       host: 'localhost',
@@ -34,6 +37,23 @@ import { TurnoModule } from './turno/turno.module';
       password: 'admin',
       database: 'postgres',
       entities: [User, Perfil, Estado, Menu, Empresas, Departamento, Cenco, TipoDispositivo, Dispositivo, Cargo]
+    }),
+    MailerModule.forRoot({
+      transport: {
+        host: process.env.EMAIL_HOST,
+        port: 587,
+        secure: false,
+        auth: {
+          user: process.env.EMAIL_USER,
+          pass: process.env.EMAIL_PASS
+        },
+        tls: {
+          rejectUnauthorized: false
+        }
+      },
+      defaults: {
+        from: '"Soporte FEMASE" <soportefemasetest@gmail.com>'
+      }
     }),
     AuthModule,
     UsersModule,
@@ -50,4 +70,4 @@ import { TurnoModule } from './turno/turno.module';
   providers: [PerfilesService],
   controllers: [PerfilesController],
 })
-export class AppModule {}
+export class AppModule { }

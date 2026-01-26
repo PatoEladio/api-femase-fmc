@@ -20,4 +20,15 @@ export class UsersController {
   crearCuenta(@Body() createUserDTO: User) {
     return this.userService.crearUsuario(createUserDTO);
   }
+
+  @Get('recuperar-clave/:run')
+  async recuperar(@Param('run') run: string) {
+    return await this.userService.recuperarClave(run);
+  }
+
+  @Post('resetear-clave')
+  async resetear(@Body() body: any) {
+    const { run, codigo, nuevaClave } = body;
+    return await this.userService.actualizarClave(run, codigo, nuevaClave);
+  }
 }
