@@ -53,13 +53,6 @@ export class EmpresasService {
       nuevaEmpresa.usuario_creador = usuario;
       const guardada = this.empresaRepository.save(nuevaEmpresa);
 
-      if (usuario == 'superadmin') {
-        await this.empresaRepository.query(
-          "INSERT INTO db_fmc.usuario_has_empresa (usuario_id, empresa_id) VALUES ($1, $2)",
-          [idUsuario, (await guardada).empresa_id]
-        );
-      }
-
       return {
         empresa_id: (await guardada).empresa_id,
         nombre_empresa: (await guardada).nombre_empresa,
