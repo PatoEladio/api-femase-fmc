@@ -12,7 +12,7 @@ export class DepartamentosService {
     private departamentoRepository: Repository<Departamento>
   ) { }
 
-  async buscarTodosLosDepartamentos(userId: number): Promise<Departamento[]> {
+  async buscarTodosLosDepartamentos(userId: number): Promise<any> {
     const busqueda = this.departamentoRepository.find({
       relations: ['estado', 'empresa'],
       order: { departamento_id: 'ASC' },
@@ -31,9 +31,14 @@ export class DepartamentosService {
     });
 
     if ((await busqueda).length > 0) {
-      return busqueda;
+      return {
+        departamentos: busqueda
+      }
     } else {
-      throw new HttpException('No se han encontrado departamentos para esta empresa', 400);
+      return {
+        departamentos: []
+      }
+      //throw new HttpException('No se han encontrado departamentos para esta empresa', 400);
     }
   }
 
@@ -46,7 +51,7 @@ export class DepartamentosService {
       return {
         departamento_id: (await guardada).departamento_id,
         nombre_departamento: (await guardada).nombre_departamento,
-        mensaje: 'Empresa creada correctamente'
+        mensaje: 'Departamento creado correctamente'
       }
 
     } catch (error) {
