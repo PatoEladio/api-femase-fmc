@@ -1,4 +1,4 @@
-import { Injectable, UseGuards } from '@nestjs/common';
+import { ConflictException, HttpException, HttpStatus, Injectable, UseGuards } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Menu } from './menus.entity';
 import { Repository } from 'typeorm';
@@ -89,12 +89,20 @@ export class MenusService {
 
   // Crear SP para agregar submenu para que no haya duplicacion de informacion
   async agregarSubmenus(listaSubmenus: [], perfilId: number) {
-    listaSubmenus.forEach(async submenu => {
-      await this.menuRepository.query('INSERT INTO db_fmc.modulo_has_perfil (modulo_id, perfil_id) VALUES ($1, $2)', [submenu, perfilId]);
-    });
+    try {
+      listaSubmenus.forEach(async submenu => {
+        const listadoMenuPerfil = await this.menuRepository.query('select * from db_fmc.modulo_has_perfil where modulo_id = $1 and perfil_id = $2', [submenu, perfilId]);
 
-    return {
-      mensaje: 'Menus agregados a perfil correctamente'
+        if (listadoMenuPerfil.length < 1) {
+          await this.menuRepository.query('INSERT INTO db_fmc.modulo_has_perfil (modulo_id, perfil_id) VALUES ($1, $2)', [submenu, perfilId]);
+        }
+      });
+
+      return {
+        mensaje: 'Funciona'
+      }
+    } catch (error) {
+      throw new HttpException('Error', 500);
     }
   }
 }

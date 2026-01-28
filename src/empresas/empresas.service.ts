@@ -64,7 +64,7 @@ export class EmpresasService {
         throw new ConflictException('La empresa ya existe o el identificador está duplicado');
       }
 
-      // Error de validación de datos
+      // Error de validación de datos6
       if (error.name === 'ValidationError') {
         throw new BadRequestException('Los datos proporcionados no son válidos');
       }
