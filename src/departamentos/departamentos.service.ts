@@ -4,6 +4,7 @@ import { Departamento } from './departamento.entity';
 import { Repository } from 'typeorm';
 import { DepartamentoCreatedDto } from './dto/departamento-created.dto';
 import { UpdateDepartamentoDto } from './dto/update-departamento.dto';
+import { SearchDeptoDto } from './dto/search-depto.dto';
 
 @Injectable()
 export class DepartamentosService {
@@ -12,8 +13,8 @@ export class DepartamentosService {
     private departamentoRepository: Repository<Departamento>
   ) { }
 
-  async buscarTodosLosDepartamentos(userId: number): Promise<any> {
-    const busqueda = this.departamentoRepository.find({
+  async buscarTodosLosDepartamentos(): Promise<SearchDeptoDto> {
+    const busqueda = await this.departamentoRepository.find({
       relations: ['estado', 'empresa'],
       order: { departamento_id: 'ASC' },
       select: {
@@ -30,7 +31,7 @@ export class DepartamentosService {
       }
     });
 
-    if ((await busqueda).length > 0) {
+    if (busqueda.length > 0) {
       return {
         departamentos: busqueda
       }

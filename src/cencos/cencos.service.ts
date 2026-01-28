@@ -4,6 +4,7 @@ import { Cenco } from './cenco.entity';
 import { Repository } from 'typeorm';
 import { CencoCreadoDTO } from './dto/created-cenco.dto';
 import { UpdateCencoDTO } from './dto/update-cenco.dto';
+import { SearchCencoDto } from './dto/search-cenco.dto';
 
 @Injectable()
 export class CencosService {
@@ -12,7 +13,7 @@ export class CencosService {
     private cencoRepository: Repository<Cenco>
   ) { }
 
-  async obtenerTodosLosCencos(): Promise<any> {
+  async obtenerTodosLosCencos(): Promise<SearchCencoDto> {
     const busqueda = this.cencoRepository.find({
       relations: [
         'estado',
@@ -25,7 +26,7 @@ export class CencosService {
 
     if ((await busqueda).length > 0) {
       return {
-        centros: busqueda
+        centros: await busqueda
       }
     } else {
       return {

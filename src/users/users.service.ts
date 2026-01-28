@@ -6,6 +6,7 @@ import { CreateUserDto } from './dto/create-user.dto';
 import { MailerService } from '@nestjs-modules/mailer';
 import * as bcrypt from 'bcrypt';
 import { UpdateUsuarioDto } from './dto/update-user.dto';
+import { SearchUserDto } from './dto/search-user.dto';
 
 @Injectable()
 export class UsersService {
@@ -32,7 +33,7 @@ export class UsersService {
   }
 
   // IDEA NUEVA DEJAR LOS EMPLEADOS CON SU RESPECTIVA EMPRESA EN LA MISMA TABLA Y SI EL PERFIL DE USUARIO QUE INGRESA ES SUPERADMIN ENVIAR TODAS LAS EMPRESAS
-  async buscarTodosLosUsuarios(): Promise<any> {
+  async buscarTodosLosUsuarios(): Promise<SearchUserDto> {
     const busqueda = this.usersRepository.find({
       relations: [
         'perfil',
@@ -43,7 +44,7 @@ export class UsersService {
 
     if ((await busqueda).length > 0) {
       return {
-        usuarios: busqueda
+        usuarios: await busqueda
       };
     } else {
       return {
