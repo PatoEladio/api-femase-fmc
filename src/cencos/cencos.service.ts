@@ -12,7 +12,7 @@ export class CencosService {
     private cencoRepository: Repository<Cenco>
   ) { }
 
-  async obtenerTodosLosCencos(): Promise<Cenco[]> {
+  async obtenerTodosLosCencos(): Promise<any> {
     const busqueda = this.cencoRepository.find({
       relations: [
         'estado',
@@ -24,9 +24,13 @@ export class CencosService {
     });
 
     if ((await busqueda).length > 0) {
-      return busqueda;
+      return {
+        centros: busqueda
+      }
     } else {
-      throw new HttpException('No se encontraron centros de costo', 400)
+      return {
+        centros: []
+      }
     }
   }
 

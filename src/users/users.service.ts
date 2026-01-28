@@ -32,7 +32,7 @@ export class UsersService {
   }
 
   // IDEA NUEVA DEJAR LOS EMPLEADOS CON SU RESPECTIVA EMPRESA EN LA MISMA TABLA Y SI EL PERFIL DE USUARIO QUE INGRESA ES SUPERADMIN ENVIAR TODAS LAS EMPRESAS
-  async buscarTodosLosUsuarios(): Promise<User[]> {
+  async buscarTodosLosUsuarios(): Promise<any> {
     const busqueda = this.usersRepository.find({
       relations: [
         'perfil',
@@ -42,9 +42,13 @@ export class UsersService {
     });
 
     if ((await busqueda).length > 0) {
-      return busqueda;
+      return {
+        usuarios: busqueda
+      };
     } else {
-      throw new HttpException('No se encontraron usuarios', 400)
+      return {
+        usuarios: []
+      }
     }
   }
 
