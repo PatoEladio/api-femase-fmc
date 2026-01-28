@@ -14,7 +14,7 @@ export class DepartamentosController {
   @Get('')
   obtenerTodosLosDeptos(@Req() req) {
     const userId = req.user.sub;
-    return this.departamentoService.buscarTodosLosDepartamentos(userId);
+    return this.departamentoService.buscarTodosLosDepartamentos();
   }
 
   @Post('crear')
