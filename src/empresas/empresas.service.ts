@@ -14,14 +14,14 @@ export class EmpresasService {
     private empresaRepository: Repository<Empresas>
   ) { }
 
-  async obtenerTodasLasEmpresas(usuarioId: number, perfilId: number): Promise<BuscarEmpresaDto> {
+  async obtenerTodasLasEmpresas(usuarioId: number, usuario: string): Promise<BuscarEmpresaDto> {
     const allEmpresas = await this.empresaRepository.find({
       relations: ['estado'],
       order: { empresa_id: 'asc' }
     });
 
     if (allEmpresas.length > 0) {
-      if (perfilId == 1 || perfilId == 3) {
+      if (usuario == 'superadmin') {
         return {
           empresas: allEmpresas,
           mensaje: 'Usuario superadmin o fiscalizador, se envian todas las empresas'

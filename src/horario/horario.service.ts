@@ -1,26 +1,28 @@
 import { BadRequestException, ConflictException, Injectable, InternalServerErrorException, NotFoundException } from '@nestjs/common';
-import { CreateTurnoDto } from './dto/create-turno.dto';
-import { UpdateTurnoDto } from './dto/update-turno.dto';
+import { CreateHorarioDto } from './dto/create-horario.dto';
+import { UpdateHorarioDto } from './dto/update-horario.dto';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Turno } from './entities/turno.entity';
+import { Horario } from './entities/horario.entity';
 import { Repository } from 'typeorm';
 
 @Injectable()
-export class TurnoService {
+export class HorarioService {
   constructor(
-    @InjectRepository(Turno)
-    private turnoRepository: Repository<Turno>
+    @InjectRepository(Horario)
+    private horarioRepository: Repository<Horario>
   ) { }
 
-  async create(createTurnoDto: Turno, usuario: string) {
+
+  async create(createHorarioDto: Horario): Promise<Horario> {
     try {
-      const nuevo = this.turnoRepository.create(createTurnoDto);
-      nuevo.usuario_creador = usuario;
-      const guardada = await this.turnoRepository.save(nuevo);
+      const nuevo = this.horarioRepository.create(createHorarioDto);
+      //nuevo.usuario_creador = usuario;
+      const guardada = await this.horarioRepository.save(nuevo);
 
       return {
-        turno_id: guardada.turno_id,
-        nombre: guardada.nombre,
+        horario_id: guardada.horario_id,
+        hora_entrada: guardada.hora_entrada,
+        hora_salida: guardada.hora_salida,
         empresa: guardada.empresa
       }
     } catch (error) {
@@ -37,18 +39,18 @@ export class TurnoService {
   }
 
   findAll() {
-    return this.turnoRepository.find({
-      relations: ['empresa', 'horario', 'estado'],
+    return this.horarioRepository.find({
       order: {
-        turno_id: 'asc'
-      }
+        horario_id: 'asc'
+      },
+      relations: ['empresa']
     });
   }
 
-  async update(id: number, updateTurnoDto: UpdateTurnoDto) {
-    const result = await this.turnoRepository.preload({
-      turno_id: id,
-      ...updateTurnoDto,
+  async update(id: number, updateHorarioDto: UpdateHorarioDto) {
+    const result = await this.horarioRepository.preload({
+      horario_id: id,
+      ...updateHorarioDto,
     });
 
     if (!result) {
@@ -56,11 +58,11 @@ export class TurnoService {
     }
 
     try {
-      const actualizada = await this.turnoRepository.save(result);
+      const actualizada = await this.horarioRepository.save(result);
 
       return {
         mensaje: 'Registro actualizado con éxito',
-        id: actualizada.turno_id
+        id: actualizada.horario_id
       };
     } catch (error) {
       if (error.code === '23505') {
@@ -71,6 +73,6 @@ export class TurnoService {
   }
 
   remove(id: number) {
-    return `This action removes a #${id} turno`;
+    return `This action removes a #${id} horario`;
   }
 }

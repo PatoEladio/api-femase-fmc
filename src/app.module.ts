@@ -25,6 +25,10 @@ import { Cargo } from './cargos/entities/cargo.entity';
 import { TurnoModule } from './turno/turno.module';
 import { MailerModule } from '@nestjs-modules/mailer';
 import { ConfigModule } from '@nestjs/config';
+import { HorarioModule } from './horario/horario.module';
+import { Horario } from './horario/entities/horario.entity';
+import { Turno } from './turno/entities/turno.entity';
+import { TurnoHorarioModule } from './turno-horario/turno-horario.module';
 
 @Module({
   imports: [
@@ -36,7 +40,7 @@ import { ConfigModule } from '@nestjs/config';
       username: 'postgres',
       password: 'admin',
       database: 'postgres',
-      entities: [User, Perfil, Estado, Menu, Empresas, Departamento, Cenco, TipoDispositivo, Dispositivo, Cargo]
+      entities: [User, Perfil, Estado, Menu, Empresas, Departamento, Cenco, TipoDispositivo, Dispositivo, Cargo, Horario, Turno]
     }),
     MailerModule.forRoot({
       transport: {
@@ -65,7 +69,9 @@ import { ConfigModule } from '@nestjs/config';
     DispositivoModule,
     TipoDispositivoModule,
     CargosModule,
-    TurnoModule
+    TurnoModule,
+    HorarioModule,
+    TurnoHorarioModule
   ],
   providers: [PerfilesService],
   controllers: [PerfilesController],

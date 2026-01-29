@@ -1,25 +1,24 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards, Req } from '@nestjs/common';
 import { TurnoService } from './turno.service';
 import { CreateTurnoDto } from './dto/create-turno.dto';
 import { UpdateTurnoDto } from './dto/update-turno.dto';
+import { Turno } from './entities/turno.entity';
+import { AuthGuard } from 'src/auth/auth.guard';
 
 @Controller('turno')
+@UseGuards(AuthGuard)
 export class TurnoController {
-  constructor(private readonly turnoService: TurnoService) {}
+  constructor(private readonly turnoService: TurnoService) { }
 
   @Post()
-  create(@Body() createTurnoDto: CreateTurnoDto) {
-    return this.turnoService.create(createTurnoDto);
+  create(@Body() createTurnoDto: Turno, @Req() req) {
+    const usuario = req.user.username;
+    return this.turnoService.create(createTurnoDto, usuario);
   }
 
   @Get()
   findAll() {
     return this.turnoService.findAll();
-  }
-
-  @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.turnoService.findOne(+id);
   }
 
   @Patch(':id')
