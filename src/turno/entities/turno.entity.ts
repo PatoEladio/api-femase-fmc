@@ -1,8 +1,9 @@
 import { ApiProperty } from "@nestjs/swagger";
-import { Empresas } from "src/empresas/empresas.entity";
+import { Cenco } from "src/cencos/cenco.entity";
+import { Empresa } from "src/empresas/empresas.entity";
 import { Estado } from "src/estado/estado.entity";
 import { Horario } from "src/horario/entities/horario.entity";
-import { Column, CreateDateColumn, Entity, JoinColumn, OneToOne, PrimaryGeneratedColumn, UpdateDateColumn } from "typeorm";
+import { Column, CreateDateColumn, Entity, JoinColumn, JoinTable, ManyToMany, OneToOne, PrimaryGeneratedColumn, UpdateDateColumn } from "typeorm";
 
 @Entity("db_fmc.turno")
 export class Turno {
@@ -34,10 +35,10 @@ export class Turno {
   })
   fecha_actualizacion: Date;
 
-  @OneToOne(() => Empresas)
+  @OneToOne(() => Empresa)
   @ApiProperty({ description: "empresa", example: 1 })
   @JoinColumn({ name: 'empresa_id' })
-  empresa: Empresas;
+  empresa: Empresa;
 
   @OneToOne(() => Estado)
   @JoinColumn({ name: 'estado_id' })
@@ -48,4 +49,5 @@ export class Turno {
   @JoinColumn({ name: 'horario_id' })
   @ApiProperty({ description: "horario_id", example: 1 })
   horario: Horario;
+
 }

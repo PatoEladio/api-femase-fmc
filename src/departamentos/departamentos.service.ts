@@ -15,20 +15,8 @@ export class DepartamentosService {
 
   async buscarTodosLosDepartamentos(): Promise<SearchDeptoDto> {
     const busqueda = await this.departamentoRepository.find({
-      relations: ['estado', 'empresa'],
-      order: { departamento_id: 'ASC' },
-      select: {
-        departamento_id: true,
-        nombre_departamento: true,
-        estado: true,
-        empresa: {
-          empresa_id: true,
-          nombre_empresa: true
-        },
-        usuario_creador: true,
-        fecha_creacion: true,
-        fecha_actualizacion: true
-      }
+      relations: ['estado', 'empresa', 'cencos'],
+      order: { departamento_id: 'ASC' }
     });
 
     if (busqueda.length > 0) {
@@ -39,14 +27,12 @@ export class DepartamentosService {
       return {
         departamentos: []
       }
-      //throw new HttpException('No se han encontrado departamentos para esta empresa', 400);
     }
   }
 
   async crearDepartamento(departamento: Departamento, usuario: string): Promise<DepartamentoCreatedDto> {
     try {
       const nuevoDepartamento = this.departamentoRepository.create(departamento);
-      nuevoDepartamento.usuario_creador = usuario;
       const guardada = this.departamentoRepository.save(nuevoDepartamento);
 
       return {

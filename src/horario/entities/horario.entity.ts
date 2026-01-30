@@ -1,5 +1,5 @@
 import { ApiProperty } from "@nestjs/swagger";
-import { Empresas } from "src/empresas/empresas.entity";
+import { Empresa } from "src/empresas/empresas.entity";
 import { Column, Entity, JoinColumn, OneToOne, PrimaryGeneratedColumn } from "typeorm";
 
 @Entity('db_fmc.horario')
@@ -23,8 +23,8 @@ export class Horario {
   @ApiProperty({ description: "hora_salida", example: "13:00:00" })
   hora_salida: string;
 
-  @OneToOne(() => Empresas)
+  @OneToOne(() => Empresa)
   @ApiProperty({ description: "empresa", example: 1 })
   @JoinColumn({ name: 'empresa_id' })
-  empresa: Empresas;
+  empresa: Empresa;
 }

@@ -11,7 +11,7 @@ import { PerfilesService } from './perfiles/perfiles.service';
 import { PerfilesController } from './perfiles/perfiles.controller';
 import { PerfilesModule } from './perfiles/perfiles.module';
 import { EmpresasModule } from './empresas/empresas.module';
-import { Empresas } from './empresas/empresas.entity';
+import { Empresa } from './empresas/empresas.entity';
 import { DepartamentosModule } from './departamentos/departamentos.module';
 import { Departamento } from './departamentos/departamento.entity';
 import { CencosModule } from './cencos/cencos.module';
@@ -40,7 +40,7 @@ import { TurnoHorarioModule } from './turno-horario/turno-horario.module';
       username: 'postgres',
       password: 'admin',
       database: 'postgres',
-      entities: [User, Perfil, Estado, Menu, Empresas, Departamento, Cenco, TipoDispositivo, Dispositivo, Cargo, Horario, Turno]
+      entities: [User, Perfil, Estado, Menu, Empresa, Departamento, Cenco, TipoDispositivo, Dispositivo, Cargo, Horario, Turno]
     }),
     MailerModule.forRoot({
       transport: {

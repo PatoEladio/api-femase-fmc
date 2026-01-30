@@ -1,10 +1,11 @@
 import { ApiProperty } from '@nestjs/swagger';
+import { Departamento } from 'src/departamentos/departamento.entity';
 import { Estado } from 'src/estado/estado.entity';
 import { User } from 'src/users/user.entity';
-import { Entity, Column, PrimaryGeneratedColumn, OneToOne, JoinColumn, ManyToMany, CreateDateColumn, UpdateDateColumn } from 'typeorm';
+import { Entity, Column, PrimaryGeneratedColumn, OneToOne, JoinColumn, ManyToMany, CreateDateColumn, UpdateDateColumn, OneToMany } from 'typeorm';
 
 @Entity('db_fmc.empresa')
-export class Empresas {
+export class Empresa {
   @PrimaryGeneratedColumn()
   empresa_id: number;
 
@@ -33,20 +34,6 @@ export class Empresas {
   @ApiProperty({ description: "estado", example: 1 })
   estado: Estado;
 
-  @Column()
-  usuario_creador: string;
-
-  @CreateDateColumn({
-    type: 'timestamp', // O 'date' según prefieras
-    default: () => 'CURRENT_TIMESTAMP'
-  })
-  fecha_creacion: Date;
-
-  @UpdateDateColumn({
-    type: 'timestamp',
-    default: () => 'CURRENT_TIMESTAMP',
-    onUpdate: 'CURRENT_TIMESTAMP',
-    nullable: true
-  })
-  fecha_actualizacion: Date;
+  @OneToMany(() => Departamento, (departamento) => departamento.empresa)
+  departamentos: Departamento[];
 }

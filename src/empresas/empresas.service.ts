@@ -1,6 +1,6 @@
 import { BadRequestException, ConflictException, HttpException, Injectable, InternalServerErrorException, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Empresas } from './empresas.entity';
+import { Empresa } from './empresas.entity';
 import { Repository } from 'typeorm';
 import { EmpresaCreadaDto } from './dto/empresa-creada.dto';
 import { UpdateEmpresaDto } from './dto/update-empresa.dto';
@@ -10,13 +10,13 @@ import { log } from 'util';
 @Injectable()
 export class EmpresasService {
   constructor(
-    @InjectRepository(Empresas)
-    private empresaRepository: Repository<Empresas>
+    @InjectRepository(Empresa)
+    private empresaRepository: Repository<Empresa>
   ) { }
 
   async obtenerTodasLasEmpresas(usuarioId: number, usuario: string): Promise<BuscarEmpresaDto> {
     const allEmpresas = await this.empresaRepository.find({
-      relations: ['estado'],
+      relations: ['estado', 'departamentos'],
       order: { empresa_id: 'asc' }
     });
 
@@ -47,31 +47,9 @@ export class EmpresasService {
     }
   }
 
-  async crearEmpresa(empresa: Empresas, usuario: string, idUsuario: number): Promise<EmpresaCreadaDto> {
-    try {
-      const nuevaEmpresa = this.empresaRepository.create(empresa);
-      nuevaEmpresa.usuario_creador = usuario;
-      const guardada = this.empresaRepository.save(nuevaEmpresa);
-
-      return {
-        empresa_id: (await guardada).empresa_id,
-        nombre_empresa: (await guardada).nombre_empresa,
-        mensaje: 'Empresa creada correctamente'
-      }
-    } catch (error) {
-      // Error de PostgreSQL/MySQL para "llave duplicada" (comúnmente código 23505)
-      if (error.code === '23505') {
-        throw new ConflictException('La empresa ya existe o el identificador está duplicado');
-      }
-
-      // Error de validación de datos6
-      if (error.name === 'ValidationError') {
-        throw new BadRequestException('Los datos proporcionados no son válidos');
-      }
-
-      // Error genérico por si falla la conexión o algo inesperado
-      throw new InternalServerErrorException('Error crítico al crear la empresa en la base de datos');
-    }
+  async create(empresa: Empresa) {
+    const nuevaEmpresa = this.empresaRepository.create(empresa);
+    return await this.empresaRepository.save(nuevaEmpresa);
   }
 
   async actualizarEmpresa(id: number, updateDto: UpdateEmpresaDto): Promise<any> {

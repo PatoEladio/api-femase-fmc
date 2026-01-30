@@ -1,8 +1,9 @@
 import { ApiProperty } from "@nestjs/swagger";
 import { Exclude } from "class-transformer";
+import { Cenco } from "src/cencos/cenco.entity";
 import { Estado } from "src/estado/estado.entity";
 import { TipoDispositivo } from "src/tipo-dispositivo/entities/tipo-dispositivo.entity";
-import { Column, CreateDateColumn, Entity, JoinColumn, OneToOne, PrimaryGeneratedColumn, UpdateDateColumn } from "typeorm";
+import { Column, CreateDateColumn, Entity, JoinColumn, ManyToOne, OneToMany, OneToOne, PrimaryGeneratedColumn, UpdateDateColumn } from "typeorm";
 
 @Entity('db_fmc.dispositivo')
 export class Dispositivo {
@@ -55,10 +56,16 @@ export class Dispositivo {
   @ApiProperty({ description: 'dns', example: 'femase.cl' })
   dns: string;
 
+  @Column()
+  estado_id: number;
+
   @OneToOne(() => Estado)
   @JoinColumn({ name: 'estado_id' })
   @ApiProperty({ description: "estado", example: 1 })
   estado: Estado;
+
+  @Column()
+  tipo_dispositivo_id: number;
 
   @OneToOne(() => TipoDispositivo)
   @JoinColumn({ name: 'tipo_dispositivo_id' })
@@ -68,4 +75,9 @@ export class Dispositivo {
   @Column()
   @ApiProperty({ description: 'nombre', example: 'ADMINISTRACION_CENTRAL' })
   nombre: string;
+
+  @ManyToOne(() => Cenco, (cenco) => cenco.dispositivos)
+  @JoinColumn({ name: 'cenco_id' })
+  @ApiProperty({ type: () => Cenco, description: 'Centro al que pertenece' })
+  cenco: Cenco;
 }

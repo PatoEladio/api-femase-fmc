@@ -1,6 +1,6 @@
-import { Empresas } from "../empresas.entity";
+import { Empresa } from "../empresas.entity";
 
 export class BuscarEmpresaDto {
-  empresas: Empresas[];
+  empresas: Empresa[];
   mensaje: string;
 }

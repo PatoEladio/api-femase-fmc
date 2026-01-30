@@ -1,7 +1,8 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { Empresas } from 'src/empresas/empresas.entity';
+import { Cenco } from 'src/cencos/cenco.entity';
+import { Empresa } from 'src/empresas/empresas.entity';
 import { Estado } from 'src/estado/estado.entity';
-import { Entity, Column, PrimaryGeneratedColumn, OneToOne, JoinColumn, CreateDateColumn, UpdateDateColumn } from 'typeorm';
+import { Entity, Column, PrimaryGeneratedColumn, OneToOne, JoinColumn, CreateDateColumn, UpdateDateColumn, ManyToOne, OneToMany } from 'typeorm';
 
 @Entity('db_fmc.departamentos')
 export class Departamento {
@@ -17,25 +18,11 @@ export class Departamento {
   @ApiProperty({ description: "estado_id", example: 1 })
   estado: Estado;
 
-  @OneToOne(() => Empresas)
+  @ManyToOne(() => Empresa, (empresa) => empresa.departamentos)
   @JoinColumn({ name: 'empresa_id' })
-  @ApiProperty({ description: "empresa_id", example: 1 })
-  empresa: Empresas;
+  @ApiProperty({ type: () => Empresa, description: "Empresa a la que pertenece" })
+  empresa: Empresa;
 
-  @Column()
-  usuario_creador: string;
-
-  @CreateDateColumn({
-    type: 'timestamp', // O 'date' según prefieras
-    default: () => 'CURRENT_TIMESTAMP'
-  })
-  fecha_creacion: Date;
-
-  @UpdateDateColumn({
-    type: 'timestamp',
-    default: () => 'CURRENT_TIMESTAMP',
-    onUpdate: 'CURRENT_TIMESTAMP',
-    nullable: true
-  })
-  fecha_actualizacion: Date;
+  @OneToMany(() => Cenco, (cenco) => cenco.departamento)
+  cencos: Cenco[];
 }

@@ -1,6 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { Exclude } from 'class-transformer';
-import { Empresas } from 'src/empresas/empresas.entity';
+import { Empresa } from 'src/empresas/empresas.entity';
 import { Estado } from 'src/estado/estado.entity';
 import { Perfil } from 'src/perfiles/perfil.entity';
 import { Entity, Column, PrimaryGeneratedColumn, OneToOne, JoinColumn, ManyToMany, JoinTable } from 'typeorm';
@@ -49,10 +49,10 @@ export class User {
   @ApiProperty({ description: "run_usuario", example: "21264235-5" })
   run_usuario: string;
 
-  @OneToOne(() => Empresas)
+  @OneToOne(() => Empresa)
   @ApiProperty({ description: "empresa", example: 1 })
   @JoinColumn({ name: 'empresa_id' })
-  empresa: Empresas;
+  empresa: Empresa;
 
   @Column({
     type: 'varchar',      // Especificamos que es un texto

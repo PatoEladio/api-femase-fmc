@@ -1,63 +1,32 @@
-import { BadRequestException, ConflictException, HttpException, Injectable, InternalServerErrorException, NotFoundException, UseGuards } from '@nestjs/common';
+import { BadRequestException, ConflictException, HttpException, Inject, Injectable, InternalServerErrorException, NotFoundException, UseGuards } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Cenco } from './cenco.entity';
-import { Repository } from 'typeorm';
+import { In, Repository } from 'typeorm';
 import { CencoCreadoDTO } from './dto/created-cenco.dto';
 import { UpdateCencoDTO } from './dto/update-cenco.dto';
 import { SearchCencoDto } from './dto/search-cenco.dto';
+import { CreateCencoDto } from './dto/create-cenco.dto';
+import { Turno } from 'src/turno/entities/turno.entity';
 
 @Injectable()
 export class CencosService {
   constructor(
     @InjectRepository(Cenco)
-    private cencoRepository: Repository<Cenco>
+    private cencoRepository: Repository<Cenco>,
+    @InjectRepository(Turno)
+    private turnoRepository: Repository<Turno>
   ) { }
 
-  async obtenerTodosLosCencos(): Promise<SearchCencoDto> {
-    const busqueda = this.cencoRepository.find({
-      relations: [
-        'estado',
-        'depto'
-      ],
-      order: {
-        cenco_id: 'ASC'
-      }
-    });
-
-    if ((await busqueda).length > 0) {
-      return {
-        centros: await busqueda
-      }
-    } else {
-      return {
-        centros: []
-      }
-    }
+  async findAll() {
+    return await this.cencoRepository.find({
+      relations: ['dispositivos', 'departamento', 'estado'],
+      order: { cenco_id: 'asc' }
+    })
   }
 
-  async crearCenco(cenco: Cenco, usuario: string): Promise<CencoCreadoDTO> {
-    try {
-      const nuevo = this.cencoRepository.create(cenco);
-      nuevo.usuario_creador = usuario;
-      const guardada = this.cencoRepository.save(nuevo);
-
-      return {
-        cenco_id: (await guardada).cenco_id,
-        nombre_cenco: (await guardada).nombre_cenco,
-        mensaje: 'Centro de costo creado correctamente'
-      }
-
-    } catch (error) {
-      if (error.code === '23505') {
-        throw new ConflictException('El centro de costo ya existe o el identificador está duplicado');
-      }
-
-      if (error.name === 'ValidationError') {
-        throw new BadRequestException('Los datos proporcionados no son válidos');
-      }
-
-      throw new InternalServerErrorException('Error crítico al crear el centro de costo en la base de datos');
-    }
+  async create(createCencoDto: CreateCencoDto) {
+    const nuevoCenco = this.cencoRepository.create(createCencoDto);
+    return await this.cencoRepository.save(nuevoCenco);
   }
 
   async actualizarCenco(id: number, updateDto: UpdateCencoDTO): Promise<any> {
@@ -88,5 +57,9 @@ export class CencosService {
       }
       throw new InternalServerErrorException('Error al actualizar el centro de costo');
     }
+  }
+
+  async asignarTurnos(cencoId: number, turnoIds: number[]) {
+
   }
 }

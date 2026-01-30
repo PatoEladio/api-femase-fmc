@@ -1,16 +1,16 @@
 import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
 import { DispositivoService } from './dispositivo.service';
-import { CreateDispositivoDto } from './dto/create-dispositivo.dto';
 import { UpdateDispositivoDto } from './dto/update-dispositivo.dto';
 import { Dispositivo } from './entities/dispositivo.entity';
+import { CreateDispositivoDto } from './dto/create-dispositivo.dto';
 
 @Controller('dispositivo')
 export class DispositivoController {
   constructor(private readonly dispositivoService: DispositivoService) { }
 
   @Post('crear')
-  create(@Body() createDispositivo: Dispositivo) {
-    return this.dispositivoService.create(createDispositivo);
+  async create(@Body() createDispositivoDto: CreateDispositivoDto) {
+    return await this.dispositivoService.create(createDispositivoDto);
   }
 
   @Get()

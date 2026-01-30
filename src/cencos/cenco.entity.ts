@@ -1,8 +1,9 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { Departamento } from 'src/departamentos/departamento.entity';
-import { Empresas } from 'src/empresas/empresas.entity';
+import { Dispositivo } from 'src/dispositivo/entities/dispositivo.entity';
 import { Estado } from 'src/estado/estado.entity';
-import { Entity, Column, PrimaryGeneratedColumn, OneToOne, JoinColumn, CreateDateColumn, UpdateDateColumn } from 'typeorm';
+import { Turno } from 'src/turno/entities/turno.entity';
+import { Entity, Column, PrimaryGeneratedColumn, OneToOne, JoinColumn, CreateDateColumn, UpdateDateColumn, OneToMany, ManyToOne, ManyToMany } from 'typeorm';
 
 @Entity('db_fmc.cencos')
 export class Cenco {
@@ -37,30 +38,23 @@ export class Cenco {
   @ApiProperty({ description: "zona_extrema", example: false })
   zona_extrema: boolean;
 
+  @Column()
+  estado_id: number;
+
   @OneToOne(() => Estado)
   @JoinColumn({ name: 'estado_id' })
   @ApiProperty({ description: "estado", example: 1 })
   estado: Estado;
 
-  @OneToOne(() => Departamento)
-  @JoinColumn({ name: 'depto_id' })
-  @ApiProperty({ description: "depto_id", example: 1 })
-  depto: Departamento;
-
   @Column()
-  usuario_creador: string;
+  departamento_id: number;
 
-  @CreateDateColumn({
-    type: 'timestamp', // O 'date' según prefieras
-    default: () => 'CURRENT_TIMESTAMP'
-  })
-  fecha_creacion: Date;
+  @ManyToOne(() => Departamento, (departamento) => departamento.cencos)
+  @JoinColumn({ name: 'departamento_id' })
+  @ApiProperty({ type: () => Departamento, description: "Departamento al que pertenece" })
+  departamento: Departamento;
 
-  @UpdateDateColumn({
-    type: 'timestamp',
-    default: () => 'CURRENT_TIMESTAMP',
-    onUpdate: 'CURRENT_TIMESTAMP',
-    nullable: true
-  })
-  fecha_actualizacion: Date;
+  @OneToMany(() => Dispositivo, (dispositivo) => dispositivo.cenco, { cascade: true })
+  dispositivos: Dispositivo[];
+
 }

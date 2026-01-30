@@ -1,5 +1,5 @@
 import { ApiProperty } from "@nestjs/swagger";
-import { Empresas } from "src/empresas/empresas.entity";
+import { Empresa } from "src/empresas/empresas.entity";
 import { Estado } from "src/estado/estado.entity";
 import { Column, CreateDateColumn, Entity, JoinColumn, OneToOne, PrimaryGeneratedColumn, UpdateDateColumn } from "typeorm";
 
@@ -17,10 +17,10 @@ export class Cargo {
   @ApiProperty({ description: "estado", example: 1 })
   estado: Estado;
 
-  @OneToOne(() => Empresas)
+  @OneToOne(() => Empresa)
   @ApiProperty({ description: "empresa", example: 1 })
   @JoinColumn({ name: 'empresa_id' })
-  empresa: Empresas;
+  empresa: Empresa;
 
   @Column()
   usuario_creador: string;

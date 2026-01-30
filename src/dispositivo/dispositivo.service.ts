@@ -13,52 +13,16 @@ export class DispositivoService {
     private dispositivoRepository: Repository<Dispositivo>
   ) { }
 
-  async create(createDispositivoDto: Dispositivo): Promise<CreateDispositivoDto> {
-    try {
-      const nuevo = this.dispositivoRepository.create(createDispositivoDto);
-      const guardada = this.dispositivoRepository.save(nuevo);
-
-      return {
-        dispositivoId: (await guardada).dispositivo_id,
-        nombreDispositivo: (await guardada).nombre,
-        mensaje: 'Dispositivo creado correctamente'
-      }
-
-    } catch (error) {
-      // Error de PostgreSQL/MySQL para "llave duplicada" (comúnmente código 23505)
-      if (error.code === '23505') {
-        throw new ConflictException('El dispositivo ya existe o el identificador está duplicado');
-      }
-
-      // Error de validación de datos
-      if (error.name === 'ValidationError') {
-        throw new BadRequestException('Los datos proporcionados no son válidos');
-      }
-
-      // Error genérico por si falla la conexión o algo inesperado
-      throw new InternalServerErrorException('Error crítico al crear el dispositivo en la base de datos');
-    }
+  async create(dto: CreateDispositivoDto) {
+    const nuevo = this.dispositivoRepository.create(dto);
+    return await this.dispositivoRepository.save(nuevo);
   }
 
-  async findAll(): Promise<SearchDispositivoDto> {
-    const busqueda = await this.dispositivoRepository.find({
-      relations: ['tipo_dispositivo', 'estado'],
-      order: {
-        dispositivo_id: 'asc'
-      }
+  async findAll() {
+    return await this.dispositivoRepository.find({
+      relations: ['cenco', 'estado', 'tipo_dispositivo'],
+      order: { dispositivo_id: 'asc' }
     })
-
-    if (busqueda.length > 0) {
-      return {
-        dispositivos: busqueda,
-        mensaje: 'Busqueda realizada correctamente'
-      }
-    } else {
-      return {
-        dispositivos: [],
-        mensaje: 'No se encontraron dispositivos'
-      }
-    }
   }
 
   async update(id: number, updateDispositivoDto: UpdateDispositivoDto): Promise<any> {
@@ -89,4 +53,13 @@ export class DispositivoService {
       throw new InternalServerErrorException('Error al actualizar el dispositivo');
     }
   }
+
+  /*
+  async asignarDispositivoACenco(cencoId: number, dispositivoId: number) {
+    const dispositivoAsignar = await this.dispositivoRepository.preload({
+      dispositivo_id: dispositivoId,
+      ...
+    })
+  }
+  */
 }

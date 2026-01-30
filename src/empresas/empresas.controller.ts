@@ -1,6 +1,6 @@
 import { Body, Controller, Get, Param, Patch, Post, Req, UseGuards } from '@nestjs/common';
 import { EmpresasService } from './empresas.service';
-import { Empresas } from './empresas.entity';
+import { Empresa } from './empresas.entity';
 import { UpdateEmpresaDto } from './dto/update-empresa.dto';
 import { AuthGuard } from 'src/auth/auth.guard';
 
@@ -19,11 +19,9 @@ export class EmpresasController {
   }
 
   @Post('crear')
-  crearEmpresa(@Body() crearEmpresa: Empresas, @Req() req) {
-    const usuario = req.user.username;
-    const id = req.user.sub;
-    return this.empresaService.crearEmpresa(crearEmpresa, usuario, id);
-  }
+  create(@Body() crearEmpresa: Empresa) {
+    return this.empresaService.create(crearEmpresa);
+  } c
 
   @Patch('actualizar/:id')
   actualizar(@Param('id') id: string, @Body() updateDto: UpdateEmpresaDto) {
