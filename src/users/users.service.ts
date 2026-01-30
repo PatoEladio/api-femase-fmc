@@ -173,7 +173,7 @@ export class UsersService {
 
       const codigoAleatorio = Math.floor(100000 + Math.random() * 900000).toString();
       const fechaExpiracion = new Date();
-      fechaExpiracion.setMinutes(fechaExpiracion.getMinutes() + 15);
+      fechaExpiracion.setMinutes(fechaExpiracion.getMinutes() + 5);
 
       nuevoUsuario.reset_token = codigoAleatorio;
       nuevoUsuario.reset_token_expires = fechaExpiracion;
