@@ -11,3 +11,4 @@ import { Turno } from 'src/turno/entities/turno.entity';
   controllers: [CencosController]
 })
 export class CencosModule {}
+//c
