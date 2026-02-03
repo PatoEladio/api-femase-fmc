@@ -1,6 +1,8 @@
 import { ApiProperty } from '@nestjs/swagger';
+import { Cargo } from 'src/cargos/entities/cargo.entity';
 import { Departamento } from 'src/departamentos/departamento.entity';
 import { Estado } from 'src/estado/estado.entity';
+import { Turno } from 'src/turno/entities/turno.entity';
 import { User } from 'src/users/user.entity';
 import { Entity, Column, PrimaryGeneratedColumn, OneToOne, JoinColumn, ManyToMany, CreateDateColumn, UpdateDateColumn, OneToMany } from 'typeorm';
 
@@ -36,4 +38,10 @@ export class Empresa {
 
   @OneToMany(() => Departamento, (departamento) => departamento.empresa)
   departamentos: Departamento[];
+
+  @OneToMany(() => Turno, (turno) => turno.empresa)
+  turnos: Turno[];
+
+  @OneToMany(() => Cargo, (cargo) => cargo.empresa)
+  cargos: Cargo[];
 }

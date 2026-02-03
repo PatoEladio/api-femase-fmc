@@ -3,7 +3,7 @@ import { Departamento } from 'src/departamentos/departamento.entity';
 import { Dispositivo } from 'src/dispositivo/entities/dispositivo.entity';
 import { Estado } from 'src/estado/estado.entity';
 import { Turno } from 'src/turno/entities/turno.entity';
-import { Entity, Column, PrimaryGeneratedColumn, OneToOne, JoinColumn, CreateDateColumn, UpdateDateColumn, OneToMany, ManyToOne, ManyToMany } from 'typeorm';
+import { Entity, Column, PrimaryGeneratedColumn, OneToOne, JoinColumn, CreateDateColumn, UpdateDateColumn, OneToMany, ManyToOne, ManyToMany, JoinTable } from 'typeorm';
 
 @Entity('db_fmc.cencos')
 export class Cenco {
@@ -51,10 +51,24 @@ export class Cenco {
 
   @ManyToOne(() => Departamento, (departamento) => departamento.cencos)
   @JoinColumn({ name: 'departamento_id' })
-  @ApiProperty({ type: () => Departamento, description: "Departamento al que pertenece" })
+  @ApiProperty({ description: "departamento_id", example: 10 })
   departamento: Departamento;
 
   @OneToMany(() => Dispositivo, (dispositivo) => dispositivo.cenco, { cascade: true })
   dispositivos: Dispositivo[];
 
+  @ManyToMany(() => Turno)
+  @JoinTable({
+    name: 'db_fmc.cenco_has_turnos',
+    joinColumn: {
+      name: 'cenco_id',
+      referencedColumnName: 'cenco_id'
+    },
+    inverseJoinColumn: {
+      name: 'turno_id',
+      referencedColumnName: 'turno_id'
+    }
+  })
+  @ApiProperty({ type: () => Turno, description: '' })
+  turnos: Turno[];
 }

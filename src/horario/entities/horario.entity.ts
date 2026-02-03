@@ -24,7 +24,7 @@ export class Horario {
   hora_salida: string;
 
   @OneToOne(() => Empresa)
-  @ApiProperty({ description: "empresa", example: 1 })
+  @ApiProperty({ type: () => Empresa, description: "empresa", example: 1 })
   @JoinColumn({ name: 'empresa_id' })
   empresa: Empresa;
 }

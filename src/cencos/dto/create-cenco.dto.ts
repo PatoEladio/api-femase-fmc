@@ -70,6 +70,7 @@ export class CreateCencoDto {
     required: false,
     example: [{ dispositivo_id: 1 }, { dispositivo_id: 2 }]
   })
+
   @IsArray()
   @IsOptional()
   @ValidateNested({ each: true })

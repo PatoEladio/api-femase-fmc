@@ -48,8 +48,6 @@ export class CreateDispositivoDto {
   dns: string;
 
   // --- RELACIONES (IDs) ---
-
-  
   //@IsNumber()
   //@IsNotEmpty()
   //@ApiProperty({ description: "ID del centro", example: 1 })

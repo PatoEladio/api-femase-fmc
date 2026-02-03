@@ -3,7 +3,7 @@ import { Cenco } from "src/cencos/cenco.entity";
 import { Empresa } from "src/empresas/empresas.entity";
 import { Estado } from "src/estado/estado.entity";
 import { Horario } from "src/horario/entities/horario.entity";
-import { Column, CreateDateColumn, Entity, JoinColumn, JoinTable, ManyToMany, OneToOne, PrimaryGeneratedColumn, UpdateDateColumn } from "typeorm";
+import { Column, CreateDateColumn, Entity, JoinColumn, JoinTable, ManyToMany, ManyToOne, OneToOne, PrimaryGeneratedColumn, UpdateDateColumn } from "typeorm";
 
 @Entity("db_fmc.turno")
 export class Turno {
@@ -18,28 +18,6 @@ export class Turno {
   @ApiProperty({ description: "es_rotativo", example: false })
   es_rotativo: boolean;
 
-  @Column()
-  usuario_creador: string;
-
-  @CreateDateColumn({
-    type: 'timestamp', // O 'date' según prefieras
-    default: () => 'CURRENT_TIMESTAMP'
-  })
-  fecha_creacion: Date;
-
-  @UpdateDateColumn({
-    type: 'timestamp',
-    default: () => 'CURRENT_TIMESTAMP',
-    onUpdate: 'CURRENT_TIMESTAMP',
-    nullable: true
-  })
-  fecha_actualizacion: Date;
-
-  @OneToOne(() => Empresa)
-  @ApiProperty({ description: "empresa", example: 1 })
-  @JoinColumn({ name: 'empresa_id' })
-  empresa: Empresa;
-
   @OneToOne(() => Estado)
   @JoinColumn({ name: 'estado_id' })
   @ApiProperty({ description: "estado", example: 1 })
@@ -50,4 +28,11 @@ export class Turno {
   @ApiProperty({ description: "horario_id", example: 1 })
   horario: Horario;
 
+  @ManyToOne(() => Empresa, (empresa) => empresa.turnos)
+  @JoinColumn({ name: 'empresa_id' })
+  @ApiProperty({ type: () => Empresa, description: 'empresa_id', example: 9 })
+  empresa: Empresa;
+
+  @ManyToMany(() => Cenco, (cenco) => cenco.turnos)
+  cencos: Cenco[];
 }

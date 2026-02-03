@@ -20,7 +20,7 @@ export class Departamento {
 
   @ManyToOne(() => Empresa, (empresa) => empresa.departamentos)
   @JoinColumn({ name: 'empresa_id' })
-  @ApiProperty({ type: () => Empresa, description: "Empresa a la que pertenece" })
+  @ApiProperty({ type: () => Empresa, description: 'empresa_id', example: 8 })
   empresa: Empresa;
 
   @OneToMany(() => Cenco, (cenco) => cenco.departamento)

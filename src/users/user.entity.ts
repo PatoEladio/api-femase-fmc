@@ -50,19 +50,19 @@ export class User {
   run_usuario: string;
 
   @OneToOne(() => Empresa)
-  @ApiProperty({ description: "empresa", example: 1 })
+  @ApiProperty({ type: () => Empresa, description: "empresa", example: 1 })
   @JoinColumn({ name: 'empresa_id' })
   empresa: Empresa;
 
   @Column({
-    type: 'varchar',      // Especificamos que es un texto
+    type: 'varchar',
     nullable: true,
     name: 'reset_token'
   })
   reset_token: string | null;
 
   @Column({
-    type: 'timestamp',    // Especificamos que es fecha y hora
+    type: 'timestamp',
     nullable: true,
     name: 'reset_token_expires'
   })

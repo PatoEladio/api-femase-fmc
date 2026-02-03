@@ -78,6 +78,6 @@ export class Dispositivo {
 
   @ManyToOne(() => Cenco, (cenco) => cenco.dispositivos)
   @JoinColumn({ name: 'cenco_id' })
-  @ApiProperty({ type: () => Cenco, description: 'Centro al que pertenece' })
+  @ApiProperty({ description: 'cenco_id', example: 22 })
   cenco: Cenco;
 }
