@@ -5,7 +5,7 @@ import { Estado } from 'src/estado/estado.entity';
 import { Turno } from 'src/turno/entities/turno.entity';
 import { Entity, Column, PrimaryGeneratedColumn, OneToOne, JoinColumn, CreateDateColumn, UpdateDateColumn, OneToMany, ManyToOne, ManyToMany, JoinTable } from 'typeorm';
 
-@Entity('db_fmc.cencos')
+@Entity({ name: 'cencos', schema: 'db_fmc' })
 export class Cenco {
   @PrimaryGeneratedColumn()
   cenco_id: number;
@@ -59,7 +59,7 @@ export class Cenco {
 
   @ManyToMany(() => Turno)
   @JoinTable({
-    name: 'db_fmc.cenco_has_turnos',
+    name: 'cenco_has_turnos',
     joinColumn: {
       name: 'cenco_id',
       referencedColumnName: 'cenco_id'
