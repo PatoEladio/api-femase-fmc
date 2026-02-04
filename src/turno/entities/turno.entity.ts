@@ -3,7 +3,7 @@ import { Cenco } from "src/cencos/cenco.entity";
 import { Empresa } from "src/empresas/empresas.entity";
 import { Estado } from "src/estado/estado.entity";
 import { Horario } from "src/horario/entities/horario.entity";
-import { Column, CreateDateColumn, Entity, JoinColumn, JoinTable, ManyToMany, ManyToOne, OneToOne, PrimaryGeneratedColumn, UpdateDateColumn } from "typeorm";
+import { Column, CreateDateColumn, Entity, JoinColumn, JoinTable, ManyToMany, ManyToOne, OneToMany, OneToOne, PrimaryGeneratedColumn, UpdateDateColumn } from "typeorm";
 
 @Entity("db_fmc.turno")
 export class Turno {
@@ -35,4 +35,5 @@ export class Turno {
 
   @ManyToMany(() => Cenco, (cenco) => cenco.turnos)
   cencos: Cenco[];
+
 }

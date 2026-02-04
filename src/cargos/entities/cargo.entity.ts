@@ -1,7 +1,7 @@
 import { ApiProperty } from "@nestjs/swagger";
 import { Empresa } from "src/empresas/empresas.entity";
 import { Estado } from "src/estado/estado.entity";
-import { Column, CreateDateColumn, Entity, JoinColumn, OneToOne, PrimaryGeneratedColumn, UpdateDateColumn } from "typeorm";
+import { Column, CreateDateColumn, Entity, JoinColumn, OneToMany, OneToOne, PrimaryGeneratedColumn, UpdateDateColumn } from "typeorm";
 
 @Entity('db_fmc.cargo')
 export class Cargo {

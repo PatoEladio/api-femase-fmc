@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, Patch, Post, Put, Req, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Param, ParseIntPipe, Patch, Post, Put, Req, UseGuards } from '@nestjs/common';
 import { PerfilesService } from './perfiles.service';
 import { Perfil } from './perfil.entity';
 import { AuthGuard } from 'src/auth/auth.guard';
@@ -25,5 +25,15 @@ export class PerfilesController {
   @Patch('actualizar/:id')
   actualizar(@Param('id') id: string, @Body() updateDto: UpdatePerfilDto) {
     return this.perfilService.actualizarPerfil(+id, updateDto);
+  }
+
+  @Put('asignar-menus/:id')
+  //@ApiOperation({ summary: 'Sincronizar todos los turnos de un centro (reemplazo total)' })
+  async asignarMenus(
+    @Param('id', ParseIntPipe) id: number,
+    @Body('moduloIds') moduloIds: number[],
+  ) {
+    // Si el usuario desmarcó todos, turnoIds vendrá como [] y .set([]) limpiará la tabla.
+    return await this.perfilService.asignarModulos(id, moduloIds);
   }
 }

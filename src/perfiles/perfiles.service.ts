@@ -4,6 +4,7 @@ import { Perfil } from './perfil.entity';
 import { Repository } from 'typeorm';
 import { CreatePerfilDto } from './dto/create-perfil.dto';
 import { UpdatePerfilDto } from './dto/update-perfil.dto';
+import { Menu } from 'src/menus/menus.entity';
 
 @Injectable()
 export class PerfilesService {
@@ -14,7 +15,7 @@ export class PerfilesService {
 
   async obtenerTodosLosPerfiles(): Promise<Perfil[]> {
     return this.perfilRepository.find({
-      relations: ['estado'],
+      relations: ['estado', 'modulos'],
       order: { perfil_id: 'asc' }
     });
   }
@@ -55,7 +56,6 @@ export class PerfilesService {
     }
 
     try {
-      // 3. Guardamos los cambios (esto disparará validaciones de BD)
       const actualizada = await this.perfilRepository.save(perfil);
 
       // 4. Retornamos respuesta personalizada
@@ -65,11 +65,22 @@ export class PerfilesService {
         nombre: actualizada.nombre_perfil
       };
     } catch (error) {
-      // Manejo de error por si el RUT duplicado choca
-      if (error.code === '23505') {
+        if (error.code === '23505') {
         throw new ConflictException('El nombre ya pertenece a otro perfil');
       }
       throw new InternalServerErrorException('Error al actualizar el perfil');
     }
+  }
+
+  async asignarModulos(perfilId: number, moduloIds: number[]) {
+    const perfil = await this.perfilRepository.findOne({
+      where: { perfil_id: perfilId },
+      relations: ['modulos']
+    });
+
+    if (!perfil) throw new NotFoundException('Perfil no encontrado');
+
+    perfil.modulos = moduloIds.map(id => ({ modulo_id: id } as Menu));
+    return await this.perfilRepository.save(perfil);
   }
 }

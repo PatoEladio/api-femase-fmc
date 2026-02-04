@@ -1,8 +1,9 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { Estado } from 'src/estado/estado.entity';
-import { Entity, Column, PrimaryGeneratedColumn, OneToOne, JoinColumn, CreateDateColumn, UpdateDateColumn } from 'typeorm';
+import { Menu } from 'src/menus/menus.entity';
+import { Entity, Column, PrimaryGeneratedColumn, OneToOne, JoinColumn, CreateDateColumn, UpdateDateColumn, ManyToMany, JoinTable } from 'typeorm';
 
-@Entity('db_fmc.perfil')
+@Entity({ name: 'perfil', schema: 'db_fmc' })
 export class Perfil {
   @PrimaryGeneratedColumn()
   perfil_id: number;
@@ -32,4 +33,18 @@ export class Perfil {
     nullable: true
   })
   fecha_actualizacion: Date;
+
+  @ManyToMany(() => Menu)
+  @JoinTable({
+    name: 'modulo_has_perfil',
+    joinColumn: {
+      name: 'perfil_id',
+      referencedColumnName: 'perfil_id'
+    },
+    inverseJoinColumn: {
+      name: 'modulo_id',
+      referencedColumnName: 'modulo_id'
+    }
+  })
+  modulos: Menu[];
 }

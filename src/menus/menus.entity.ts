@@ -1,6 +1,7 @@
-import { Entity, PrimaryGeneratedColumn, OneToOne, JoinColumn, Column } from 'typeorm';
+import { Perfil } from 'src/perfiles/perfil.entity';
+import { Entity, PrimaryGeneratedColumn, OneToOne, JoinColumn, Column, ManyToMany } from 'typeorm';
 
-@Entity('db_fmc.modulo_has_perfil')
+@Entity('db_fmc.modulo')
 export class Menu {
   @PrimaryGeneratedColumn()
   modulo_id: number;
@@ -10,4 +11,10 @@ export class Menu {
 
   @Column()
   modulo_padre_id: number;
+
+  @Column()
+  tipo_modulo_id: number;
+
+  @ManyToMany(() => Perfil, (perfil) => perfil.modulos)
+  perfiles: Perfil[];
 }

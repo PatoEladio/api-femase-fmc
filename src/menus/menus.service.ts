@@ -66,44 +66,11 @@ export class MenusService {
     return menuTransformado;
   }
 
+  // Para agregar a perfiles
   async obtenerMenus() {
-    const menus = await this.menuRepository.query('select * from db_fmc.modulo where tipo_modulo_id = $1', [1]);
-    return menus;
-  }
-
-  // Accesos disponibles
-  async obtenerSubmenus() {
-    const submenus = await this.menuRepository.query('select * from db_fmc.modulo where tipo_modulo_id = $1', [2]);
-    return submenus;
-  }
-
-  async obtenerSubmenusPorPerfil(perfilId: number) {
-    const submenuPerfil = await this.menuRepository.query(`
-      select mp.perfil_id, m.modulo_id, m.nombre_modulo, m.modulo_padre_id, m.tipo_modulo_id 
-      from db_fmc.modulo_has_perfil as mp
-      join db_fmc.modulo as m on m.modulo_id = mp.modulo_id
-      where m.tipo_modulo_id = 2 and mp.perfil_id = $1`, [perfilId]);
-
-    return submenuPerfil;
-  }
-
-  // Crear SP para agregar submenu para que no haya duplicacion de informacion
-  async agregarSubmenus(listaSubmenus: [], perfilId: number) {
-    try {
-      listaSubmenus.forEach(async submenu => {
-        const listadoMenuPerfil = await this.menuRepository.query('select * from db_fmc.modulo_has_perfil where modulo_id = $1 and perfil_id = $2', [submenu, perfilId]);
-
-        if (listadoMenuPerfil.length < 1) {
-          await this.menuRepository.query('INSERT INTO db_fmc.modulo_has_perfil (modulo_id, perfil_id) VALUES ($1, $2)', [submenu, perfilId]);
-        }
-      });
-
-      return {
-        mensaje: 'Funciona'
-      }
-    } catch (error) {
-      throw new HttpException('Error', 500);
-    }
+    const menus = await this.menuRepository.find();
+    const menusTransformados = this.transformarModulos(menus)
+    return menusTransformados;
   }
 }
 
