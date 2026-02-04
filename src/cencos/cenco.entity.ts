@@ -3,6 +3,7 @@ import { Departamento } from 'src/departamentos/departamento.entity';
 import { Dispositivo } from 'src/dispositivo/entities/dispositivo.entity';
 import { Estado } from 'src/estado/estado.entity';
 import { Turno } from 'src/turno/entities/turno.entity';
+import { User } from 'src/users/user.entity';
 import { Entity, Column, PrimaryGeneratedColumn, OneToOne, JoinColumn, CreateDateColumn, UpdateDateColumn, OneToMany, ManyToOne, ManyToMany, JoinTable } from 'typeorm';
 
 @Entity({ name: 'cencos', schema: 'db_fmc' })
@@ -71,4 +72,7 @@ export class Cenco {
   })
   @ApiProperty({ type: () => Turno, description: '' })
   turnos: Turno[];
+
+  @ManyToMany(() => User, (usuario) => usuario.cencos)
+  usuarios: User[];
 }

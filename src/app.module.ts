@@ -29,6 +29,7 @@ import { HorarioModule } from './horario/horario.module';
 import { Horario } from './horario/entities/horario.entity';
 import { Turno } from './turno/entities/turno.entity';
 import { TurnoHorarioModule } from './turno-horario/turno-horario.module';
+import { EmpleadoModule } from './empleado/empleado.module';
 
 @Module({
   imports: [
@@ -71,7 +72,8 @@ import { TurnoHorarioModule } from './turno-horario/turno-horario.module';
     CargosModule,
     TurnoModule,
     HorarioModule,
-    TurnoHorarioModule
+    TurnoHorarioModule,
+    EmpleadoModule
   ],
   providers: [PerfilesService],
   controllers: [PerfilesController],

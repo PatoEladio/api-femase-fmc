@@ -28,12 +28,10 @@ export class PerfilesController {
   }
 
   @Put('asignar-menus/:id')
-  //@ApiOperation({ summary: 'Sincronizar todos los turnos de un centro (reemplazo total)' })
   async asignarMenus(
     @Param('id', ParseIntPipe) id: number,
     @Body('moduloIds') moduloIds: number[],
   ) {
-    // Si el usuario desmarcó todos, turnoIds vendrá como [] y .set([]) limpiará la tabla.
     return await this.perfilService.asignarModulos(id, moduloIds);
   }
 }

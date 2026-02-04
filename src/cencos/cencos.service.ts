@@ -35,23 +35,19 @@ export class CencosService {
       ...updateDto,
     });
 
-    // 2. Si no existe el ID, lanzamos 404
     if (!cenco) {
       throw new NotFoundException(`El centro de costo con ID ${id} no existe`);
     }
 
     try {
-      // 3. Guardamos los cambios (esto disparará validaciones de BD)
       const actualizada = await this.cencoRepository.save(cenco);
 
-      // 4. Retornamos respuesta personalizada
       return {
         mensaje: 'Centro de costo actualizado con éxito',
         id: actualizada.cenco_id,
         nombre: actualizada.nombre_cenco
       };
     } catch (error) {
-      // Manejo de error por si el RUT duplicado choca
       if (error.code === '23505') {
         throw new ConflictException('Ya existe el centro de costo');
       }

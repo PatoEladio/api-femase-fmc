@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, Patch, Post, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Param, ParseIntPipe, Patch, Post, Put, UseGuards } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { User } from './user.entity';
 import { UpdateUsuarioDto } from './dto/update-user.dto';
@@ -41,5 +41,13 @@ export class UsersController {
   @Patch('actualizar/:id')
   actualizar(@Param('id') id: string, @Body() updateDto: UpdateUsuarioDto) {
     return this.userService.actualizarUsuario(+id, updateDto);
+  }
+
+  @Put('asignar-cencos/:id')
+  async asignarMenus(
+    @Param('id', ParseIntPipe) id: number,
+    @Body('cencoIds') cencoIds: number[],
+  ) {
+    return await this.userService.asignarCenco(id, cencoIds);
   }
 }

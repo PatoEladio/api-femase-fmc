@@ -61,7 +61,7 @@ export class MenusService {
       'SELECT * FROM db_fmc.obtener_modulos_perfil($1)',
       [perfilId]
     );
-
+    
     const menuTransformado = this.transformarModulos(respuesta);
     return menuTransformado;
   }

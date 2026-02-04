@@ -1,11 +1,12 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { Exclude } from 'class-transformer';
+import { Cenco } from 'src/cencos/cenco.entity';
 import { Empresa } from 'src/empresas/empresas.entity';
 import { Estado } from 'src/estado/estado.entity';
 import { Perfil } from 'src/perfiles/perfil.entity';
 import { Entity, Column, PrimaryGeneratedColumn, OneToOne, JoinColumn, ManyToMany, JoinTable } from 'typeorm';
 
-@Entity('db_fmc.usuario')
+@Entity({ name: 'usuario', schema: 'db_fmc' })
 export class User {
   @PrimaryGeneratedColumn()
   usuario_id: number;
@@ -67,4 +68,18 @@ export class User {
     name: 'reset_token_expires'
   })
   reset_token_expires: Date | null;
+
+  @ManyToMany(() => Cenco, (cenco) => cenco.usuarios)
+  @JoinTable({
+    name: 'usuario_has_cenco',
+    joinColumn: {
+      name: 'usuario_id',
+      referencedColumnName: 'usuario_id'
+    },
+    inverseJoinColumn: {
+      name: 'cenco_id',
+      referencedColumnName: 'cenco_id'
+    }
+  })
+  cencos: Cenco[];
 }

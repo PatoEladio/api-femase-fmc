@@ -7,6 +7,7 @@ import { MailerService } from '@nestjs-modules/mailer';
 import * as bcrypt from 'bcrypt';
 import { UpdateUsuarioDto } from './dto/update-user.dto';
 import { SearchUserDto } from './dto/search-user.dto';
+import { Cenco } from 'src/cencos/cenco.entity';
 
 @Injectable()
 export class UsersService {
@@ -35,10 +36,12 @@ export class UsersService {
   // IDEA NUEVA DEJAR LOS EMPLEADOS CON SU RESPECTIVA EMPRESA EN LA MISMA TABLA Y SI EL PERFIL DE USUARIO QUE INGRESA ES SUPERADMIN ENVIAR TODAS LAS EMPRESAS
   async buscarTodosLosUsuarios(): Promise<SearchUserDto> {
     const busqueda = this.usersRepository.find({
+      order: { usuario_id: 'asc' },
       relations: [
         'perfil',
         'estado',
-        'empresa'
+        'empresa',
+        'cencos'
       ]
     });
 
@@ -236,5 +239,17 @@ export class UsersService {
       }
       throw new InternalServerErrorException('Error al actualizar el usuario');
     }
+  }
+
+  async asignarCenco(userId: number, cencoIds: number[]) {
+    const usuario = await this.usersRepository.findOne({
+      where: { usuario_id: userId },
+      relations: ['cencos']
+    });
+
+    if (!usuario) throw new NotFoundException('Usuario no encontrado');
+
+    usuario.cencos = cencoIds.map(id => ({ cenco_id: id } as Cenco));
+    return await this.usersRepository.save(usuario);
   }
 }
