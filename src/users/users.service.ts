@@ -252,4 +252,15 @@ export class UsersService {
     usuario.cencos = cencoIds.map(id => ({ cenco_id: id } as Cenco));
     return await this.usersRepository.save(usuario);
   }
+
+  async enviarCencosPorUsuario(usuarioId: number) {
+    const cencos = await this.usersRepository.find({
+      where: {
+        usuario_id: usuarioId
+      },
+      relations: ['cencos']
+    })
+
+    return cencos;
+  }
 }

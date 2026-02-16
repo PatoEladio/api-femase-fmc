@@ -30,6 +30,7 @@ import { Horario } from './horario/entities/horario.entity';
 import { Turno } from './turno/entities/turno.entity';
 import { TurnoHorarioModule } from './turno-horario/turno-horario.module';
 import { EmpleadoModule } from './empleado/empleado.module';
+import { Empleado } from './empleado/entities/empleado.entity';
 
 @Module({
   imports: [
@@ -41,7 +42,7 @@ import { EmpleadoModule } from './empleado/empleado.module';
       username: 'postgres',
       password: 'admin',
       database: 'postgres',
-      entities: [User, Perfil, Estado, Menu, Empresa, Departamento, Cenco, TipoDispositivo, Dispositivo, Cargo, Horario, Turno]
+      entities: [User, Perfil, Estado, Menu, Empresa, Departamento, Cenco, TipoDispositivo, Dispositivo, Cargo, Horario, Turno, Empleado]
     }),
     MailerModule.forRoot({
       transport: {

@@ -71,4 +71,21 @@ export class CencosService {
     // 3. Guardamos la entidad completa
     return await this.cencoRepository.save(cenco);
   }
+
+  async buscarCencosPorUsuario(usuarioId: number): Promise<any> {
+    const cencos = await this.cencoRepository.find({
+      relations: ['usuarios']
+    })
+
+    let nuevaListaCencos: Array<Cenco> = new Array<Cenco>;
+
+    cencos.forEach(cenco => {
+      const existe: boolean = cenco.usuarios.some((usuario) => usuario.usuario_id == usuarioId);
+      if (existe) {
+        nuevaListaCencos.push(cenco);
+      }
+    });
+
+    return nuevaListaCencos;
+  }
 }

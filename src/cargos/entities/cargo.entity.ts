@@ -1,4 +1,5 @@
 import { ApiProperty } from "@nestjs/swagger";
+import { Empleado } from "src/empleado/entities/empleado.entity";
 import { Empresa } from "src/empresas/empresas.entity";
 import { Estado } from "src/estado/estado.entity";
 import { Column, CreateDateColumn, Entity, JoinColumn, OneToMany, OneToOne, PrimaryGeneratedColumn, UpdateDateColumn } from "typeorm";
@@ -38,4 +39,7 @@ export class Cargo {
     nullable: true
   })
   fecha_actualizacion: Date;
+
+  @OneToMany(() => Empleado, (empleado) => empleado.cargo)
+  empleados: Empleado[];
 }

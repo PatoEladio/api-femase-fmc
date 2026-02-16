@@ -50,4 +50,9 @@ export class UsersController {
   ) {
     return await this.userService.asignarCenco(id, cencoIds);
   }
+
+  @Get('buscar-cencos/:usuarioId')
+  async buscarCencosPorUsuario(@Param('usuarioId') id: string) {
+    return this.userService.enviarCencosPorUsuario(+id);
+  }
 }

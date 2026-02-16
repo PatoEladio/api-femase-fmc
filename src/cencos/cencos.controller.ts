@@ -48,4 +48,10 @@ export class CencosController {
     // Si el usuario desmarcó todos, turnoIds vendrá como [] y .set([]) limpiará la tabla.
     return await this.cencoService.asignarTurnos(id, turnoIds);
   }
+
+  @Get('buscar-cencos-usuario')
+  async buscarCencoUsuario(@Req() req) {
+    const usuarioId = req.user.sub;
+    return this.cencoService.buscarCencosPorUsuario(usuarioId);
+  }
 }

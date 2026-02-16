@@ -1,6 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { Cargo } from 'src/cargos/entities/cargo.entity';
 import { Departamento } from 'src/departamentos/departamento.entity';
+import { Empleado } from 'src/empleado/entities/empleado.entity';
 import { Estado } from 'src/estado/estado.entity';
 import { Turno } from 'src/turno/entities/turno.entity';
 import { User } from 'src/users/user.entity';
@@ -44,4 +45,7 @@ export class Empresa {
 
   @OneToMany(() => Cargo, (cargo) => cargo.empresa)
   cargos: Cargo[];
+
+  @OneToMany(() => Empleado, (empleado) => empleado.empresa)
+  empleados: Empleado[];
 }

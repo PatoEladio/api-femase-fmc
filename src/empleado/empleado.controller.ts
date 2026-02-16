@@ -2,24 +2,20 @@ import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/commo
 import { EmpleadoService } from './empleado.service';
 import { CreateEmpleadoDto } from './dto/create-empleado.dto';
 import { UpdateEmpleadoDto } from './dto/update-empleado.dto';
+import { Empleado } from './entities/empleado.entity';
 
 @Controller('empleado')
 export class EmpleadoController {
-  constructor(private readonly empleadoService: EmpleadoService) {}
+  constructor(private readonly empleadoService: EmpleadoService) { }
 
   @Post()
-  create(@Body() createEmpleadoDto: CreateEmpleadoDto) {
+  create(@Body() createEmpleadoDto: Empleado) {
     return this.empleadoService.create(createEmpleadoDto);
   }
 
   @Get()
   findAll() {
     return this.empleadoService.findAll();
-  }
-
-  @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.empleadoService.findOne(+id);
   }
 
   @Patch(':id')

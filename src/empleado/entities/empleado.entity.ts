@@ -1,82 +1,103 @@
 import { ApiProperty } from "@nestjs/swagger";
+import { Cargo } from "src/cargos/entities/cargo.entity";
 import { Empresa } from "src/empresas/empresas.entity";
-import { Column, Entity, ManyToMany, ManyToOne, PrimaryGeneratedColumn } from "typeorm";
+import { Estado } from "src/estado/estado.entity";
+import { Turno } from "src/turno/entities/turno.entity";
+import { User } from "src/users/user.entity";
+import { Column, Entity, JoinColumn, ManyToMany, ManyToOne, OneToOne, PrimaryGeneratedColumn } from "typeorm";
 
 @Entity({ name: 'empleado', schema: 'db_fmc' })
 export class Empleado {
   @PrimaryGeneratedColumn()
+  @ApiProperty({ description: 'Identificador del empleado', example: 1 })
   empleado_id: number;
 
   @Column()
-  @ApiProperty({})
+  @ApiProperty({ description: 'RUN del empleado', example: '21223312-2' })
+  run: string;
+
+  @Column()
+  @ApiProperty({ description: 'Nombres del empleado', example: 'Bastián' })
   nombres: string;
 
   @Column()
-  @ApiProperty({})
-  ape_paterno: string;
+  @ApiProperty({ description: 'Apellido paterno del empleado', example: 'Soto' })
+  apellido_paterno: string;
 
   @Column()
-  @ApiProperty({})
-  ape_materno: string;
+  @ApiProperty({ description: 'Apellido materno del empleado', example: 'Pérez' })
+  apellido_materno: string;
 
   @Column()
-  @ApiProperty({})
+  @ApiProperty({ description: 'Fecha de nacimiento del empleado', example: '1990-01-01' })
   fecha_nacimiento: Date;
 
   @Column()
-  @ApiProperty({})
+  @ApiProperty({ description: 'Dirección del empleado', example: 'Av. Principal 123' })
   direccion: string;
 
   @Column()
-  @ApiProperty({})
+  @ApiProperty({ description: 'Correo electrónico del empleado', example: 'usuario@dominio.cl' })
   email: string;
 
   @Column()
-  @ApiProperty({})
-  email_personal: string;
-
-  @Column()
-  @ApiProperty({})
+  @ApiProperty({ description: 'Sexo del empleado', example: 'M' })
   sexo: string;
 
   @Column()
-  @ApiProperty({})
+  @ApiProperty({ description: 'Teléfono fijo del empleado', example: 22223333 })
   telefono_fijo: number;
 
   @Column()
-  @ApiProperty({})
+  @ApiProperty({ description: 'Teléfono móvil del empleado', example: 987654321 })
   telefono_movil: number;
 
   @Column()
-  @ApiProperty({})
+  @ApiProperty({ description: 'Comuna de residencia del empleado', example: 'Santiago' })
   comuna: string;
 
   @Column()
-  @ApiProperty({})
+  @ApiProperty({ description: 'Fecha de inicio de contrato', example: '2024-01-01' })
   fecha_ini_contrato: Date;
 
   @Column()
-  @ApiProperty({})
-  fecha_fin_contato: Date;
-
-  @Column()
-  @ApiProperty({})
+  @ApiProperty({ description: 'Indica si el contrato es indefinido', example: true })
   contrato_indefinido: boolean;
 
   @Column()
-  @ApiProperty({})
+  @ApiProperty({ description: 'Fecha de término de contrato', example: '2024-12-31' })
+  fecha_fin_contrato: Date;
+
+  @Column()
+  @ApiProperty({ description: 'Indica si aplica artículo 22', example: false })
   art_22: boolean;
 
   @Column()
-  @ApiProperty({})
+  @ApiProperty({ description: 'Indica si el empleado autoriza ausencia', example: true })
   autoriza_ausencia: boolean;
 
   @Column()
-  @ApiProperty({})
+  @ApiProperty({ description: 'Clave de acceso del empleado', example: '1234' })
   clave: string;
 
-  @ManyToOne(() => Empresa)
+  @ManyToOne(() => Empresa, (empresa) => empresa.empleados)
+  @JoinColumn({ name: 'empresa_id' })
+  @ApiProperty({ type: () => Empresa, description: "empresa", example: 1 })
   empresa: Empresa;
 
-  // @ManyToMany() -- esto es para manejar los cencos del empleado, solo debe tener uno pero debe ir en la tabla asociativa de usuarios y cencos
+  // Relaciones (Cargo, Turno)
+  @ManyToOne(() => Cargo, (cargo) => cargo.empleados)
+  @JoinColumn({ name: 'cargo_id' })
+  @ApiProperty({ type: () => Cargo, description: "cargo", example: 1 })
+  cargo: Cargo;
+
+  @ManyToOne(() => Turno, (turno) => turno.empleados)
+  @JoinColumn({ name: 'turno_id' })
+  @ApiProperty({ type: () => Turno, description: "turno", example: 1 })
+  turno: Turno;
+
+  @ManyToOne(() => Estado)
+  @JoinColumn({ name: 'estado_id' })
+  @ApiProperty({ type: () => Estado, description: "estado", example: 1 })
+  estado: Estado;
 }
