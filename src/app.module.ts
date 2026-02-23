@@ -40,8 +40,8 @@ import { Empleado } from './empleado/entities/empleado.entity';
       host: 'localhost',
       port: 5432,
       username: 'postgres',
-      password: 'admin',
-      database: 'postgres',
+      password: 'superadmin',
+      database: 'femase',
       entities: [User, Perfil, Estado, Menu, Empresa, Departamento, Cenco, TipoDispositivo, Dispositivo, Cargo, Horario, Turno, Empleado]
     }),
     MailerModule.forRoot({
