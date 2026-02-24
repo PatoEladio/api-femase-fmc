@@ -17,7 +17,6 @@ export class TurnoService {
       const nuevo = this.turnoRepository.create(createTurnoDto);
       //nuevo.usuario_creador = usuario;
       const guardada = await this.turnoRepository.save(nuevo);
-
       return {
         turno_id: guardada.turno_id,
         nombre: guardada.nombre,
@@ -35,6 +34,7 @@ export class TurnoService {
       throw new InternalServerErrorException('Error crítico al crear el registro en la base de datos');
     }
   }
+
 
   findAll() {
     return this.turnoRepository.find({
