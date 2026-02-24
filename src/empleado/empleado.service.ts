@@ -1,4 +1,4 @@
-import { HttpException, Injectable, NotFoundException } from '@nestjs/common';
+import { ConflictException, HttpException, Injectable, InternalServerErrorException, NotFoundException } from '@nestjs/common';
 import { CreateEmpleadoDto } from './dto/create-empleado.dto';
 import { UpdateEmpleadoDto } from './dto/update-empleado.dto';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -80,7 +80,7 @@ export class EmpleadoService {
     });
     if (!empleado) throw new NotFoundException('Empleado no encontrado');
     const usuario = await this.userRepository.findOne({
-      where: { run_usuario: empleado.run},
+      where: { run_usuario: empleado.run },
       relations: ['cencos']
     });
     if (!usuario) throw new NotFoundException('Usuario no encontrado');
@@ -88,8 +88,33 @@ export class EmpleadoService {
     return await this.userRepository.save(usuario);
   }
 
-  update(id: number, updateEmpleadoDto: UpdateEmpleadoDto) {
-    return `This action updates a #${id} empleado`;
+  async update(id: number, updateEmpleadoDto: UpdateEmpleadoDto): Promise<any> {
+    const empleado = await this.empleadoRepository.preload({
+      empleado_id: id,
+      ...updateEmpleadoDto,
+    });
+
+    // 2. Si no existe el ID, lanzamos 404
+    if (!empleado) {
+      throw new NotFoundException(`El empleado con ID ${id} no existe`);
+    }
+
+    try {
+      // 3. Guardamos los cambios (esto disparará validaciones de BD)
+      const actualizada = await this.empleadoRepository.save(empleado);
+
+      // 4. Retornamos respuesta personalizada
+      return {
+        mensaje: 'Empleado actualizado con exito',
+        id: actualizada.empleado_id
+      };
+    } catch (error) {
+      // Manejo de error por si el RUT duplicado choca
+      if (error.code === '23505') {
+        throw new ConflictException('Ya existe el empleado');
+      }
+      throw new InternalServerErrorException('Error al actualizar el empleado');
+    }
   }
 
   remove(id: number) {

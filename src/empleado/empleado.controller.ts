@@ -16,6 +16,11 @@ export class EmpleadoController {
     return await this.empleadoService.asignarCenco(run, cencoIds);
   }
 
+  @Patch('actualizar/:id')
+  update(@Param('id') id: string, @Body() updateEmpleadoDto: UpdateEmpleadoDto) {
+    return this.empleadoService.update(+id, updateEmpleadoDto);
+  }
+
   @Post()
   create(@Body() createEmpleadoDto: Empleado) {
     return this.empleadoService.create(createEmpleadoDto);
@@ -26,10 +31,6 @@ export class EmpleadoController {
     return this.empleadoService.findAll();
   }
 
-  @Patch(':id')
-  update(@Param('id') id: string, @Body() updateEmpleadoDto: UpdateEmpleadoDto) {
-    return this.empleadoService.update(+id, updateEmpleadoDto);
-  }
 
   @Delete(':id')
   remove(@Param('id') id: string) {
