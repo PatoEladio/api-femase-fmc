@@ -63,14 +63,26 @@ export class EmpleadoService {
     }
   }
   async findAll() {
-    return await this.empleadoRepository.find({
+    const empleados = await this.empleadoRepository.find({
       relations: [
         'estado',
         'empresa',
         'cargo',
         'turno'
       ]
-    })
+    });
+
+    const usuarios = await this.userRepository.find({
+      relations: ['cencos', 'empleado']
+    });
+
+    return empleados.map(emp => {
+      const u = usuarios.find(usuario => usuario.empleado?.empleado_id === emp.empleado_id);
+      return {
+        ...emp,
+        cencos: u ? u.cencos : []
+      };
+    });
   }
 
   // Asignar cencos al empleado, deberia seguir la misma logica del usuario
@@ -87,6 +99,9 @@ export class EmpleadoService {
     usuario.cencos = cencoIds.map(id => ({ cenco_id: id } as Cenco));
     return await this.userRepository.save(usuario);
   }
+
+
+
 
   async update(id: number, updateEmpleadoDto: UpdateEmpleadoDto): Promise<any> {
     const empleado = await this.empleadoRepository.preload({

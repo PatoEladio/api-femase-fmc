@@ -9,7 +9,7 @@ export class EmpleadoController {
   constructor(private readonly empleadoService: EmpleadoService) { }
 
   @Put('asignar-cencos/:run')
-  async asignarMenus(
+  async asignarCencos(
     @Param('run') run: string,
     @Body('cencoIds') cencoIds: number[],
   ) {

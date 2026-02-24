@@ -147,6 +147,7 @@ export class UsersService {
         mensaje: 'Usuario creadc correctamente'
       }
     } catch (error) {
+      console.error("Error al crear usuario:", error);
       if (error.code === '23505') {
         throw new ConflictException('El usuario ya existe o el identificador está duplicado');
       }
