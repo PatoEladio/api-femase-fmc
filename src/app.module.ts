@@ -31,6 +31,8 @@ import { Turno } from './turno/entities/turno.entity';
 import { TurnoHorarioModule } from './turno-horario/turno-horario.module';
 import { EmpleadoModule } from './empleado/empleado.module';
 import { Empleado } from './empleado/entities/empleado.entity';
+import { AfpModule } from './afp/afp.module';
+import { Afp } from './afp/entities/afp.entity';
 
 @Module({
   imports: [
@@ -42,7 +44,7 @@ import { Empleado } from './empleado/entities/empleado.entity';
       username: 'postgres',
       password: 'superadmin',
       database: 'femase',
-      entities: [User, Perfil, Estado, Menu, Empresa, Departamento, Cenco, TipoDispositivo, Dispositivo, Cargo, Horario, Turno, Empleado]
+      entities: [User, Perfil, Estado, Menu, Empresa, Departamento, Cenco, TipoDispositivo, Dispositivo, Cargo, Horario, Turno, Empleado, Afp]
     }),
     MailerModule.forRoot({
       transport: {
@@ -74,7 +76,8 @@ import { Empleado } from './empleado/entities/empleado.entity';
     TurnoModule,
     HorarioModule,
     TurnoHorarioModule,
-    EmpleadoModule
+    EmpleadoModule,
+    AfpModule
   ],
   providers: [PerfilesService],
   controllers: [PerfilesController],

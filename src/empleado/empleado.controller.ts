@@ -37,3 +37,4 @@ export class EmpleadoController {
     return this.empleadoService.remove(+id);
   }
 }
+

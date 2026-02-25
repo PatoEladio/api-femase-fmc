@@ -103,10 +103,12 @@ export class EmpleadoService {
 
 
 
-  async update(id: number, updateEmpleadoDto: UpdateEmpleadoDto): Promise<any> {
+  async update(id: number, updateEmpleadoDto: UpdateEmpleadoDto | any): Promise<any> {
+    const dtoTransformado = { ...updateEmpleadoDto };
+
     const empleado = await this.empleadoRepository.preload({
       empleado_id: id,
-      ...updateEmpleadoDto,
+      ...dtoTransformado,
     });
 
     // 2. Si no existe el ID, lanzamos 404
