@@ -33,6 +33,10 @@ import { EmpleadoModule } from './empleado/empleado.module';
 import { Empleado } from './empleado/entities/empleado.entity';
 import { AfpModule } from './afp/afp.module';
 import { Afp } from './afp/entities/afp.entity';
+import { ErrorRechazoModule } from './error-rechazo/error-rechazo.module';
+import { ErrorRechazo } from './error-rechazo/entities/error-rechazo.entity';
+import { ProveedorCorreoModule } from './proveedor-correo/proveedor-correo.module';
+import { ProveedorCorreo } from './proveedor-correo/entities/proveedor-correo.entity';
 
 @Module({
   imports: [
@@ -44,7 +48,7 @@ import { Afp } from './afp/entities/afp.entity';
       username: 'postgres',
       password: 'superadmin',
       database: 'femase',
-      entities: [User, Perfil, Estado, Menu, Empresa, Departamento, Cenco, TipoDispositivo, Dispositivo, Cargo, Horario, Turno, Empleado, Afp]
+      entities: [User, Perfil, Estado, Menu, Empresa, Departamento, Cenco, TipoDispositivo, Dispositivo, Cargo, Horario, Turno, Empleado, Afp, ErrorRechazo, ProveedorCorreo]
     }),
     MailerModule.forRoot({
       transport: {
@@ -77,7 +81,9 @@ import { Afp } from './afp/entities/afp.entity';
     HorarioModule,
     TurnoHorarioModule,
     EmpleadoModule,
-    AfpModule
+    AfpModule,
+    ErrorRechazoModule,
+    ProveedorCorreoModule
   ],
   providers: [PerfilesService],
   controllers: [PerfilesController],

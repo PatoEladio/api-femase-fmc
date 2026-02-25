@@ -29,9 +29,6 @@ export class AfpService {
     return await this.afpRepository.save(nuevoAfp);
   }
 
-  async findAll() {
-    return await this.afpRepository.find();
-  }
 
   findOne(id: number) {
     return `This action returns a #${id} afp`;
