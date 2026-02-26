@@ -37,6 +37,10 @@ import { ErrorRechazoModule } from './error-rechazo/error-rechazo.module';
 import { ErrorRechazo } from './error-rechazo/entities/error-rechazo.entity';
 import { ProveedorCorreoModule } from './proveedor-correo/proveedor-correo.module';
 import { ProveedorCorreo } from './proveedor-correo/entities/proveedor-correo.entity';
+import { FeriadosModule } from './feriados/feriados.module';
+import { Feriado } from './feriados/entities/feriado.entity';
+import { TurnoHorario } from './turno-horario/entities/turno-horario.entity';
+import { Semana } from './turno-horario/entities/semana.entity';
 
 @Module({
   imports: [
@@ -48,7 +52,8 @@ import { ProveedorCorreo } from './proveedor-correo/entities/proveedor-correo.en
       username: 'postgres',
       password: 'superadmin',
       database: 'femase',
-      entities: [User, Perfil, Estado, Menu, Empresa, Departamento, Cenco, TipoDispositivo, Dispositivo, Cargo, Horario, Turno, Empleado, Afp, ErrorRechazo, ProveedorCorreo]
+      synchronize: false,
+      entities: [User, Perfil, Estado, Menu, Empresa, Departamento, Cenco, TipoDispositivo, Dispositivo, Cargo, Horario, Turno, Empleado, Afp, ErrorRechazo, ProveedorCorreo, Feriado, TurnoHorario, Semana]
     }),
     MailerModule.forRoot({
       transport: {
@@ -83,7 +88,9 @@ import { ProveedorCorreo } from './proveedor-correo/entities/proveedor-correo.en
     EmpleadoModule,
     AfpModule,
     ErrorRechazoModule,
-    ProveedorCorreoModule
+    ProveedorCorreoModule,
+    FeriadosModule,
+    TurnoHorarioModule
   ],
   providers: [PerfilesService],
   controllers: [PerfilesController],

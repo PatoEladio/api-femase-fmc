@@ -4,6 +4,8 @@ import { UpdateTurnoDto } from './dto/update-turno.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Turno } from './entities/turno.entity';
 import { Repository } from 'typeorm';
+import { TurnoHorario } from 'src/turno-horario/entities/turno-horario.entity';
+import { Semana } from 'src/turno-horario/entities/semana.entity';
 
 @Injectable()
 export class TurnoService {
@@ -38,7 +40,7 @@ export class TurnoService {
 
   findAll() {
     return this.turnoRepository.find({
-      relations: ['empresa', 'horario', 'estado'],
+      relations: ['empresa', 'horario', 'estado', 'dias', 'dias.semana'] ,
       order: {
         turno_id: 'asc'
       }
@@ -68,6 +70,26 @@ export class TurnoService {
       }
       throw new InternalServerErrorException('Error al actualizar el registro');
     }
+  }
+
+  async asignarDias (id:number, dias:Number[]) {
+    const turno = await this.turnoRepository.findOne({
+      where:{turno_id:id},
+      relations:['dias']
+    })
+
+    if (!turno) {
+      throw new NotFoundException(`EL registro con ID ${id} no existe`);
+    }
+
+    turno.dias = dias.map(numero_dia =>{
+      return{
+        semana:{
+          cod_dia:numero_dia
+        }
+      } as TurnoHorario
+    });
+    return await this.turnoRepository.save(turno);
   }
 
   remove(id: number) {
