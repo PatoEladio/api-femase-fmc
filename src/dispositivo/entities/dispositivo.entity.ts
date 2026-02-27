@@ -5,7 +5,7 @@ import { Estado } from "src/estado/estado.entity";
 import { TipoDispositivo } from "src/tipo-dispositivo/entities/tipo-dispositivo.entity";
 import { Column, CreateDateColumn, Entity, JoinColumn, ManyToOne, OneToMany, OneToOne, PrimaryGeneratedColumn, UpdateDateColumn } from "typeorm";
 
-@Entity('db_fmc.dispositivo')
+@Entity({ name: 'dispositivo', schema: 'db_fmc' })
 export class Dispositivo {
   @PrimaryGeneratedColumn()
   dispositivo_id: number;

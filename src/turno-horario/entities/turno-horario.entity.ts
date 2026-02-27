@@ -3,7 +3,7 @@ import { Turno } from "src/turno/entities/turno.entity";
 import { Entity, JoinColumn, ManyToOne, OneToOne, PrimaryGeneratedColumn } from "typeorm";
 import { Semana } from "./semana.entity";
 
-@Entity('db_fmc.turno_has_semana')
+@Entity({ name: 'turno_has_semana', schema: 'db_fmc' })
 export class TurnoHorario {
   @PrimaryGeneratedColumn()
   id: number;
@@ -18,6 +18,6 @@ export class TurnoHorario {
   @ApiProperty({ description: "cod_dia", example: 3 })
   semana: Semana;
 
-  
+
 
 }

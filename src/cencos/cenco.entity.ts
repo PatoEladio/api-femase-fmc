@@ -70,6 +70,7 @@ export class Cenco {
       referencedColumnName: 'turno_id'
     }
   })
+  
   @ApiProperty({ type: () => Turno, description: '' })
   turnos: Turno[];
 

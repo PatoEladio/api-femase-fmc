@@ -7,7 +7,7 @@ import { Horario } from "src/horario/entities/horario.entity";
 import { TurnoHorario } from "src/turno-horario/entities/turno-horario.entity";
 import { Column, CreateDateColumn, Entity, JoinColumn, JoinTable, ManyToMany, ManyToOne, OneToMany, OneToOne, PrimaryGeneratedColumn, UpdateDateColumn } from "typeorm";
 
-@Entity("db_fmc.turno")
+@Entity({ name: 'turno', schema: 'db_fmc' })
 export class Turno {
   @PrimaryGeneratedColumn()
   turno_id: number;
@@ -41,7 +41,7 @@ export class Turno {
   @OneToMany(() => Empleado, (empleado) => empleado.turno)
   empleados: Empleado[];
 
-  @OneToMany(() => TurnoHorario,(turno) => turno.turno,{cascade:true} )
+  @OneToMany(() => TurnoHorario, (turno) => turno.turno, { cascade: true })
   @ApiProperty({ type: () => [TurnoHorario], description: "dias asignados" })
   dias: TurnoHorario[];
 }

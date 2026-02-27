@@ -1,7 +1,7 @@
 import { Column, Entity, JoinColumn, OneToMany, OneToOne, PrimaryGeneratedColumn } from "typeorm";
 import { TurnoHorario } from "./turno-horario.entity";
 
-@Entity('db_fmc.semana')
+@Entity({ name: 'semana', schema: 'db_fmc' })
 export class Semana {
   @PrimaryGeneratedColumn()
   cod_dia: number;

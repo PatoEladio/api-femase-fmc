@@ -1,7 +1,7 @@
 import { ApiProperty } from "@nestjs/swagger";
 import { Column, CreateDateColumn, Entity, PrimaryGeneratedColumn, UpdateDateColumn } from "typeorm";
 
-@Entity('db_fmc.feriados') 
+@Entity({ name: 'feriados', schema: 'db_fmc' })
 export class Feriado {
 
     @PrimaryGeneratedColumn()

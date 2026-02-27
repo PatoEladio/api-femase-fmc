@@ -35,4 +35,9 @@ export class TurnoController {
   remove(@Param('id') id: string) {
     return this.turnoService.remove(+id);
   }
+
+  @Patch('asignar-empleados/:id')
+  asignarEmpleados(@Param('id') id: string, @Body("empleadosIds") empleadosIds: number[]) {
+    return this.turnoService.asignarEmpleados(+id, empleadosIds);
+  }
 }

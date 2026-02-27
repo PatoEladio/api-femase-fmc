@@ -2,7 +2,7 @@ import { ApiProperty } from "@nestjs/swagger";
 import { Estado } from "src/estado/estado.entity";
 import { Column, CreateDateColumn, Entity, JoinColumn, OneToOne, PrimaryGeneratedColumn, UpdateDateColumn } from "typeorm";
 
-@Entity('db_fmc.tipo_dispositivo')
+@Entity({ name: 'tipo_dispositivo', schema: 'db_fmc' })
 export class TipoDispositivo {
   @PrimaryGeneratedColumn()
   tipo_dispositivo_id: number;

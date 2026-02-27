@@ -1,7 +1,7 @@
 import { Perfil } from 'src/perfiles/perfil.entity';
 import { Entity, PrimaryGeneratedColumn, OneToOne, JoinColumn, Column, ManyToMany } from 'typeorm';
 
-@Entity('db_fmc.modulo')
+@Entity({ name: 'modulo', schema: 'db_fmc' })
 export class Menu {
   @PrimaryGeneratedColumn()
   modulo_id: number;
