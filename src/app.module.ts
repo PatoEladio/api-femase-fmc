@@ -50,7 +50,7 @@ import { Semana } from './turno-horario/entities/semana.entity';
       host: 'localhost',
       port: 5432,
       username: 'postgres',
-      password: 'superadmin',
+      password: 'admin',
       database: 'femase',
       synchronize: false,
       entities: [User, Perfil, Estado, Menu, Empresa, Departamento, Cenco, TipoDispositivo, Dispositivo, Cargo, Horario, Turno, Empleado, Afp, ErrorRechazo, ProveedorCorreo, Feriado, TurnoHorario, Semana]
