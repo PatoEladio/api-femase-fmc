@@ -1,6 +1,6 @@
 import { Entity, Column, PrimaryGeneratedColumn } from 'typeorm';
 
-@Entity('db_fmc.estado')
+@Entity({ name: 'estado', schema: 'db_fmc' })
 export class Estado {
   @PrimaryGeneratedColumn()
   estado_id: number;

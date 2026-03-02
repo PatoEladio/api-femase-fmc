@@ -31,6 +31,16 @@ import { Turno } from './turno/entities/turno.entity';
 import { TurnoHorarioModule } from './turno-horario/turno-horario.module';
 import { EmpleadoModule } from './empleado/empleado.module';
 import { Empleado } from './empleado/entities/empleado.entity';
+import { AfpModule } from './afp/afp.module';
+import { Afp } from './afp/entities/afp.entity';
+import { ErrorRechazoModule } from './error-rechazo/error-rechazo.module';
+import { ErrorRechazo } from './error-rechazo/entities/error-rechazo.entity';
+import { ProveedorCorreoModule } from './proveedor-correo/proveedor-correo.module';
+import { ProveedorCorreo } from './proveedor-correo/entities/proveedor-correo.entity';
+import { FeriadosModule } from './feriados/feriados.module';
+import { Feriado } from './feriados/entities/feriado.entity';
+import { TurnoHorario } from './turno-horario/entities/turno-horario.entity';
+import { Semana } from './turno-horario/entities/semana.entity';
 
 @Module({
   imports: [
@@ -40,9 +50,10 @@ import { Empleado } from './empleado/entities/empleado.entity';
       host: 'localhost',
       port: 5432,
       username: 'postgres',
-      password: 'admin',
-      database: 'postgres',
-      entities: [User, Perfil, Estado, Menu, Empresa, Departamento, Cenco, TipoDispositivo, Dispositivo, Cargo, Horario, Turno, Empleado]
+      password: 'superadmin',
+      database: 'femase',
+      synchronize: false,
+      entities: [User, Perfil, Estado, Menu, Empresa, Departamento, Cenco, TipoDispositivo, Dispositivo, Cargo, Horario, Turno, Empleado, Afp, ErrorRechazo, ProveedorCorreo, Feriado, TurnoHorario, Semana]
     }),
     MailerModule.forRoot({
       transport: {
@@ -74,7 +85,12 @@ import { Empleado } from './empleado/entities/empleado.entity';
     TurnoModule,
     HorarioModule,
     TurnoHorarioModule,
-    EmpleadoModule
+    EmpleadoModule,
+    AfpModule,
+    ErrorRechazoModule,
+    ProveedorCorreoModule,
+    FeriadosModule,
+    TurnoHorarioModule
   ],
   providers: [PerfilesService],
   controllers: [PerfilesController],

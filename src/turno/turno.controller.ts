@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards, Req } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards, Req, Put } from '@nestjs/common';
 import { TurnoService } from './turno.service';
 import { CreateTurnoDto } from './dto/create-turno.dto';
 import { UpdateTurnoDto } from './dto/update-turno.dto';
@@ -6,11 +6,11 @@ import { Turno } from './entities/turno.entity';
 import { AuthGuard } from 'src/auth/auth.guard';
 
 @Controller('turno')
-@UseGuards(AuthGuard)
 export class TurnoController {
   constructor(private readonly turnoService: TurnoService) { }
 
   @Post()
+  @UseGuards(AuthGuard)
   create(@Body() createTurnoDto: Turno, @Req() req) {
     const usuario = req.user.username;
     return this.turnoService.create(createTurnoDto, usuario);
@@ -21,13 +21,23 @@ export class TurnoController {
     return this.turnoService.findAll();
   }
 
-  @Patch(':id')
+  @Patch('actualizar/:id')
   update(@Param('id') id: string, @Body() updateTurnoDto: UpdateTurnoDto) {
     return this.turnoService.update(+id, updateTurnoDto);
+  }
+
+  @Patch('asignar-dias/:id')
+  asignarDias(@Param('id') id: string, @Body("dias") dias: number[]) {
+    return this.turnoService.asignarDias(+id, dias);
   }
 
   @Delete(':id')
   remove(@Param('id') id: string) {
     return this.turnoService.remove(+id);
+  }
+
+  @Patch('asignar-empleados/:id')
+  asignarEmpleados(@Param('id') id: string, @Body("empleadosIds") empleadosIds: number[]) {
+    return this.turnoService.asignarEmpleados(+id, empleadosIds);
   }
 }

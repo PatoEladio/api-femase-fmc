@@ -1,4 +1,4 @@
-import { HttpException, Injectable } from '@nestjs/common';
+import { ConflictException, HttpException, Injectable, InternalServerErrorException, NotFoundException } from '@nestjs/common';
 import { CreateEmpleadoDto } from './dto/create-empleado.dto';
 import { UpdateEmpleadoDto } from './dto/update-empleado.dto';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -6,6 +6,7 @@ import { Empleado } from './entities/empleado.entity';
 import { Repository } from 'typeorm';
 import { User } from 'src/users/user.entity';
 import * as bcrypt from 'bcrypt';
+import { Cenco } from 'src/cencos/cenco.entity';
 
 @Injectable()
 export class EmpleadoService {
@@ -62,20 +63,75 @@ export class EmpleadoService {
     }
   }
   async findAll() {
-    return await this.empleadoRepository.find({
+    const empleados = await this.empleadoRepository.find({
       relations: [
         'estado',
         'empresa',
         'cargo',
         'turno'
       ]
-    })
+    });
+
+    const usuarios = await this.userRepository.find({
+      relations: ['cencos', 'empleado']
+    });
+
+    return empleados.map(emp => {
+      const u = usuarios.find(usuario => usuario.empleado?.empleado_id === emp.empleado_id);
+      return {
+        ...emp,
+        cencos: u ? u.cencos : []
+      };
+    });
   }
 
   // Asignar cencos al empleado, deberia seguir la misma logica del usuario
+  async asignarCenco(runEmpleado: string, cencoIds: number[]) {
+    const empleado = await this.empleadoRepository.findOne({
+      where: { run: runEmpleado }
+    });
+    if (!empleado) throw new NotFoundException('Empleado no encontrado');
+    const usuario = await this.userRepository.findOne({
+      where: { run_usuario: empleado.run },
+      relations: ['cencos']
+    });
+    if (!usuario) throw new NotFoundException('Usuario no encontrado');
+    usuario.cencos = cencoIds.map(id => ({ cenco_id: id } as Cenco));
+    return await this.userRepository.save(usuario);
+  }
 
-  update(id: number, updateEmpleadoDto: UpdateEmpleadoDto) {
-    return `This action updates a #${id} empleado`;
+
+
+
+  async update(id: number, updateEmpleadoDto: UpdateEmpleadoDto | any): Promise<any> {
+    const dtoTransformado = { ...updateEmpleadoDto };
+
+    const empleado = await this.empleadoRepository.preload({
+      empleado_id: id,
+      ...dtoTransformado,
+    });
+
+    // 2. Si no existe el ID, lanzamos 404
+    if (!empleado) {
+      throw new NotFoundException(`El empleado con ID ${id} no existe`);
+    }
+
+    try {
+      // 3. Guardamos los cambios (esto disparará validaciones de BD)
+      const actualizada = await this.empleadoRepository.save(empleado);
+
+      // 4. Retornamos respuesta personalizada
+      return {
+        mensaje: 'Empleado actualizado con exito',
+        id: actualizada.empleado_id
+      };
+    } catch (error) {
+      // Manejo de error por si el RUT duplicado choca
+      if (error.code === '23505') {
+        throw new ConflictException('Ya existe el empleado');
+      }
+      throw new InternalServerErrorException('Error al actualizar el empleado');
+    }
   }
 
   remove(id: number) {

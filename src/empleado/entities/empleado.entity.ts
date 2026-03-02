@@ -4,7 +4,7 @@ import { Empresa } from "src/empresas/empresas.entity";
 import { Estado } from "src/estado/estado.entity";
 import { Turno } from "src/turno/entities/turno.entity";
 import { User } from "src/users/user.entity";
-import { Column, Entity, JoinColumn, ManyToMany, ManyToOne, OneToOne, PrimaryGeneratedColumn } from "typeorm";
+import { Column, Entity, JoinColumn, JoinTable, ManyToMany, ManyToOne, OneToOne, PrimaryGeneratedColumn } from "typeorm";
 
 @Entity({ name: 'empleado', schema: 'db_fmc' })
 export class Empleado {
@@ -91,10 +91,10 @@ export class Empleado {
   @ApiProperty({ type: () => Cargo, description: "cargo", example: 1 })
   cargo: Cargo;
 
-  @ManyToOne(() => Turno, (turno) => turno.empleados)
+  @ManyToOne(() => Turno, (turno) => turno.empleados, { nullable: true })
   @JoinColumn({ name: 'turno_id' })
   @ApiProperty({ type: () => Turno, description: "turno", example: 1 })
-  turno: Turno;
+  turno: Turno | null;
 
   @ManyToOne(() => Estado)
   @JoinColumn({ name: 'estado_id' })

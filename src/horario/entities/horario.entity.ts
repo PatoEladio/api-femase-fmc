@@ -2,7 +2,7 @@ import { ApiProperty } from "@nestjs/swagger";
 import { Empresa } from "src/empresas/empresas.entity";
 import { Column, Entity, JoinColumn, OneToOne, PrimaryGeneratedColumn } from "typeorm";
 
-@Entity('db_fmc.horario')
+@Entity({ name: 'horario', schema: 'db_fmc' })
 export class Horario {
   @PrimaryGeneratedColumn()
   horario_id: number;

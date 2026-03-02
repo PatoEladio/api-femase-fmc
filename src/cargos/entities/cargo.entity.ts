@@ -4,7 +4,7 @@ import { Empresa } from "src/empresas/empresas.entity";
 import { Estado } from "src/estado/estado.entity";
 import { Column, CreateDateColumn, Entity, JoinColumn, OneToMany, OneToOne, PrimaryGeneratedColumn, UpdateDateColumn } from "typeorm";
 
-@Entity('db_fmc.cargo')
+@Entity({ name: 'cargo', schema: 'db_fmc' })
 export class Cargo {
   @PrimaryGeneratedColumn()
   cargo_id: number;

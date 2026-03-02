@@ -7,7 +7,7 @@ import { Turno } from 'src/turno/entities/turno.entity';
 import { User } from 'src/users/user.entity';
 import { Entity, Column, PrimaryGeneratedColumn, OneToOne, JoinColumn, ManyToMany, CreateDateColumn, UpdateDateColumn, OneToMany } from 'typeorm';
 
-@Entity('db_fmc.empresa')
+@Entity({ name: 'empresa', schema: 'db_fmc' })
 export class Empresa {
   @PrimaryGeneratedColumn()
   empresa_id: number;
