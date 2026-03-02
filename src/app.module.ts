@@ -41,6 +41,10 @@ import { FeriadosModule } from './feriados/feriados.module';
 import { Feriado } from './feriados/entities/feriado.entity';
 import { TurnoHorario } from './turno-horario/entities/turno-horario.entity';
 import { Semana } from './turno-horario/entities/semana.entity';
+import { TipoAusenciaModule } from './tipo-ausencia/tipo-ausencia.module';
+import { TipoAusencia } from './tipo-ausencia/entities/tipo-ausencia.entity';
+import { SesionActivaModule } from './sesion-activa/sesion-activa.module';
+import { SesionActiva } from './sesion-activa/entities/sesion-activa.entity';
 
 @Module({
   imports: [
@@ -53,7 +57,7 @@ import { Semana } from './turno-horario/entities/semana.entity';
       password: 'superadmin',
       database: 'femase',
       synchronize: false,
-      entities: [User, Perfil, Estado, Menu, Empresa, Departamento, Cenco, TipoDispositivo, Dispositivo, Cargo, Horario, Turno, Empleado, Afp, ErrorRechazo, ProveedorCorreo, Feriado, TurnoHorario, Semana]
+      entities: [User, Perfil, Estado, Menu, Empresa, Departamento, Cenco, TipoDispositivo, Dispositivo, Cargo, Horario, Turno, Empleado, Afp, ErrorRechazo, ProveedorCorreo, Feriado, TurnoHorario, Semana, TipoAusencia, SesionActiva]
     }),
     MailerModule.forRoot({
       transport: {
@@ -90,7 +94,9 @@ import { Semana } from './turno-horario/entities/semana.entity';
     ErrorRechazoModule,
     ProveedorCorreoModule,
     FeriadosModule,
-    TurnoHorarioModule
+    TurnoHorarioModule,
+    TipoAusenciaModule,
+    SesionActivaModule
   ],
   providers: [PerfilesService],
   controllers: [PerfilesController],
