@@ -168,7 +168,7 @@ export class UsersService {
         nombres: correoDT + " - Fiscalizacion",
         apellido_materno: '',
         apellido_paterno: '',
-        email: correoDT + '@gmail.com',
+        email: correoDT + '@gmail.com', //cambiar a @dt.gob.cl
         empresa: { empresa_id: 9 },
         estado: { estado_id: 1 },
         perfil: { perfil_id: 3 },

@@ -100,4 +100,8 @@ export class Empleado {
   @JoinColumn({ name: 'estado_id' })
   @ApiProperty({ type: () => Estado, description: "estado", example: 1 })
   estado: Estado;
+
+  @Column()
+  @ApiProperty({ description: 'Correo electrónico laboral del empleado', example: 'usuario@dt.gob.cl' })
+  email_laboral: string;
 }

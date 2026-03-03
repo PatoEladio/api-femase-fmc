@@ -64,6 +64,9 @@ export class EmpleadoService {
   }
   async findAll() {
     const empleados = await this.empleadoRepository.find({
+      order: {
+        empleado_id: 'ASC'
+      },
       relations: [
         'estado',
         'empresa',
@@ -137,4 +140,7 @@ export class EmpleadoService {
   remove(id: number) {
     return `This action removes a #${id} empleado`;
   }
+
 }
+
+

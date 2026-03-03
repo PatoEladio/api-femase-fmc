@@ -55,7 +55,7 @@ import { SesionActiva } from './sesion-activa/entities/sesion-activa.entity';
       port: 5432,
       username: 'postgres',
       password: 'superadmin',
-      database: 'femase',
+      database: 'postgres',
       synchronize: false,
       entities: [User, Perfil, Estado, Menu, Empresa, Departamento, Cenco, TipoDispositivo, Dispositivo, Cargo, Horario, Turno, Empleado, Afp, ErrorRechazo, ProveedorCorreo, Feriado, TurnoHorario, Semana, TipoAusencia, SesionActiva]
     }),

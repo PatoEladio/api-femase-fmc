@@ -22,6 +22,9 @@ export class ProveedorCorreoService {
     const busqueda = await this.proveedorCorreoRepository.find({
       order: {
         id: "ASC"
+      },
+      relations: {
+        empresa: true
       }
     });
     if (busqueda.length === 0) {
