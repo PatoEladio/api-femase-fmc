@@ -27,4 +27,20 @@ export class Horario {
   @ApiProperty({ type: () => Empresa, description: "empresa", example: 1 })
   @JoinColumn({ name: 'empresa_id' })
   empresa: Empresa;
+
+  @Column({
+    type: "time",
+    name: "holgura_mins",
+    nullable: true
+  })
+  @ApiProperty({ description: "holgura_mins", example: "00:40:00" })
+  holgura_mins: string;
+
+  @Column({
+    type: "time",
+    name: "colacion",
+    nullable: true
+  })
+  @ApiProperty({ description: "colacion", example: "00:60:00" })
+  colacion: string;
 }

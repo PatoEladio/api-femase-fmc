@@ -23,7 +23,9 @@ export class HorarioService {
         horario_id: guardada.horario_id,
         hora_entrada: guardada.hora_entrada,
         hora_salida: guardada.hora_salida,
-        empresa: guardada.empresa
+        empresa: guardada.empresa,
+        holgura_mins: guardada.holgura_mins,
+        colacion: guardada.colacion
       }
     } catch (error) {
       if (error.code === '23505') {

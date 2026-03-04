@@ -40,4 +40,9 @@ export class TurnoController {
   asignarEmpleados(@Param('id') id: string, @Body("empleadosIds") empleadosIds: number[]) {
     return this.turnoService.asignarEmpleados(+id, empleadosIds);
   }
+
+  @Patch('asignar-turnos/:idturno/:idcenco')
+  asignarCencos(@Param('idturno') idturno: string, @Param('idcenco') idcenco: string) {
+    return this.turnoService.asignarCenco(+idturno, +idcenco);
+  }
 }

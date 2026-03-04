@@ -102,10 +102,7 @@ export class EmpleadoService {
     usuario.cencos = cencoIds.map(id => ({ cenco_id: id } as Cenco));
     return await this.userRepository.save(usuario);
   }
-
-
-
-
+  
   async update(id: number, updateEmpleadoDto: UpdateEmpleadoDto | any): Promise<any> {
     const dtoTransformado = { ...updateEmpleadoDto };
 

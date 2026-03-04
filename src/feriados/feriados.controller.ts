@@ -5,11 +5,16 @@ import { UpdateFeriadoDto } from './dto/update-feriado.dto';
 
 @Controller('feriados')
 export class FeriadosController {
-  constructor(private readonly feriadosService: FeriadosService) {}
+  constructor(private readonly feriadosService: FeriadosService) { }
 
   @Post("crear")
   create(@Body() createFeriadoDto: CreateFeriadoDto) {
     return this.feriadosService.create(createFeriadoDto);
+  }
+
+  @Post("seed")
+  seed() {
+    return this.feriadosService.seed();
   }
 
   @Get()

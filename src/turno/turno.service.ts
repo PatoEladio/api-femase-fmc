@@ -148,4 +148,31 @@ export class TurnoService {
       empleados_actualizados: nuevosEmpleados.length
     };
   }
+
+
+  async asignarCenco(turnoId:number, cencoId:number){
+    const turno = await this.turnoRepository.findOne({
+      where:{
+        turno_id:turnoId
+      }
+    })
+    if(!turno){
+      throw new NotFoundException('Turno no encontrado');
+    }
+    const cenco = await this.cencoRepository.findOne({
+      where:{
+        cenco_id:cencoId
+      },
+      relations:['turnos']
+    })
+    if(!cenco){
+      throw new NotFoundException("cenco no encontrado")
+    }
+
+    const existeTurno = cenco.turnos.find(turno => turno.turno_id === turnoId)
+    if(!existeTurno){
+      cenco.turnos.push(turno)
+    }
+    return await this.cencoRepository.save(cenco)
+  }
 }

@@ -8,7 +8,7 @@ import { Horario } from './entities/horario.entity';
 export class HorarioController {
   constructor(private readonly horarioService: HorarioService) { }
 
-  @Post()
+  @Post("crear")
   create(@Body() createHorarioDto: Horario) {
     return this.horarioService.create(createHorarioDto);
   }
