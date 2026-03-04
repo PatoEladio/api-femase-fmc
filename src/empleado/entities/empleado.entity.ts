@@ -104,4 +104,8 @@ export class Empleado {
   @Column()
   @ApiProperty({ description: 'Correo electrónico laboral del empleado', example: 'usuario@dt.gob.cl' })
   email_laboral: string;
+
+  @Column()
+  @ApiProperty({description:"numero de ficha del empleado",example:"21287800-6B"})
+  num_ficha: string;
 }
