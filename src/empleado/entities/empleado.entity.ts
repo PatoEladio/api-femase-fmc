@@ -1,5 +1,6 @@
 import { ApiProperty } from "@nestjs/swagger";
 import { Cargo } from "src/cargos/entities/cargo.entity";
+import { Cenco } from "src/cencos/cenco.entity";
 import { Empresa } from "src/empresas/empresas.entity";
 import { Estado } from "src/estado/estado.entity";
 import { Turno } from "src/turno/entities/turno.entity";
@@ -106,6 +107,12 @@ export class Empleado {
   email_laboral: string;
 
   @Column()
-  @ApiProperty({description:"numero de ficha del empleado",example:"21287800-6B"})
+  @ApiProperty({ description: "numero de ficha del empleado", example: "21287800-6B" })
   num_ficha: string;
+
+  @ManyToOne(() => Cenco, (cenco) => cenco.empleados)
+  @JoinColumn({ name: 'cenco_id' })
+  @ApiProperty({ type: () => Cenco, description: "cenco", example: 1 })
+  cenco: Cenco;
+
 }

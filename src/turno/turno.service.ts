@@ -150,27 +150,27 @@ export class TurnoService {
   }
 
 
-  async asignarCenco(turnoId:number, cencoId:number){
+  async asignarCenco(turnoId: number, cencoId: number) {
     const turno = await this.turnoRepository.findOne({
-      where:{
-        turno_id:turnoId
+      where: {
+        turno_id: turnoId
       }
     })
-    if(!turno){
+    if (!turno) {
       throw new NotFoundException('Turno no encontrado');
     }
     const cenco = await this.cencoRepository.findOne({
-      where:{
-        cenco_id:cencoId
+      where: {
+        cenco_id: cencoId
       },
-      relations:['turnos']
+      relations: ['turnos']
     })
-    if(!cenco){
+    if (!cenco) {
       throw new NotFoundException("cenco no encontrado")
     }
 
     const existeTurno = cenco.turnos.find(turno => turno.turno_id === turnoId)
-    if(!existeTurno){
+    if (!existeTurno) {
       cenco.turnos.push(turno)
     }
     return await this.cencoRepository.save(cenco)

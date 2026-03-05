@@ -1,6 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { Departamento } from 'src/departamentos/departamento.entity';
 import { Dispositivo } from 'src/dispositivo/entities/dispositivo.entity';
+import { Empleado } from 'src/empleado/entities/empleado.entity';
 import { Estado } from 'src/estado/estado.entity';
 import { Turno } from 'src/turno/entities/turno.entity';
 import { User } from 'src/users/user.entity';
@@ -76,4 +77,7 @@ export class Cenco {
 
   @ManyToMany(() => User, (usuario) => usuario.cencos)
   usuarios: User[];
+
+  @OneToMany(() => Empleado, (empleado) => empleado.cenco)
+  empleados: Empleado[];
 }

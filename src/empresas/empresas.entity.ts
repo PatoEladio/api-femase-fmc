@@ -52,4 +52,12 @@ export class Empresa {
 
   @OneToOne(() => ProveedorCorreo, (proveedor_correo) => proveedor_correo.empresa)
   proveedor_correo: ProveedorCorreo;
+
+  @Column()
+  @ApiProperty({ description: "nombre_contacto", example: "Bastián Maximiliano" })
+  nombre_contacto: string;
+
+  @Column()
+  @ApiProperty({ description: "telefono_contacto", example: 22223333 })
+  telefono_contacto:string
 }
