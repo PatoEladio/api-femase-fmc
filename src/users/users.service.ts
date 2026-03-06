@@ -41,7 +41,8 @@ export class UsersService {
         'perfil',
         'estado',
         'empresa',
-        'cencos'
+        'cencos',
+        'empleado'
       ]
     });
 
@@ -242,6 +243,9 @@ export class UsersService {
     }
   }
 
+
+
+
   async asignarCenco(userId: number, cencoIds: number[]) {
     const usuario = await this.usersRepository.findOne({
       where: { usuario_id: userId },
@@ -254,14 +258,19 @@ export class UsersService {
     return await this.usersRepository.save(usuario);
   }
 
+
+
   async enviarCencosPorUsuario(usuarioId: number) {
-    const cencos = await this.usersRepository.find({
+    const usuario = await this.usersRepository.findOne({
       where: {
         usuario_id: usuarioId
       },
       relations: ['cencos']
-    })
-
-    return cencos;
+    });
+    if (!usuario) {
+      return []; // Si no hay usuario, retorna lista vacía
+    }
+    // Retornamos SOLO el arreglo de cencos
+    return usuario.cencos;
   }
 }

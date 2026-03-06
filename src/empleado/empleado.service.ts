@@ -29,19 +29,20 @@ export class EmpleadoService {
       where: { empleado_id: guardarNuevoEmpleado.empleado_id },
       relations: [
         'estado',
-        'empresa'
+        'empresa',
+        'cenco'
       ]
     });
 
     if (!empleadoCreado) throw new HttpException('No se encontro el empleado', 400);
 
-
     // Encripto run para guardar clave
     const salt = await bcrypt.genSalt();
     const claveHash = await bcrypt.hash(empleadoCreado.run, salt);
-    // Creo el usuario
+
+    // Creo el usuario ligado exclusivamente a esta ficha
     const nuevoUser = this.userRepository.create({
-      username: empleadoCreado?.run,
+      username: empleadoCreado?.num_ficha, // Usando num_ficha como login
       password: claveHash,
       nombres: empleadoCreado?.nombres,
       apellido_paterno: empleadoCreado?.apellido_paterno,
@@ -51,17 +52,19 @@ export class EmpleadoService {
       estado: { estado_id: 1 },
       perfil: { perfil_id: 8 },
       run_usuario: empleadoCreado?.run,
-      empleado: { empleado_id: empleadoCreado?.empleado_id }
+      empleado: { empleado_id: empleadoCreado?.empleado_id },
+      cencos: empleadoCreado.cenco ? [empleadoCreado.cenco] : [] // Asignamos su cenco inicial
     });
 
     const guardarNuevoUser = await this.userRepository.save(nuevoUser);
-
     if (!guardarNuevoUser) throw new HttpException('Error al crear el usuario', 400);
 
     return {
       message: 'Empleado creado correctamente y asociado a un usuario!'
     }
   }
+
+
   async findAll() {
     const empleados = await this.empleadoRepository.find({
       order: {
@@ -71,12 +74,13 @@ export class EmpleadoService {
         'estado',
         'empresa',
         'cargo',
-        'turno'
+        'turno',
+        "cenco"
       ]
     });
 
     const usuarios = await this.userRepository.find({
-      relations: ['cencos', 'empleado']
+      relations: ['empleado', 'cencos']
     });
 
     return empleados.map(emp => {
@@ -89,44 +93,48 @@ export class EmpleadoService {
   }
 
   // Asignar cencos al empleado, deberia seguir la misma logica del usuario
-  async asignarCenco(runEmpleado: string, cencoIds: number[]) {
-    const empleado = await this.empleadoRepository.findOne({
-      where: { run: runEmpleado }
-    });
-    if (!empleado) throw new NotFoundException('Empleado no encontrado');
-    const usuario = await this.userRepository.findOne({
-      where: { run_usuario: empleado.run },
-      relations: ['cencos']
-    });
-    if (!usuario) throw new NotFoundException('Usuario no encontrado');
-    usuario.cencos = cencoIds.map(id => ({ cenco_id: id } as Cenco));
-    return await this.userRepository.save(usuario);
-  }
-  
+
+
   async update(id: number, updateEmpleadoDto: UpdateEmpleadoDto | any): Promise<any> {
     const dtoTransformado = { ...updateEmpleadoDto };
-
     const empleado = await this.empleadoRepository.preload({
       empleado_id: id,
       ...dtoTransformado,
     });
 
-    // 2. Si no existe el ID, lanzamos 404
     if (!empleado) {
       throw new NotFoundException(`El empleado con ID ${id} no existe`);
     }
 
     try {
-      // 3. Guardamos los cambios (esto disparará validaciones de BD)
+      // 1. Guardar cambios en empleado
       const actualizada = await this.empleadoRepository.save(empleado);
 
-      // 4. Retornamos respuesta personalizada
+      // 2. Traer empleado actualizado con su nuevo cenco
+      const empGuardado = await this.empleadoRepository.findOne({
+        where: { empleado_id: actualizada.empleado_id },
+        relations: ['cenco']
+      });
+
+      if (empGuardado) {
+        // Buscar especifícamente el usuario que pertenece a este empleado (ficha)
+        const usuario = await this.userRepository.findOne({
+          where: { empleado: { empleado_id: empGuardado.empleado_id } },
+          relations: ['cencos', 'empleado']
+        });
+
+        if (usuario) {
+          // Si el empleado tiene un cenco, lo asignamos; si se lo quitaron, vaciamos la lista.
+          usuario.cencos = empGuardado.cenco ? [empGuardado.cenco] : [];
+          await this.userRepository.save(usuario);
+        }
+      }
+
       return {
-        mensaje: 'Empleado actualizado con exito',
+        mensaje: 'Empleado actualizado con exito y cenco de usuario sincronizado',
         id: actualizada.empleado_id
       };
     } catch (error) {
-      // Manejo de error por si el RUT duplicado choca
       if (error.code === '23505') {
         throw new ConflictException('Ya existe el empleado');
       }
