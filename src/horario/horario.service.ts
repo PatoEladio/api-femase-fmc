@@ -13,19 +13,15 @@ export class HorarioService {
   ) { }
 
 
-  async create(createHorarioDto: Horario): Promise<Horario> {
+  async create(createHorarioDto: Horario) {
     try {
       const nuevo = this.horarioRepository.create(createHorarioDto);
       //nuevo.usuario_creador = usuario;
       const guardada = await this.horarioRepository.save(nuevo);
 
       return {
-        horario_id: guardada.horario_id,
-        hora_entrada: guardada.hora_entrada,
-        hora_salida: guardada.hora_salida,
-        empresa: guardada.empresa,
-        holgura_mins: guardada.holgura_mins,
-        colacion: guardada.colacion
+        message: 'Registro creado con éxito',
+        id: guardada.horario_id
       }
     } catch (error) {
       if (error.code === '23505') {

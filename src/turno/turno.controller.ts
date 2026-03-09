@@ -26,10 +26,6 @@ export class TurnoController {
     return this.turnoService.update(+id, updateTurnoDto);
   }
 
-  @Patch('asignar-dias/:id')
-  asignarDias(@Param('id') id: string, @Body("dias") dias: number[]) {
-    return this.turnoService.asignarDias(+id, dias);
-  }
 
   @Delete(':id')
   remove(@Param('id') id: string) {
