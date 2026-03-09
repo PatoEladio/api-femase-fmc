@@ -92,9 +92,6 @@ export class EmpleadoService {
     });
   }
 
-  // Asignar cencos al empleado, deberia seguir la misma logica del usuario
-
-
   async update(id: number, updateEmpleadoDto: UpdateEmpleadoDto | any): Promise<any> {
     const dtoTransformado = { ...updateEmpleadoDto };
     const empleado = await this.empleadoRepository.preload({
