@@ -244,8 +244,6 @@ export class UsersService {
   }
 
 
-
-
   async asignarCenco(userId: number, cencoIds: number[]) {
     const usuario = await this.usersRepository.findOne({
       where: { usuario_id: userId },
