@@ -12,10 +12,14 @@ export class FeriadosController {
     return this.feriadosService.create(createFeriadoDto);
   }
 
+
+  
   @Post("seed")
   seed() {
     return this.feriadosService.seed();
   }
+
+
 
   @Get()
   findAll() {

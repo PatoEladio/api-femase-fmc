@@ -16,10 +16,6 @@ export class Turno {
   @ApiProperty({ description: "nombre", example: 'Turno numero 1' })
   nombre: string;
 
-  @Column()
-  @ApiProperty({ description: "es_rotativo", example: false })
-  es_rotativo: boolean;
-
   @OneToOne(() => Estado)
   @JoinColumn({ name: 'estado_id' })
   @ApiProperty({ description: "estado", example: 1 })

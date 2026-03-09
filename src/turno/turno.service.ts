@@ -24,7 +24,6 @@ export class TurnoService {
   async create(createTurnoDto: Turno, usuario: string) {
     try {
       const nuevo = this.turnoRepository.create(createTurnoDto);
-      //nuevo.usuario_creador = usuario;
       const guardada = await this.turnoRepository.save(nuevo);
       return {
         turno_id: guardada.turno_id,
