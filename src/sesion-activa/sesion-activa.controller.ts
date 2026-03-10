@@ -14,4 +14,5 @@ export class SesionActivaController {
   eliminarSesion(@Param('usuarioId') usuarioId: string) {
     return this.sesionActivaService.eliminarSesion(+usuarioId);
   }
+  
 }

@@ -77,7 +77,7 @@ export class Empleado {
   @ApiProperty({ description: 'Indica si el empleado autoriza ausencia', example: true })
   autoriza_ausencia: boolean;
 
-  @Column()
+  @Column({ nullable: true })
   @ApiProperty({ description: 'Clave de acceso del empleado', example: '1234' })
   clave: string;
 

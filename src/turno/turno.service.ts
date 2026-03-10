@@ -86,11 +86,6 @@ export class TurnoService {
   }
 
 
-
-  remove(id: number) {
-    return `This action removes a #${id} turno`;
-  }
-
   async asignarEmpleados(turnoId: number, empleadosIds: number[]) {
     const turno = await this.turnoRepository.findOne({ where: { turno_id: turnoId } });
     if (!turno) {
@@ -164,11 +159,11 @@ export class TurnoService {
     return await this.cencoRepository.save(cenco)
   }
 
-    async asignarHorario(id_turno: number, _id_dia: number[], id_horario: number[]) {
-    
-    // PASO 1: Validar que por cada día enviado, haya un horario correspondiente.
-    // Si mandas 3 días, debes mandar 3 horarios.
-    if (_id_dia.length !== id_horario.length) {
+
+
+
+  async asignarHorario(id_turno: number, id_dia: number[], id_horario: number[]) {
+    if (id_dia.length !== id_horario.length) {
       throw new BadRequestException('La lista de días y la lista de horarios deben tener exactamente la misma cantidad de elementos.');
     }
 
@@ -181,30 +176,25 @@ export class TurnoService {
       throw new NotFoundException('El Turno solicitado no existe.');
     }
 
-    // PASO 3: ELIMINAR LOS REGISTROS VIEJOS.
-    // Con esta línea borramos de la tabla "detalle_turno" todo lo que pertenezca a este turno.
     await this.detalleTurnoRepository.delete({ turno: { turno_id: id_turno } });
 
-    // PASO 4: ¿Querían vaciar el turno?
-    // Si la lista de días viene vacía, no hay nada que guardar. Terminamos con éxito aquí.
-    if (_id_dia.length === 0) {
-      return { 
-        mensaje: 'Se han quitado todos los horarios de este turno.', 
-        turno_id: id_turno 
+    if (id_dia.length === 0) {
+      return {
+        mensaje: 'Se han quitado todos los horarios de este turno.',
+        turno_id: id_turno
       };
     }
 
-    // PASO 5: Traer de la base de datos los Días y los Horarios usando los IDs que nos enviaron.
-    const dias = await this.semanaRepository.findBy({ cod_dia: In(_id_dia) });
+    const dias = await this.semanaRepository.findBy({ cod_dia: In(id_dia) });
     const horarios = await this.horarioRepository.findBy({ horario_id: In(id_horario) });
 
     // PASO 6: Combinar los datos.
     // Recorremos la lista de Días uno por uno.
-    const nuevosDetallesAGuardar = _id_dia.map((id_del_dia, indice) => {
-      
-      // Obtenemos el ID del horario que está en la misma posición (índice) que este día.
+    const nuevosDetallesAGuardar = id_dia.map((id_del_dia, indice) => {
+
+      // Obtenemos el ID del horario que está en la misma posición (índice) que este día. 
       const id_del_horario = id_horario[indice];
-      
+
       // Buscamos la información completa del Día y del Horario en los datos que trajimos de la BD.
       const diaEncontrado = dias.find(d => d.cod_dia === id_del_dia);
       const horarioEncontrado = horarios.find(h => h.horario_id === id_del_horario);
@@ -225,12 +215,33 @@ export class TurnoService {
     // PASO 7: Guardar todo en la base de datos al mismo tiempo.
     await this.detalleTurnoRepository.save(nuevosDetallesAGuardar);
 
-    return { 
-        mensaje: 'Los horarios han sido asignados y actualizados correctamente en el turno.', 
-        turno_id: id_turno 
+
+    return {
+      mensaje: 'Los horarios han sido asignados y actualizados correctamente en el turno.',
+      turno_id: id_turno
     };
   }
 
+  async obtenerHorarioPorTurno(id_turno: number) {
+    // 1. Buscamos el turno para validar que exista y obtener su información básica.
+    const turno = await this.turnoRepository.findOne({
+      where: { turno_id: id_turno }
+    });
 
-  
+    if (!turno) {
+      throw new NotFoundException('El Turno solicitado no existe.');
+    }
+
+    // 2. Buscamos todas las relaciones en detalle_turno que pertenezcan a este turno.
+    // Usamos 'relations' para que nos traiga los objetos completos de Dia y Horario.
+    const detalles = await this.detalleTurnoRepository.find({
+      where: { turno: { turno_id: id_turno } },
+      relations: ["turno", 'dia', 'horario'],
+      order: {
+        dia: { cod_dia: 'ASC' } // Opcional: Ordenar por día de la semana
+      }
+    });
+    return detalles
+  }
+
 }
