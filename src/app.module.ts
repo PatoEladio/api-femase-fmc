@@ -46,6 +46,8 @@ import { DetalleTurnoModule } from './detalle-turno/detalle-turno.module';
 import { SemanaModule } from './semana/semana.module';
 import { DetalleTurno } from './detalle-turno/entities/detalle-turno.entity';
 import { Semana } from './semana/entities/semana.entity';
+import { TipoMarcasModule } from './tipo-marcas/tipo-marcas.module';
+import { TipoMarca } from './tipo-marcas/entities/tipo-marca.entity';
 
 @Module({
   imports: [
@@ -58,7 +60,7 @@ import { Semana } from './semana/entities/semana.entity';
       password: 'superadmin',
       database: 'femase',
       synchronize: false,
-      entities: [User, Perfil, Estado, Menu, Empresa, Departamento, Cenco, TipoDispositivo, Dispositivo, Cargo, Horario, Turno, Empleado, Afp, ErrorRechazo, ProveedorCorreo, Feriado, TipoAusencia, SesionActiva, DetalleTurno, Semana]
+      entities: [User, Perfil, Estado, Menu, Empresa, Departamento, Cenco, TipoDispositivo, Dispositivo, Cargo, Horario, Turno, Empleado, Afp, ErrorRechazo, ProveedorCorreo, Feriado, TipoAusencia, SesionActiva, DetalleTurno, Semana, TipoMarca]
     }),
     MailerModule.forRoot({
       transport: {
@@ -97,7 +99,8 @@ import { Semana } from './semana/entities/semana.entity';
     TipoAusenciaModule,
     SesionActivaModule,
     DetalleTurnoModule,
-    SemanaModule
+    SemanaModule,
+    TipoMarcasModule
   ],
   providers: [PerfilesService],
   controllers: [PerfilesController],
