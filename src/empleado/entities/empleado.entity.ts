@@ -1,11 +1,12 @@
 import { ApiProperty } from "@nestjs/swagger";
+import { AsignacionTurnoRotativo } from "src/asignacion_turno_rotativo/entities/asignacion_turno_rotativo.entity";
 import { Cargo } from "src/cargos/entities/cargo.entity";
 import { Cenco } from "src/cencos/cenco.entity";
 import { Empresa } from "src/empresas/empresas.entity";
 import { Estado } from "src/estado/estado.entity";
 import { Turno } from "src/turno/entities/turno.entity";
 import { User } from "src/users/user.entity";
-import { Column, Entity, JoinColumn, JoinTable, ManyToMany, ManyToOne, OneToOne, PrimaryGeneratedColumn } from "typeorm";
+import { Column, Entity, JoinColumn, JoinTable, ManyToMany, ManyToOne, OneToMany, OneToOne, PrimaryGeneratedColumn } from "typeorm";
 
 @Entity({ name: 'empleado', schema: 'db_fmc' })
 export class Empleado {
@@ -114,5 +115,8 @@ export class Empleado {
   @JoinColumn({ name: 'cenco_id' })
   @ApiProperty({ type: () => Cenco, description: "cenco", example: 1 })
   cenco: Cenco;
+
+  @OneToMany(() => AsignacionTurnoRotativo, (asignacion_turno_rotativo) => asignacion_turno_rotativo.empleado)
+  asignacion_turno_rotativo: AsignacionTurnoRotativo[];
 
 }

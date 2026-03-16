@@ -11,11 +11,11 @@ export class DetalleTurno {
 
     @ManyToOne(() => Turno, (turno) => turno.detalle_turno)
     @JoinColumn({ name: 'id_turno' })
-    turno: Turno; 
+    turno: Turno;
 
     @ManyToOne(() => Horario, (horario) => horario.detalle_turno)
     @JoinColumn({ name: 'id_horario' })
-    horario: Horario; 
+    horario: Horario;
 
     @ManyToOne(() => Semana, (semana) => semana.detalle_turno)
     @JoinColumn({ name: 'id_dia' })

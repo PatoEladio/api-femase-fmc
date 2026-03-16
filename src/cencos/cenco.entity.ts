@@ -80,4 +80,9 @@ export class Cenco {
 
   @OneToMany(() => Empleado, (empleado) => empleado.cenco)
   empleados: Empleado[];
+
+  @Column()
+  @ApiProperty({ description: "permite turno rotativo", example: true })
+  @JoinColumn({ name: 'permite_turno_r' })
+  permite_turno_r: boolean;
 }

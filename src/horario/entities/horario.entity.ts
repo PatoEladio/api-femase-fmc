@@ -1,6 +1,8 @@
 import { ApiProperty } from "@nestjs/swagger";
+import { AsignacionTurnoRotativo } from "src/asignacion_turno_rotativo/entities/asignacion_turno_rotativo.entity";
 import { DetalleTurno } from "src/detalle-turno/entities/detalle-turno.entity";
 import { Empresa } from "src/empresas/empresas.entity";
+import { TurnosRotativo } from "src/turnos-rotativos/entities/turnos-rotativo.entity";
 import { Column, Entity, JoinColumn, ManyToMany, ManyToOne, OneToMany, OneToOne, PrimaryGeneratedColumn } from "typeorm";
 
 @Entity({ name: 'horario', schema: 'db_fmc' })
@@ -50,4 +52,6 @@ export class Horario {
   @JoinColumn({ name: 'id_horario' })
   detalle_turno: DetalleTurno[]; 
 
+  @OneToMany(() => AsignacionTurnoRotativo, (asignacion_turno_rotativo) => asignacion_turno_rotativo.horario)
+  asignacion_turno_rotativo: AsignacionTurnoRotativo[];
 }

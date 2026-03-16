@@ -48,6 +48,10 @@ import { DetalleTurno } from './detalle-turno/entities/detalle-turno.entity';
 import { Semana } from './semana/entities/semana.entity';
 import { TipoMarcasModule } from './tipo-marcas/tipo-marcas.module';
 import { TipoMarca } from './tipo-marcas/entities/tipo-marca.entity';
+import { TurnosRotativosModule } from './turnos-rotativos/turnos-rotativos.module';
+import { TurnosRotativo } from './turnos-rotativos/entities/turnos-rotativo.entity';
+import { AsignacionTurnoRotativoModule } from './asignacion_turno_rotativo/asignacion_turno_rotativo.module';
+import { AsignacionTurnoRotativo } from './asignacion_turno_rotativo/entities/asignacion_turno_rotativo.entity';
 
 @Module({
   imports: [
@@ -60,7 +64,7 @@ import { TipoMarca } from './tipo-marcas/entities/tipo-marca.entity';
       password: 'superadmin',
       database: 'femase',
       synchronize: false,
-      entities: [User, Perfil, Estado, Menu, Empresa, Departamento, Cenco, TipoDispositivo, Dispositivo, Cargo, Horario, Turno, Empleado, Afp, ErrorRechazo, ProveedorCorreo, Feriado, TipoAusencia, SesionActiva, DetalleTurno, Semana, TipoMarca]
+      entities: [User, Perfil, Estado, Menu, Empresa, Departamento, Cenco, TipoDispositivo, Dispositivo, Cargo, Horario, Turno, Empleado, Afp, ErrorRechazo, ProveedorCorreo, Feriado, TipoAusencia, SesionActiva, DetalleTurno, Semana, TipoMarca, TurnosRotativo, AsignacionTurnoRotativo]
     }),
     MailerModule.forRoot({
       transport: {
@@ -100,7 +104,9 @@ import { TipoMarca } from './tipo-marcas/entities/tipo-marca.entity';
     SesionActivaModule,
     DetalleTurnoModule,
     SemanaModule,
-    TipoMarcasModule
+    TipoMarcasModule,
+    TurnosRotativosModule,
+    AsignacionTurnoRotativoModule
   ],
   providers: [PerfilesService],
   controllers: [PerfilesController],
