@@ -53,7 +53,7 @@ export class TurnoService {
 
   findAll() {
     return this.turnoRepository.find({
-      relations: ['empresa', 'estado',],
+      relations: ['empresa', 'estado', "detalle_turno.horario", "detalle_turno.dia"],
       order: {
         turno_id: 'asc'
       }

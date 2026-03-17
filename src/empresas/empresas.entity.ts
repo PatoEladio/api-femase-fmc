@@ -5,7 +5,6 @@ import { Empleado } from 'src/empleado/entities/empleado.entity';
 import { Estado } from 'src/estado/estado.entity';
 import { ProveedorCorreo } from 'src/proveedor-correo/entities/proveedor-correo.entity';
 import { Turno } from 'src/turno/entities/turno.entity';
-import { TurnosRotativo } from 'src/turnos-rotativos/entities/turnos-rotativo.entity';
 import { User } from 'src/users/user.entity';
 import { Entity, Column, PrimaryGeneratedColumn, OneToOne, JoinColumn, ManyToMany, CreateDateColumn, UpdateDateColumn, OneToMany } from 'typeorm';
 
@@ -61,7 +60,4 @@ export class Empresa {
   @Column()
   @ApiProperty({ description: "telefono_contacto", example: 22223333 })
   telefono_contacto:string
-
-  @OneToMany(() => TurnosRotativo, (turnos_rotativo) => turnos_rotativo.empresa)
-  turnos_rotativos: TurnosRotativo[];
 }

@@ -119,4 +119,7 @@ export class Empleado {
   @OneToMany(() => AsignacionTurnoRotativo, (asignacion_turno_rotativo) => asignacion_turno_rotativo.empleado)
   asignacion_turno_rotativo: AsignacionTurnoRotativo[];
 
+  @Column()
+  @ApiProperty({ description: 'Indica si el empleado permite rotativo', example: true })
+  permite_rotativo: boolean;
 }

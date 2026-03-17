@@ -2,7 +2,6 @@ import { ApiProperty } from "@nestjs/swagger";
 import { AsignacionTurnoRotativo } from "src/asignacion_turno_rotativo/entities/asignacion_turno_rotativo.entity";
 import { DetalleTurno } from "src/detalle-turno/entities/detalle-turno.entity";
 import { Empresa } from "src/empresas/empresas.entity";
-import { TurnosRotativo } from "src/turnos-rotativos/entities/turnos-rotativo.entity";
 import { Column, Entity, JoinColumn, ManyToMany, ManyToOne, OneToMany, OneToOne, PrimaryGeneratedColumn } from "typeorm";
 
 @Entity({ name: 'horario', schema: 'db_fmc' })
