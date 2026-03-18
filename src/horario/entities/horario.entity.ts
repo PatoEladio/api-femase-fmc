@@ -35,7 +35,7 @@ export class Horario {
     name: "holgura_mins",
     nullable: true
   })
-  
+
   @ApiProperty({ description: "holgura_mins", example: "00:40:00" })
   holgura_mins: string;
 
@@ -49,8 +49,11 @@ export class Horario {
 
   @OneToMany(() => DetalleTurno, (detalleTurno) => detalleTurno.horario)
   @JoinColumn({ name: 'id_horario' })
-  detalle_turno: DetalleTurno[]; 
+  detalle_turno: DetalleTurno[];
 
   @OneToMany(() => AsignacionTurnoRotativo, (asignacion_turno_rotativo) => asignacion_turno_rotativo.horario)
   asignacion_turno_rotativo: AsignacionTurnoRotativo[];
+
+  @Column()
+  nocturno: boolean
 }
