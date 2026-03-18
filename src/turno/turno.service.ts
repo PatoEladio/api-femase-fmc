@@ -4,10 +4,11 @@ import { UpdateTurnoDto } from './dto/update-turno.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Turno } from './entities/turno.entity';
 import { Repository, In } from 'typeorm';
-import { TurnoHorario } from 'src/turno-horario/entities/turno-horario.entity';
-import { Semana } from 'src/turno-horario/entities/semana.entity';
 import { Empleado } from 'src/empleado/entities/empleado.entity';
 import { Cenco } from 'src/cencos/cenco.entity';
+import { Semana } from 'src/semana/entities/semana.entity';
+import { Horario } from 'src/horario/entities/horario.entity';
+import { DetalleTurno } from 'src/detalle-turno/entities/detalle-turno.entity';
 
 
 @Injectable()
@@ -18,13 +19,18 @@ export class TurnoService {
     @InjectRepository(Empleado)
     private empleadoRepository: Repository<Empleado>,
     @InjectRepository(Cenco)
-    private cencoRepository: Repository<Cenco>
+    private cencoRepository: Repository<Cenco>,
+    @InjectRepository(Semana)
+    private semanaRepository: Repository<Semana>,
+    @InjectRepository(Horario)
+    private horarioRepository: Repository<Horario>,
+    @InjectRepository(DetalleTurno)
+    private detalleTurnoRepository: Repository<DetalleTurno>
   ) { }
 
   async create(createTurnoDto: Turno, usuario: string) {
     try {
       const nuevo = this.turnoRepository.create(createTurnoDto);
-      //nuevo.usuario_creador = usuario;
       const guardada = await this.turnoRepository.save(nuevo);
       return {
         turno_id: guardada.turno_id,
@@ -47,7 +53,7 @@ export class TurnoService {
 
   findAll() {
     return this.turnoRepository.find({
-      relations: ['empresa', 'horario', 'estado', 'dias', 'dias.semana'],
+      relations: ['empresa', 'estado', "detalle_turno.horario", "detalle_turno.dia"],
       order: {
         turno_id: 'asc'
       }
@@ -79,29 +85,6 @@ export class TurnoService {
     }
   }
 
-  async asignarDias(id: number, dias: Number[]) {
-    const turno = await this.turnoRepository.findOne({
-      where: { turno_id: id },
-      relations: ['dias']
-    })
-
-    if (!turno) {
-      throw new NotFoundException(`EL registro con ID ${id} no existe`);
-    }
-
-    turno.dias = dias.map(numero_dia => {
-      return {
-        semana: {
-          cod_dia: numero_dia
-        }
-      } as TurnoHorario
-    });
-    return await this.turnoRepository.save(turno);
-  }
-
-  remove(id: number) {
-    return `This action removes a #${id} turno`;
-  }
 
   async asignarEmpleados(turnoId: number, empleadosIds: number[]) {
     const turno = await this.turnoRepository.findOne({ where: { turno_id: turnoId } });
@@ -148,4 +131,117 @@ export class TurnoService {
       empleados_actualizados: nuevosEmpleados.length
     };
   }
+
+
+  async asignarCenco(turnoId: number, cencoId: number) {
+    const turno = await this.turnoRepository.findOne({
+      where: {
+        turno_id: turnoId
+      }
+    })
+    if (!turno) {
+      throw new NotFoundException('Turno no encontrado');
+    }
+    const cenco = await this.cencoRepository.findOne({
+      where: {
+        cenco_id: cencoId
+      },
+      relations: ['turnos']
+    })
+    if (!cenco) {
+      throw new NotFoundException("cenco no encontrado")
+    }
+
+    const existeTurno = cenco.turnos.find(turno => turno.turno_id === turnoId)
+    if (!existeTurno) {
+      cenco.turnos.push(turno)
+    }
+    return await this.cencoRepository.save(cenco)
+  }
+
+
+
+
+  async asignarHorario(id_turno: number, id_dia: number[], id_horario: number[]) {
+    if (id_dia.length !== id_horario.length) {
+      throw new BadRequestException('La lista de días y la lista de horarios deben tener exactamente la misma cantidad de elementos.');
+    }
+
+    // PASO 2: Buscar que el Turno de verdad exista en la base de datos.
+    const turno = await this.turnoRepository.findOne({
+      where: { turno_id: id_turno }
+    });
+
+    if (!turno) {
+      throw new NotFoundException('El Turno solicitado no existe.');
+    }
+
+    await this.detalleTurnoRepository.delete({ turno: { turno_id: id_turno } });
+
+    if (id_dia.length === 0) {
+      return {
+        mensaje: 'Se han quitado todos los horarios de este turno.',
+        turno_id: id_turno
+      };
+    }
+
+    const dias = await this.semanaRepository.findBy({ cod_dia: In(id_dia) });
+    const horarios = await this.horarioRepository.findBy({ horario_id: In(id_horario) });
+
+    // PASO 6: Combinar los datos.
+    // Recorremos la lista de Días uno por uno.
+    const nuevosDetallesAGuardar = id_dia.map((id_del_dia, indice) => {
+
+      // Obtenemos el ID del horario que está en la misma posición (índice) que este día. 
+      const id_del_horario = id_horario[indice];
+
+      // Buscamos la información completa del Día y del Horario en los datos que trajimos de la BD.
+      const diaEncontrado = dias.find(d => d.cod_dia === id_del_dia);
+      const horarioEncontrado = horarios.find(h => h.horario_id === id_del_horario);
+
+      // Si nos pasaron un ID inventado que no está en la base de datos, lanzamos error.
+      if (!diaEncontrado || !horarioEncontrado) {
+        throw new NotFoundException(`No existe el día con ID ${id_del_dia} o el horario con ID ${id_del_horario} en la base de datos.`);
+      }
+
+      // Creamos la nueva fila para la tabla "detalle_turno" (conexión entre el Turno, el Día y el Horario).
+      return this.detalleTurnoRepository.create({
+        turno: turno,
+        dia: diaEncontrado,
+        horario: horarioEncontrado
+      });
+    });
+
+    // PASO 7: Guardar todo en la base de datos al mismo tiempo.
+    await this.detalleTurnoRepository.save(nuevosDetallesAGuardar);
+
+
+    return {
+      mensaje: 'Los horarios han sido asignados y actualizados correctamente en el turno.',
+      turno_id: id_turno
+    };
+  }
+
+  async obtenerHorarioPorTurno(id_turno: number) {
+    // 1. Buscamos el turno para validar que exista y obtener su información básica.
+    const turno = await this.turnoRepository.findOne({
+      where: { turno_id: id_turno }
+    });
+
+    if (!turno) {
+      throw new NotFoundException('El Turno solicitado no existe.');
+    }
+
+    // 2. Buscamos todas las relaciones en detalle_turno que pertenezcan a este turno.
+    // Usamos 'relations' para que nos traiga los objetos completos de Dia y Horario.
+    const detalles = await this.detalleTurnoRepository.find({
+      where: { turno: { turno_id: id_turno } },
+      relations: ["turno", 'dia', 'horario'],
+      order: {
+        dia: { cod_dia: 'ASC' } // Opcional: Ordenar por día de la semana
+      }
+    });
+    return detalles
+  }
+
 }

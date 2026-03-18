@@ -4,6 +4,8 @@ import { UpdateFeriadoDto } from './dto/update-feriado.dto';
 import { Feriado } from './entities/feriado.entity';
 import { Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
+import * as path from 'path';
+import * as fs from 'fs';
 
 @Injectable()
 export class FeriadosService {
@@ -11,7 +13,7 @@ export class FeriadosService {
   constructor(
     @InjectRepository(Feriado)
     private readonly feriadosRepository: Repository<Feriado>,
-  ) {}
+  ) { }
 
   async create(createFeriadoDto: CreateFeriadoDto) {
     const nuevoferiado = this.feriadosRepository.create(createFeriadoDto);
@@ -29,7 +31,7 @@ export class FeriadosService {
   }
 
   async update(id: number, updateFeriadoDto: UpdateFeriadoDto) {
-    const feriadoEditadp =  await this.feriadosRepository.preload({
+    const feriadoEditadp = await this.feriadosRepository.preload({
       id: id,
       ...updateFeriadoDto,
     })
@@ -47,6 +49,25 @@ export class FeriadosService {
     } catch (error) {
       throw new InternalServerErrorException('Error al actualizar el feriado');
     }
+  }
+
+  async seed() {
+    const count = await this.feriadosRepository.count();
+    if (count > 0) {
+      return { mensaje: 'La tabla feriados ya contiene datos', total: count };
+    }
+
+    const filePath = path.join(process.cwd(), 'utils', 'feriados.json');
+    const rawData = fs.readFileSync(filePath, 'utf-8');
+    const feriados: any[] = JSON.parse(rawData);
+
+    const entidades: Feriado[] = feriados.map((f) => {
+      const { id, ...data } = f;
+      return this.feriadosRepository.create(data as Partial<Feriado>);
+    });
+
+    await this.feriadosRepository.save(entidades);
+    return { mensaje: 'Feriados insertados con éxito', total: entidades.length };
   }
 
   remove(id: number) {

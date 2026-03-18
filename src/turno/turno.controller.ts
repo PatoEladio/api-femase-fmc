@@ -26,18 +26,27 @@ export class TurnoController {
     return this.turnoService.update(+id, updateTurnoDto);
   }
 
-  @Patch('asignar-dias/:id')
-  asignarDias(@Param('id') id: string, @Body("dias") dias: number[]) {
-    return this.turnoService.asignarDias(+id, dias);
-  }
-
-  @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.turnoService.remove(+id);
-  }
-
   @Patch('asignar-empleados/:id')
   asignarEmpleados(@Param('id') id: string, @Body("empleadosIds") empleadosIds: number[]) {
     return this.turnoService.asignarEmpleados(+id, empleadosIds);
   }
+
+  @Patch('asignar-turnos/:idturno/:idcenco')
+  asignarCencos(@Param('idturno') idturno: string, @Param('idcenco') idcenco: string) {
+    return this.turnoService.asignarCenco(+idturno, +idcenco);
+  }
+  @Patch('asignar-horario/:id')
+  asignarHorario(
+    @Param('id') id_turno: string,
+    @Body('id_dia') id_dia: number[],
+    @Body('id_horario') id_horario: number[]
+  ) {
+    return this.turnoService.asignarHorario(+id_turno, id_dia, id_horario);
+  }
+
+  @Get("obtener-horario/:id")
+  obtenerHorario(@Param("id") id_turno: string) {
+    return this.turnoService.obtenerHorarioPorTurno(+id_turno);
+  }
+
 }

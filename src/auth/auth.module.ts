@@ -6,11 +6,13 @@ import { JwtModule } from '@nestjs/jwt';
 import { jwtConstants } from './constants';
 import { PassportModule } from '@nestjs/passport';
 import { JwtStrategy } from './jwt.strategy';
+import { SesionActivaModule } from 'src/sesion-activa/sesion-activa.module';
 
 @Module({
   imports: [
     PassportModule,
     UsersModule,
+    SesionActivaModule,
     JwtModule.register({
       global: true,
       secret: jwtConstants.secret,

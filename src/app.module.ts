@@ -28,7 +28,6 @@ import { ConfigModule } from '@nestjs/config';
 import { HorarioModule } from './horario/horario.module';
 import { Horario } from './horario/entities/horario.entity';
 import { Turno } from './turno/entities/turno.entity';
-import { TurnoHorarioModule } from './turno-horario/turno-horario.module';
 import { EmpleadoModule } from './empleado/empleado.module';
 import { Empleado } from './empleado/entities/empleado.entity';
 import { AfpModule } from './afp/afp.module';
@@ -39,8 +38,18 @@ import { ProveedorCorreoModule } from './proveedor-correo/proveedor-correo.modul
 import { ProveedorCorreo } from './proveedor-correo/entities/proveedor-correo.entity';
 import { FeriadosModule } from './feriados/feriados.module';
 import { Feriado } from './feriados/entities/feriado.entity';
-import { TurnoHorario } from './turno-horario/entities/turno-horario.entity';
-import { Semana } from './turno-horario/entities/semana.entity';
+import { TipoAusenciaModule } from './tipo-ausencia/tipo-ausencia.module';
+import { TipoAusencia } from './tipo-ausencia/entities/tipo-ausencia.entity';
+import { SesionActivaModule } from './sesion-activa/sesion-activa.module';
+import { SesionActiva } from './sesion-activa/entities/sesion-activa.entity';
+import { DetalleTurnoModule } from './detalle-turno/detalle-turno.module';
+import { SemanaModule } from './semana/semana.module';
+import { DetalleTurno } from './detalle-turno/entities/detalle-turno.entity';
+import { Semana } from './semana/entities/semana.entity';
+import { TipoMarcasModule } from './tipo-marcas/tipo-marcas.module';
+import { TipoMarca } from './tipo-marcas/entities/tipo-marca.entity';
+import { AsignacionTurnoRotativoModule } from './asignacion_turno_rotativo/asignacion_turno_rotativo.module';
+import { AsignacionTurnoRotativo } from './asignacion_turno_rotativo/entities/asignacion_turno_rotativo.entity';
 
 @Module({
   imports: [
@@ -53,7 +62,7 @@ import { Semana } from './turno-horario/entities/semana.entity';
       password: 'admin',
       database: 'femase',
       synchronize: false,
-      entities: [User, Perfil, Estado, Menu, Empresa, Departamento, Cenco, TipoDispositivo, Dispositivo, Cargo, Horario, Turno, Empleado, Afp, ErrorRechazo, ProveedorCorreo, Feriado, TurnoHorario, Semana]
+      entities: [User, Perfil, Estado, Menu, Empresa, Departamento, Cenco, TipoDispositivo, Dispositivo, Cargo, Horario, Turno, Empleado, Afp, ErrorRechazo, ProveedorCorreo, Feriado, TipoAusencia, SesionActiva, DetalleTurno, Semana, TipoMarca, AsignacionTurnoRotativo]
     }),
     MailerModule.forRoot({
       transport: {
@@ -84,13 +93,17 @@ import { Semana } from './turno-horario/entities/semana.entity';
     CargosModule,
     TurnoModule,
     HorarioModule,
-    TurnoHorarioModule,
     EmpleadoModule,
     AfpModule,
     ErrorRechazoModule,
     ProveedorCorreoModule,
     FeriadosModule,
-    TurnoHorarioModule
+    TipoAusenciaModule,
+    SesionActivaModule,
+    DetalleTurnoModule,
+    SemanaModule,
+    TipoMarcasModule,
+    AsignacionTurnoRotativoModule
   ],
   providers: [PerfilesService],
   controllers: [PerfilesController],

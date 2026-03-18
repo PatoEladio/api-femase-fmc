@@ -19,7 +19,7 @@ export class CencosService {
 
   async findAll() {
     return await this.cencoRepository.find({
-      relations: ['dispositivos', 'departamento', 'estado', 'turnos'],
+      relations: ['dispositivos', 'departamento', 'departamento.empresa', 'estado', 'turnos',],
       order: { cenco_id: 'asc' }
     })
   }

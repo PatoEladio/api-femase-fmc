@@ -1,15 +1,15 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { TurnoHorarioService } from './turno-horario.service';
+import { TipoMarcasService } from './tipo-marcas.service';
 
-describe('TurnoHorarioService', () => {
-  let service: TurnoHorarioService;
+describe('TipoMarcasService', () => {
+  let service: TipoMarcasService;
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
-      providers: [TurnoHorarioService],
+      providers: [TipoMarcasService],
     }).compile();
 
-    service = module.get<TurnoHorarioService>(TurnoHorarioService);
+    service = module.get<TipoMarcasService>(TipoMarcasService);
   });
 
   it('should be defined', () => {

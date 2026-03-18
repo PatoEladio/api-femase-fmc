@@ -1,10 +1,9 @@
 import { ApiProperty } from "@nestjs/swagger";
 import { Cenco } from "src/cencos/cenco.entity";
+import { DetalleTurno } from "src/detalle-turno/entities/detalle-turno.entity";
 import { Empleado } from "src/empleado/entities/empleado.entity";
 import { Empresa } from "src/empresas/empresas.entity";
 import { Estado } from "src/estado/estado.entity";
-import { Horario } from "src/horario/entities/horario.entity";
-import { TurnoHorario } from "src/turno-horario/entities/turno-horario.entity";
 import { Column, CreateDateColumn, Entity, JoinColumn, JoinTable, ManyToMany, ManyToOne, OneToMany, OneToOne, PrimaryGeneratedColumn, UpdateDateColumn } from "typeorm";
 
 @Entity({ name: 'turno', schema: 'db_fmc' })
@@ -16,19 +15,11 @@ export class Turno {
   @ApiProperty({ description: "nombre", example: 'Turno numero 1' })
   nombre: string;
 
-  @Column()
-  @ApiProperty({ description: "es_rotativo", example: false })
-  es_rotativo: boolean;
-
   @OneToOne(() => Estado)
   @JoinColumn({ name: 'estado_id' })
   @ApiProperty({ description: "estado", example: 1 })
   estado: Estado;
 
-  @OneToOne(() => Horario)
-  @JoinColumn({ name: 'horario_id' })
-  @ApiProperty({ description: "horario_id", example: 1 })
-  horario: Horario;
 
   @ManyToOne(() => Empresa, (empresa) => empresa.turnos)
   @JoinColumn({ name: 'empresa_id' })
@@ -41,7 +32,9 @@ export class Turno {
   @OneToMany(() => Empleado, (empleado) => empleado.turno)
   empleados: Empleado[];
 
-  @OneToMany(() => TurnoHorario, (turno) => turno.turno, { cascade: true })
-  @ApiProperty({ type: () => [TurnoHorario], description: "dias asignados" })
-  dias: TurnoHorario[];
+  @OneToMany(() => DetalleTurno, (detalleTurno) => detalleTurno.turno)
+  @JoinColumn({ name: 'id_detalle_turno' })
+  detalle_turno: DetalleTurno[];
+
+
 }

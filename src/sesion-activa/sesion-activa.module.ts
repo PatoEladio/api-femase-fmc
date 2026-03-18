@@ -1,0 +1,13 @@
+import { Module } from '@nestjs/common';
+import { SesionActivaService } from './sesion-activa.service';
+import { SesionActivaController } from './sesion-activa.controller';
+import { TypeOrmModule } from '@nestjs/typeorm';
+import { SesionActiva } from './entities/sesion-activa.entity';
+
+@Module({
+  imports: [TypeOrmModule.forFeature([SesionActiva])],
+  controllers: [SesionActivaController],
+  providers: [SesionActivaService],
+  exports: [SesionActivaService],
+})
+export class SesionActivaModule { }

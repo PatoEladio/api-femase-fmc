@@ -3,6 +3,7 @@ import { Cargo } from 'src/cargos/entities/cargo.entity';
 import { Departamento } from 'src/departamentos/departamento.entity';
 import { Empleado } from 'src/empleado/entities/empleado.entity';
 import { Estado } from 'src/estado/estado.entity';
+import { ProveedorCorreo } from 'src/proveedor-correo/entities/proveedor-correo.entity';
 import { Turno } from 'src/turno/entities/turno.entity';
 import { User } from 'src/users/user.entity';
 import { Entity, Column, PrimaryGeneratedColumn, OneToOne, JoinColumn, ManyToMany, CreateDateColumn, UpdateDateColumn, OneToMany } from 'typeorm';
@@ -48,4 +49,15 @@ export class Empresa {
 
   @OneToMany(() => Empleado, (empleado) => empleado.empresa)
   empleados: Empleado[];
+
+  @OneToOne(() => ProveedorCorreo, (proveedor_correo) => proveedor_correo.empresa)
+  proveedor_correo: ProveedorCorreo;
+
+  @Column()
+  @ApiProperty({ description: "nombre_contacto", example: "Bastián Maximiliano" })
+  nombre_contacto: string;
+
+  @Column()
+  @ApiProperty({ description: "telefono_contacto", example: 22223333 })
+  telefono_contacto:string
 }

@@ -8,13 +8,6 @@ import { Empleado } from './entities/empleado.entity';
 export class EmpleadoController {
   constructor(private readonly empleadoService: EmpleadoService) { }
 
-  @Put('asignar-cencos/:run')
-  async asignarCencos(
-    @Param('run') run: string,
-    @Body('cencoIds') cencoIds: number[],
-  ) {
-    return await this.empleadoService.asignarCenco(run, cencoIds);
-  }
 
   @Patch('actualizar/:id')
   update(@Param('id') id: string, @Body() updateEmpleadoDto: UpdateEmpleadoDto) {
