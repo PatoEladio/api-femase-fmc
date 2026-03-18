@@ -75,8 +75,24 @@ export class AsignacionTurnoRotativoService {
     return `This action returns a #${id} asignacionTurnoRotativo`;
   }
 
-  update(id: number, updateAsignacionTurnoRotativoDto: UpdateAsignacionTurnoRotativoDto) {
-    return `This action updates a #${id} asignacionTurnoRotativo`;
+  async update(id: number, updateAsignacionTurnoRotativoDto: UpdateAsignacionTurnoRotativoDto) {
+    const existe = await this.asignacionTurnoRotativoRepository.findOne({
+      where: { id: id }
+    });
+    if (!existe) {
+      throw new HttpException(
+        `No se encontro la asignacion de turno rotativo`,
+        HttpStatus.BAD_REQUEST
+      );
+    }
+    const actualizar = this.asignacionTurnoRotativoRepository.update(id, updateAsignacionTurnoRotativoDto);
+    if (!actualizar) {
+      throw new HttpException(
+        `No se pudo actualizar la asignacion de turno rotativo`,
+        HttpStatus.BAD_REQUEST
+      );
+    }
+    return actualizar;
   }
 
   remove(id: number) {
