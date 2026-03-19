@@ -32,8 +32,8 @@ export class TipoMarcasService {
     return `This action returns a #${id} tipoMarca`;
   }
 
-  update(id: number, updateTipoMarcaDto: UpdateTipoMarcaDto) {
-    const tipoMarca = this.tipoMarcasRepository.findOne({
+  async update(id: number, updateTipoMarcaDto: UpdateTipoMarcaDto) {
+    const tipoMarca = await this.tipoMarcasRepository.findOne({
       where:{
         id:id
       }

@@ -36,8 +36,14 @@ export class AsignacionTurnoRotativoService {
 
 
 
-  findAll() {
-    return this.asignacionTurnoRotativoRepository.find({
+  async findAll(idEmpleado: number, page: number = 1) {
+    const limit = 50;
+    const skip = (page - 1) * limit;
+
+    const [data, total] = await this.asignacionTurnoRotativoRepository.findAndCount({
+      where: {
+        empleado: { empleado_id: idEmpleado }
+      },
       relations: {
         empleado: {
           empresa: true,
@@ -66,8 +72,17 @@ export class AsignacionTurnoRotativoService {
             departamento_id: true
           }
         }
-      }
+      },
+      take: limit,
+      skip: skip,
     });
+
+    return {
+      data,
+      total,
+      page,
+      lastPage: Math.ceil(total / limit)
+    };
   }
 
 
