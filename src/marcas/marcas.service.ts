@@ -34,7 +34,14 @@ export class MarcasService {
       order: {
         fecha_marca: 'ASC',
       },
-      relations: ['empleado', 'dispositivo'],
+      relations: [
+        'empleado',
+        'dispositivo',
+        'empleado.turno',
+        'empleado.turno.detalle_turno',
+        'empleado.turno.detalle_turno.horario',
+        'empleado.turno.detalle_turno.dia'
+      ],
       select: {
         id_marca: true,
         fecha_marca: true,
@@ -44,6 +51,16 @@ export class MarcasService {
         info_adicional: true,
         empleado: {
           num_ficha: true,
+          turno: {
+            turno_id: true,
+            detalle_turno: {
+              id_detalle_turno: true,
+              horario: {
+                hora_entrada: true,
+                hora_salida: true,
+              },
+            },
+          }
         },
         dispositivo: {
           nombre: true,
@@ -59,7 +76,10 @@ export class MarcasService {
       empleadoInfo = busqueda[0].empleado;
 
     } else {
-      empleadoInfo = await this.marcaRepository.manager.findOne(Empleado, { where: { num_ficha: numFicha } });
+      empleadoInfo = await this.marcaRepository.manager.findOne(Empleado, {
+        where: { num_ficha: numFicha },
+        relations: ['turno', 'turno.detalle_turno', 'turno.detalle_turno.horario', 'turno.detalle_turno.dia']
+      });
     }
 
     if (!empleadoInfo) {
@@ -109,10 +129,20 @@ export class MarcasService {
       });
 
       if (marcasDelDia.length > 0) {
-        const formateadas = marcasDelDia.map(m => ({
-          ...m,
-          fecha_marca: dateKey as any
-        }));
+        const formateadas = marcasDelDia.map(m => {
+          const dtDia = m.empleado?.turno?.detalle_turno?.find((dt: any) => dt.dia?.cod_dia === diaSemana);
+          return {
+            ...m,
+            fecha_marca: dateKey as any,
+            empleado: m.empleado ? {
+              ...m.empleado,
+              turno: m.empleado.turno ? {
+                ...m.empleado.turno,
+                detalle_turno: dtDia && dtDia.horario ? { horario: dtDia.horario } : null
+              } : null
+            } : null
+          };
+        });
         result.push(...formateadas);
 
         if (marcasDelDia.length === 1) {
@@ -124,6 +154,7 @@ export class MarcasService {
             infoFaltante = 'Falta Marca Entrada';
           }
 
+          const dtDia = empleadoInfo?.turno?.detalle_turno?.find((dt: any) => dt.dia?.cod_dia === diaSemana);
           result.push({
             id_marca: null,
             fecha_marca: dateKey as any,
@@ -132,10 +163,17 @@ export class MarcasService {
             hashcode: null,
             info_adicional: infoFaltante,
             dispositivo: null,
-            empleado: { num_ficha: empleadoInfo?.num_ficha },
+            empleado: {
+              num_ficha: empleadoInfo?.num_ficha,
+              turno: empleadoInfo?.turno ? {
+                turno_id: empleadoInfo.turno.turno_id,
+                detalle_turno: dtDia && dtDia.horario ? { horario: dtDia.horario } : null
+              } : null
+            },
           } as any);
         }
       } else {
+        const dtDia = empleadoInfo?.turno?.detalle_turno?.find((dt: any) => dt.dia?.cod_dia === diaSemana);
         result.push({
           id_marca: null,
           fecha_marca: dateKey as any,
@@ -144,7 +182,14 @@ export class MarcasService {
           hashcode: null,
           info_adicional: tieneTurnoHoy ? 'Sin marca' : 'Día libre',
           dispositivo: null,
-          empleado: { num_ficha: empleadoInfo?.num_ficha },
+          tieneTurno: tieneTurnoHoy,
+          empleado: {
+            num_ficha: empleadoInfo?.num_ficha,
+            turno: empleadoInfo?.turno ? {
+              turno_id: empleadoInfo.turno.turno_id,
+              detalle_turno: dtDia && dtDia.horario ? { horario: dtDia.horario } : null
+            } : null
+          },
         } as any);
       }
 
