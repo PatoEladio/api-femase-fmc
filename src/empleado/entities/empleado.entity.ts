@@ -4,6 +4,7 @@ import { Cargo } from "src/cargos/entities/cargo.entity";
 import { Cenco } from "src/cencos/cenco.entity";
 import { Empresa } from "src/empresas/empresas.entity";
 import { Estado } from "src/estado/estado.entity";
+import { Marca } from "src/marcas/entities/marca.entity";
 import { Turno } from "src/turno/entities/turno.entity";
 import { User } from "src/users/user.entity";
 import { Column, Entity, JoinColumn, JoinTable, ManyToMany, ManyToOne, OneToMany, OneToOne, PrimaryGeneratedColumn } from "typeorm";
@@ -122,4 +123,7 @@ export class Empleado {
   @Column()
   @ApiProperty({ description: 'Indica si el empleado permite rotativo', example: true })
   permite_rotativo: boolean;
+
+  @OneToMany(() => Marca, (marca) => marca.empleado)
+  marcas: Marca[];
 }
