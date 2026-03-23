@@ -50,6 +50,8 @@ import { TipoMarcasModule } from './tipo-marcas/tipo-marcas.module';
 import { TipoMarca } from './tipo-marcas/entities/tipo-marca.entity';
 import { AsignacionTurnoRotativoModule } from './asignacion_turno_rotativo/asignacion_turno_rotativo.module';
 import { AsignacionTurnoRotativo } from './asignacion_turno_rotativo/entities/asignacion_turno_rotativo.entity';
+import { MarcasModule } from './marcas/marcas.module';
+import { Marca } from './marcas/entities/marca.entity';
 
 @Module({
   imports: [
@@ -59,10 +61,35 @@ import { AsignacionTurnoRotativo } from './asignacion_turno_rotativo/entities/as
       host: 'localhost',
       port: 5432,
       username: 'postgres',
-      password: 'admin',
-      database: 'femase',
+      password: 'Admin',
+      database: 'postgres',
       synchronize: false,
-      entities: [User, Perfil, Estado, Menu, Empresa, Departamento, Cenco, TipoDispositivo, Dispositivo, Cargo, Horario, Turno, Empleado, Afp, ErrorRechazo, ProveedorCorreo, Feriado, TipoAusencia, SesionActiva, DetalleTurno, Semana, TipoMarca, AsignacionTurnoRotativo]
+      entities: [
+        User,
+        Perfil,
+        Estado,
+        Menu,
+        Empresa,
+        Departamento,
+        Cenco,
+        TipoDispositivo,
+        Dispositivo,
+        Cargo,
+        Horario,
+        Turno,
+        Empleado,
+        Afp,
+        ErrorRechazo,
+        ProveedorCorreo,
+        Feriado,
+        TipoAusencia,
+        SesionActiva,
+        DetalleTurno,
+        Semana,
+        TipoMarca,
+        AsignacionTurnoRotativo,
+        Marca
+      ]
     }),
     MailerModule.forRoot({
       transport: {
@@ -103,7 +130,8 @@ import { AsignacionTurnoRotativo } from './asignacion_turno_rotativo/entities/as
     DetalleTurnoModule,
     SemanaModule,
     TipoMarcasModule,
-    AsignacionTurnoRotativoModule
+    AsignacionTurnoRotativoModule,
+    MarcasModule
   ],
   providers: [PerfilesService],
   controllers: [PerfilesController],
