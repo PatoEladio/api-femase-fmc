@@ -61,8 +61,8 @@ import { Marca } from './marcas/entities/marca.entity';
       host: 'localhost',
       port: 5432,
       username: 'postgres',
-      password: 'Admin',
-      database: 'postgres',
+      password: 'superadmin',
+      database: 'femase',
       synchronize: false,
       entities: [
         User,
