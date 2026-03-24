@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsDateString, IsNotEmpty, IsNumber, IsString } from 'class-validator';
+import { IsDateString, IsNotEmpty, IsNumber, IsOptional, IsString } from 'class-validator';
 
 export class CreateMarcaDto {
   @IsDateString()
@@ -23,9 +23,9 @@ export class CreateMarcaDto {
   hashcode: string;
 
   @IsString()
-  @IsNotEmpty()
+  @IsOptional()
   @ApiProperty({ description: 'Información adicional', example: 'Marca manual' })
-  info_adicional: string;
+  info_adicional?: string;
 
   @IsNumber()
   @IsNotEmpty()
@@ -38,12 +38,12 @@ export class CreateMarcaDto {
   num_ficha: string;
 
   @IsNumber()
-  @IsNotEmpty()
+  @IsOptional()
   @ApiProperty({ description: 'ID del tipo de marca', example: 1 })
-  id_tipo_marca: number;
+  id_tipo_marca?: number;
 
   @IsString()
-  @IsNotEmpty()
+  @IsOptional()
   @ApiProperty({ description: 'Comentario', example: 'Comentario' })
-  comentario: string;
+  comentario?: string;
 }
