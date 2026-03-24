@@ -6,7 +6,7 @@ import { Column, Entity, JoinColumn, OneToOne, PrimaryGeneratedColumn } from "ty
 export class TipoMarca {
     @PrimaryGeneratedColumn()
     @ApiProperty({ description: "id", example: 1 })
-    id: number;
+    tipo_marca_id: number;
 
     @Column()
     @ApiProperty({ description: "nombre", example: "nombre" })
@@ -16,8 +16,4 @@ export class TipoMarca {
     @JoinColumn({ name: 'estado_id' })
     @ApiProperty({ description: "estado", example: 1 })
     estado_id: Estado;
-
-    @Column()
-    @ApiProperty({ description: "orden de despliegue", example: 1 })
-    orden_despliegue: number;
 }

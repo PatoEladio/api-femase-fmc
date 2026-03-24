@@ -49,6 +49,7 @@ export class MarcasService {
         evento: true,
         hashcode: true,
         info_adicional: true,
+        comentario: true,
         empleado: {
           num_ficha: true,
           turno: {
@@ -180,7 +181,7 @@ export class MarcasService {
           hora_marca: null,
           evento: null,
           hashcode: null,
-          info_adicional: tieneTurnoHoy ? 'Sin marca' : 'Día libre',
+          info_adicional: tieneTurnoHoy ? 'Faltan ambas marcas ' : 'Día libre',
           dispositivo: null,
           tieneTurno: tieneTurnoHoy,
           empleado: {
@@ -203,8 +204,25 @@ export class MarcasService {
     return `This action returns a #${id} marca`;
   }
 
-  update(id: number, updateMarcaDto: UpdateMarcaDto) {
-    return `This action updates a #${id} marca`;
+  async update(id: number, updateMarcaDto: UpdateMarcaDto) {
+    if (!updateMarcaDto || Object.keys(updateMarcaDto).length === 0) {
+      throw new HttpException('No se proporcionaron los datos para actualizar la marca', 400);
+    }
+
+    const marca = await this.marcaRepository.findOne({ where: { id_marca: id } });
+
+    if (!marca) {
+      throw new HttpException('No se encontró la marca a actualizar', 404);
+    }
+
+    Object.assign(marca, updateMarcaDto);
+    const guardar = await this.marcaRepository.save(marca);
+
+    if (!guardar) {
+      throw new HttpException('No se pudo actualizar la marca', 500);
+    }
+
+    return { message: 'Marca actualizada exitosamente', data: guardar };
   }
 
   remove(id: number) {
