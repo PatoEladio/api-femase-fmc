@@ -1,7 +1,8 @@
 import { Dispositivo } from "src/dispositivo/entities/dispositivo.entity";
 import { Empleado } from "src/empleado/entities/empleado.entity";
+import { MarcasAuditoria } from "src/marcas-auditoria/entities/marcas-auditoria.entity";
 import { TipoMarca } from "src/tipo-marcas/entities/tipo-marca.entity";
-import { Column, Entity, JoinColumn, ManyToOne, PrimaryGeneratedColumn } from "typeorm";
+import { Column, Entity, JoinColumn, ManyToOne, OneToOne, PrimaryGeneratedColumn } from "typeorm";
 
 @Entity({ name: 'marcas', schema: 'db_fmc' })
 export class Marca {
@@ -46,4 +47,7 @@ export class Marca {
 
   @Column()
   comentario: string;
+
+  @OneToOne(() => MarcasAuditoria, (marcasAuditoria) => marcasAuditoria.id_marca)
+  marcas_auditoria: MarcasAuditoria;
 }

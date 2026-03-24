@@ -5,12 +5,15 @@ import { Between, Repository } from 'typeorm';
 import { Marca } from './entities/marca.entity';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Empleado } from '../empleado/entities/empleado.entity';
+import { MarcasAuditoria } from '../marcas-auditoria/entities/marcas-auditoria.entity';
 
 @Injectable()
 export class MarcasService {
   constructor(
     @InjectRepository(Marca)
     private marcaRepository: Repository<Marca>,
+    @InjectRepository(MarcasAuditoria)
+    private marcasAuditoriaRepository: Repository<MarcasAuditoria>,
   ) { }
 
   async create(createMarcaDto: CreateMarcaDto) {
@@ -209,7 +212,7 @@ export class MarcasService {
     return `This action returns a #${id} marca`;
   }
 
-  async update(id: number, updateMarcaDto: UpdateMarcaDto) {
+  async update(id: number, updateMarcaDto: UpdateMarcaDto, usuarioActualizador: string) {
     if (!updateMarcaDto || Object.keys(updateMarcaDto).length === 0) {
       throw new HttpException('No se proporcionaron los datos para actualizar la marca', 400);
     }
@@ -226,6 +229,21 @@ export class MarcasService {
     if (!guardar) {
       throw new HttpException('No se pudo actualizar la marca', 500);
     }
+
+    const marcaAuditoria = this.marcasAuditoriaRepository.create({
+      id_marca: marca.id_marca,
+      marca: { id_marca: marca.id_marca },
+      fecha_marca: marca.fecha_marca,
+      hora_marca: marca.hora_marca,
+      evento: marca.evento,
+      hashcode: marca.hashcode,
+      num_ficha: marca.num_ficha,
+      fecha_actualizacion: new Date(),
+      usuario_actualizador: usuarioActualizador
+    });
+
+    Object.assign(marcaAuditoria, updateMarcaDto);
+    const guardarAuditoria = await this.marcasAuditoriaRepository.save(marcaAuditoria);
 
     return { message: 'Marca actualizada exitosamente', data: guardar };
   }
