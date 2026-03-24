@@ -40,7 +40,8 @@ export class MarcasService {
         'empleado.turno',
         'empleado.turno.detalle_turno',
         'empleado.turno.detalle_turno.horario',
-        'empleado.turno.detalle_turno.dia'
+        'empleado.turno.detalle_turno.dia',
+        'tipo_marca'
       ],
       select: {
         id_marca: true,
@@ -50,6 +51,10 @@ export class MarcasService {
         hashcode: true,
         info_adicional: true,
         comentario: true,
+        tipo_marca: {
+          tipo_marca_id: true,
+          nombre: true,
+        },
         empleado: {
           num_ficha: true,
           turno: {

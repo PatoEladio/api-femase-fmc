@@ -1,5 +1,6 @@
 import { Dispositivo } from "src/dispositivo/entities/dispositivo.entity";
 import { Empleado } from "src/empleado/entities/empleado.entity";
+import { TipoMarca } from "src/tipo-marcas/entities/tipo-marca.entity";
 import { Column, Entity, JoinColumn, ManyToOne, PrimaryGeneratedColumn } from "typeorm";
 
 @Entity({ name: 'marcas', schema: 'db_fmc' })
@@ -21,6 +22,13 @@ export class Marca {
 
   @Column()
   info_adicional: string;
+
+  @Column()
+  id_tipo_marca: number;
+
+  @ManyToOne(() => TipoMarca, (tipoMarca) => tipoMarca.marcas)
+  @JoinColumn({ name: 'id_tipo_marca' })
+  tipo_marca: TipoMarca;
 
   @Column()
   dispositivo_id: number;
