@@ -52,6 +52,8 @@ import { AsignacionTurnoRotativoModule } from './asignacion_turno_rotativo/asign
 import { AsignacionTurnoRotativo } from './asignacion_turno_rotativo/entities/asignacion_turno_rotativo.entity';
 import { MarcasModule } from './marcas/marcas.module';
 import { Marca } from './marcas/entities/marca.entity';
+import { MarcasAuditoriaModule } from './marcas-auditoria/marcas-auditoria.module';
+import { MarcasAuditoria } from './marcas-auditoria/entities/marcas-auditoria.entity';
 
 @Module({
   imports: [
@@ -88,7 +90,8 @@ import { Marca } from './marcas/entities/marca.entity';
         Semana,
         TipoMarca,
         AsignacionTurnoRotativo,
-        Marca
+        Marca,
+        MarcasAuditoria
       ]
     }),
     MailerModule.forRoot({
@@ -131,7 +134,8 @@ import { Marca } from './marcas/entities/marca.entity';
     SemanaModule,
     TipoMarcasModule,
     AsignacionTurnoRotativoModule,
-    MarcasModule
+    MarcasModule,
+    MarcasAuditoriaModule
   ],
   providers: [PerfilesService],
   controllers: [PerfilesController],
