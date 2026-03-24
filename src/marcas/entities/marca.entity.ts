@@ -35,4 +35,7 @@ export class Marca {
   @ManyToOne(() => Empleado, (empleado) => empleado.marcas)
   @JoinColumn({ name: 'num_ficha', referencedColumnName: 'num_ficha' })
   empleado: Empleado;
+
+  @Column()
+  comentario: string;
 }
