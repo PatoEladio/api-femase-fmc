@@ -36,4 +36,14 @@ export class CreateMarcaDto {
   @IsNotEmpty()
   @ApiProperty({ description: 'Número de ficha', example: '123456' })
   num_ficha: string;
+
+  @IsNumber()
+  @IsNotEmpty()
+  @ApiProperty({ description: 'ID del tipo de marca', example: 1 })
+  id_tipo_marca: number;
+
+  @IsString()
+  @IsNotEmpty()
+  @ApiProperty({ description: 'Comentario', example: 'Comentario' })
+  comentario: string;
 }
