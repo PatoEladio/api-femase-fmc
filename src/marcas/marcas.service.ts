@@ -124,6 +124,10 @@ export class MarcasService {
 
       let diaSemana = currentDate.getDay();
       if (diaSemana === 0) diaSemana = 7;
+
+      const diasNombres = ['', 'Lu.', 'Ma.', 'Mi.', 'Ju.', 'Vi.', 'Sá.', 'Do.'];
+      const fechaFormatExt = `${diasNombres[diaSemana]} ${day}-${month}-${year}`;
+
       const tieneTurnoHoy = diasConTurno.includes(diaSemana);
 
       const marcasDelDia = busqueda.filter((m) => {
@@ -142,7 +146,7 @@ export class MarcasService {
           const dtDia = m.empleado?.turno?.detalle_turno?.find((dt: any) => dt.dia?.cod_dia === diaSemana);
           return {
             ...m,
-            fecha_marca: dateKey as any,
+            fecha_marca: fechaFormatExt as any,
             empleado: m.empleado ? {
               ...m.empleado,
               turno: m.empleado.turno ? {
@@ -166,7 +170,7 @@ export class MarcasService {
           const dtDia = empleadoInfo?.turno?.detalle_turno?.find((dt: any) => dt.dia?.cod_dia === diaSemana);
           result.push({
             id_marca: null,
-            fecha_marca: dateKey as any,
+            fecha_marca: fechaFormatExt as any,
             hora_marca: null,
             evento: null,
             hashcode: null,
@@ -185,7 +189,7 @@ export class MarcasService {
         const dtDia = empleadoInfo?.turno?.detalle_turno?.find((dt: any) => dt.dia?.cod_dia === diaSemana);
         result.push({
           id_marca: null,
-          fecha_marca: dateKey as any,
+          fecha_marca: fechaFormatExt as any,
           hora_marca: null,
           evento: null,
           hashcode: null,
@@ -224,16 +228,27 @@ export class MarcasService {
     }
 
     Object.assign(marca, updateMarcaDto);
+    if (marca.fecha_marca) {
+      if (marca.fecha_marca instanceof Date) marca.fecha_marca = marca.fecha_marca.toISOString().substring(0, 10) as any;
+      else if (typeof marca.fecha_marca === 'string') marca.fecha_marca = (marca.fecha_marca as string).substring(0, 10) as any;
+    }
     const guardar = await this.marcaRepository.save(marca);
 
     if (!guardar) {
       throw new HttpException('No se pudo actualizar la marca', 500);
     }
 
+    let fMarca = marca.fecha_marca;
+    if (fMarca instanceof Date) {
+      fMarca = fMarca.toISOString().substring(0, 10) as any;
+    } else if (typeof fMarca === 'string') {
+      fMarca = (fMarca as string).substring(0, 10) as any;
+    }
+
     const marcaAuditoria = this.marcasAuditoriaRepository.create({
       id_marca: marca.id_marca,
       marca: { id_marca: marca.id_marca },
-      fecha_marca: marca.fecha_marca,
+      fecha_marca: fMarca,
       hora_marca: marca.hora_marca,
       evento: marca.evento,
       hashcode: marca.hashcode,
@@ -243,6 +258,14 @@ export class MarcasService {
     });
 
     Object.assign(marcaAuditoria, updateMarcaDto);
+    if (marcaAuditoria.fecha_marca) {
+      if (marcaAuditoria.fecha_marca instanceof Date) marcaAuditoria.fecha_marca = marcaAuditoria.fecha_marca.toISOString().substring(0, 10) as any;
+      else if (typeof marcaAuditoria.fecha_marca === 'string') marcaAuditoria.fecha_marca = (marcaAuditoria.fecha_marca as string).substring(0, 10) as any;
+    }
+    if (marcaAuditoria.fecha_actualizacion) {
+      if (marcaAuditoria.fecha_actualizacion instanceof Date) marcaAuditoria.fecha_actualizacion = marcaAuditoria.fecha_actualizacion.toISOString().substring(0, 19).replace('T', ' ') as any;
+      else if (typeof marcaAuditoria.fecha_actualizacion === 'string') marcaAuditoria.fecha_actualizacion = (marcaAuditoria.fecha_actualizacion as string).substring(0, 19).replace('T', ' ') as any;
+    }
     const guardarAuditoria = await this.marcasAuditoriaRepository.save(marcaAuditoria);
 
     return { message: 'Marca actualizada exitosamente', data: guardar };

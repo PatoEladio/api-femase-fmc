@@ -16,15 +16,33 @@ export class MarcasAuditoriaService {
     return 'This action adds a new marcasAuditoria';
   }
 
-  findAll(idMarca: number) {
+  async findAll(idMarca: number) {
     if (!idMarca) {
       return [];
     }
 
-    return this.marcasAuditoriaRepository.find({
+    const resultados = await this.marcasAuditoriaRepository.find({
       where: {
         id_marca: idMarca
       }
+    });
+
+    return resultados.map((r: any) => {
+      let fMarca = r.fecha_marca;
+      if (fMarca instanceof Date) {
+        fMarca = fMarca.toISOString().substring(0, 10);
+      } else if (typeof fMarca === 'string') {
+        fMarca = fMarca.substring(0, 10);
+      }
+
+      let fActualizacion = r.fecha_actualizacion;
+      if (fActualizacion instanceof Date) {
+        fActualizacion = fActualizacion.toISOString().substring(0, 19).replace('T', ' ');
+      } else if (typeof fActualizacion === 'string') {
+        fActualizacion = fActualizacion.substring(0, 19).replace('T', ' ');
+      }
+
+      return { ...r, fecha_marca: fMarca, fecha_actualizacion: fActualizacion };
     });
   }
 
