@@ -5,12 +5,15 @@ import { Between, Repository } from 'typeorm';
 import { Marca } from './entities/marca.entity';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Empleado } from '../empleado/entities/empleado.entity';
+import { MarcasAuditoria } from '../marcas-auditoria/entities/marcas-auditoria.entity';
 
 @Injectable()
 export class MarcasService {
   constructor(
     @InjectRepository(Marca)
     private marcaRepository: Repository<Marca>,
+    @InjectRepository(MarcasAuditoria)
+    private marcasAuditoriaRepository: Repository<MarcasAuditoria>,
   ) { }
 
   async create(createMarcaDto: CreateMarcaDto) {
@@ -40,7 +43,8 @@ export class MarcasService {
         'empleado.turno',
         'empleado.turno.detalle_turno',
         'empleado.turno.detalle_turno.horario',
-        'empleado.turno.detalle_turno.dia'
+        'empleado.turno.detalle_turno.dia',
+        'tipo_marca'
       ],
       select: {
         id_marca: true,
@@ -49,6 +53,11 @@ export class MarcasService {
         evento: true,
         hashcode: true,
         info_adicional: true,
+        comentario: true,
+        tipo_marca: {
+          tipo_marca_id: true,
+          nombre: true,
+        },
         empleado: {
           num_ficha: true,
           turno: {
@@ -180,7 +189,7 @@ export class MarcasService {
           hora_marca: null,
           evento: null,
           hashcode: null,
-          info_adicional: tieneTurnoHoy ? 'Sin marca' : 'Día libre',
+          info_adicional: tieneTurnoHoy ? 'Faltan ambas marcas ' : 'Día libre',
           dispositivo: null,
           tieneTurno: tieneTurnoHoy,
           empleado: {
@@ -203,8 +212,40 @@ export class MarcasService {
     return `This action returns a #${id} marca`;
   }
 
-  update(id: number, updateMarcaDto: UpdateMarcaDto) {
-    return `This action updates a #${id} marca`;
+  async update(id: number, updateMarcaDto: UpdateMarcaDto, usuarioActualizador: string) {
+    if (!updateMarcaDto || Object.keys(updateMarcaDto).length === 0) {
+      throw new HttpException('No se proporcionaron los datos para actualizar la marca', 400);
+    }
+
+    const marca = await this.marcaRepository.findOne({ where: { id_marca: id } });
+
+    if (!marca) {
+      throw new HttpException('No se encontró la marca a actualizar', 404);
+    }
+
+    Object.assign(marca, updateMarcaDto);
+    const guardar = await this.marcaRepository.save(marca);
+
+    if (!guardar) {
+      throw new HttpException('No se pudo actualizar la marca', 500);
+    }
+
+    const marcaAuditoria = this.marcasAuditoriaRepository.create({
+      id_marca: marca.id_marca,
+      marca: { id_marca: marca.id_marca },
+      fecha_marca: marca.fecha_marca,
+      hora_marca: marca.hora_marca,
+      evento: marca.evento,
+      hashcode: marca.hashcode,
+      num_ficha: marca.num_ficha,
+      fecha_actualizacion: new Date(),
+      usuario_actualizador: usuarioActualizador
+    });
+
+    Object.assign(marcaAuditoria, updateMarcaDto);
+    const guardarAuditoria = await this.marcasAuditoriaRepository.save(marcaAuditoria);
+
+    return { message: 'Marca actualizada exitosamente', data: guardar };
   }
 
   remove(id: number) {

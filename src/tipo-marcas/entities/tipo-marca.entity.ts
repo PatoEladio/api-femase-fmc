@@ -1,12 +1,13 @@
 import { ApiProperty } from "@nestjs/swagger";
 import { Estado } from "src/estado/estado.entity";
-import { Column, Entity, JoinColumn, OneToOne, PrimaryGeneratedColumn } from "typeorm";
+import { Marca } from "src/marcas/entities/marca.entity";
+import { Column, Entity, JoinColumn, OneToMany, OneToOne, PrimaryGeneratedColumn } from "typeorm";
 
 @Entity('tipo_marcas', { schema: 'db_fmc' })
 export class TipoMarca {
     @PrimaryGeneratedColumn()
     @ApiProperty({ description: "id", example: 1 })
-    id: number;
+    tipo_marca_id: number;
 
     @Column()
     @ApiProperty({ description: "nombre", example: "nombre" })
@@ -17,7 +18,6 @@ export class TipoMarca {
     @ApiProperty({ description: "estado", example: 1 })
     estado_id: Estado;
 
-    @Column()
-    @ApiProperty({ description: "orden de despliegue", example: 1 })
-    orden_despliegue: number;
+    @OneToMany(() => Marca, (marca) => marca.tipo_marca)
+    marcas: Marca[];
 }

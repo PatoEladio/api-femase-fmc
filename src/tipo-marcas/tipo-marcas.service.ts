@@ -21,9 +21,9 @@ export class TipoMarcasService {
     return this.tipoMarcasRepository.find({
       relations: {
         estado_id: true
-      },  
-      order:{
-        id:"ASC"
+      },
+      order: {
+        tipo_marca_id: "ASC"
       }
     });
   }
@@ -35,8 +35,8 @@ export class TipoMarcasService {
 
   async update(id: number, updateTipoMarcaDto: UpdateTipoMarcaDto) {
     const tipoMarca = await this.tipoMarcasRepository.findOne({
-      where:{
-        id:id
+      where: {
+        tipo_marca_id: id
       }
     });
     if (!tipoMarca) {

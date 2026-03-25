@@ -1,9 +1,11 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, Query } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, Query, Req, UseGuards } from '@nestjs/common';
 import { MarcasService } from './marcas.service';
 import { CreateMarcaDto } from './dto/create-marca.dto';
 import { UpdateMarcaDto } from './dto/update-marca.dto';
+import { AuthGuard } from 'src/auth/auth.guard';
 
 @Controller('marcas')
+@UseGuards(AuthGuard)
 export class MarcasController {
   constructor(private readonly marcasService: MarcasService) { }
 
@@ -23,8 +25,8 @@ export class MarcasController {
   }
 
   @Patch(':id')
-  update(@Param('id') id: string, @Body() updateMarcaDto: UpdateMarcaDto) {
-    return this.marcasService.update(+id, updateMarcaDto);
+  update(@Param('id') id: string, @Body() updateMarcaDto: UpdateMarcaDto, @Req() req: any) {
+    return this.marcasService.update(+id, updateMarcaDto, req.user.username);
   }
 
   @Delete(':id')
