@@ -252,6 +252,8 @@ export class MarcasService {
       if (marca.fecha_marca instanceof Date) marca.fecha_marca = marca.fecha_marca.toISOString().substring(0, 10) as any;
       else if (typeof marca.fecha_marca === 'string') marca.fecha_marca = (marca.fecha_marca as string).substring(0, 10) as any;
     }
+    marca.hashcode = crypto.createHash('md5').update(JSON.stringify(marca.evento + ';' + marca.fecha_marca + ';' + marca.hora_marca + ';' + marca.num_ficha + ';' + marca.id_tipo_marca + ';' + marca.info_adicional + ';' + marca.comentario)).digest('hex');
+
     const guardar = await this.marcaRepository.save(marca);
 
     if (!guardar) {
