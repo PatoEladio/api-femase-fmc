@@ -7,6 +7,7 @@ import { Estado } from "src/estado/estado.entity";
 import { Marca } from "src/marcas/entities/marca.entity";
 import { Turno } from "src/turno/entities/turno.entity";
 import { User } from "src/users/user.entity";
+import { Vacaciones } from "src/vacaciones/entities/vacaciones.entity";
 import { Column, Entity, JoinColumn, JoinTable, ManyToMany, ManyToOne, OneToMany, OneToOne, PrimaryGeneratedColumn } from "typeorm";
 
 @Entity({ name: 'empleado', schema: 'db_fmc' })
@@ -126,4 +127,7 @@ export class Empleado {
 
   @OneToMany(() => Marca, (marca) => marca.empleado)
   marcas: Marca[];
+
+  @OneToMany(() => Vacaciones, (vacaciones) => vacaciones.empleado)
+  vacaciones: Vacaciones[];
 }
