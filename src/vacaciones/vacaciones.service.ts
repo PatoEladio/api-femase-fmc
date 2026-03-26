@@ -61,6 +61,50 @@ export class VacacionesService {
       }
     }
 
+    let multiplicadorDias: number;
+
+    if (busqueda[0].zona_extrema) {
+      multiplicadorDias = 1.67;
+    } else {
+      multiplicadorDias = 1.25;
+    }
+
+    const fechaInicioContrato = new Date(busqueda[0].empleado.fecha_ini_contrato);
+    const fechaActual = new Date();
+    
+    let mesesTrabajados = (fechaActual.getFullYear() - fechaInicioContrato.getFullYear()) * 12 + (fechaActual.getMonth() - fechaInicioContrato.getMonth());
+    
+    if (fechaActual.getDate() < fechaInicioContrato.getDate()) {
+      mesesTrabajados--;
+    }
+    
+    if (mesesTrabajados < 0) mesesTrabajados = 0;
+
+    const diasAcumulados = mesesTrabajados * multiplicadorDias;
+
+    busqueda.forEach(b => {
+      b.dias_acumulados = parseFloat(diasAcumulados.toFixed(2));
+
+      if (b.fecha_inicio && b.fecha_fin) {
+        const startDate = new Date(b.fecha_inicio);
+        const endDate = new Date(b.fecha_fin);
+        
+        let diasEfectivos = 0;
+        const current = new Date(startDate.getTime());
+
+        while (current <= endDate) {
+          const dayOfWeek = current.getDay();
+          if (dayOfWeek !== 0 && dayOfWeek !== 6) {
+            diasEfectivos++;
+          }
+          current.setDate(current.getDate() + 1);
+        }
+        
+        b.dias_efectivos = diasEfectivos;
+        b.saldo_vacaciones = parseFloat((b.dias_acumulados - b.dias_efectivos).toFixed(2));
+      }
+    });
+
     return busqueda;
   }
 
