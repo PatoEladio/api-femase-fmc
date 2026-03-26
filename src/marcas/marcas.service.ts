@@ -6,6 +6,8 @@ import { Marca } from './entities/marca.entity';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Empleado } from '../empleado/entities/empleado.entity';
 import { MarcasAuditoria } from '../marcas-auditoria/entities/marcas-auditoria.entity';
+import { Feriado } from '../feriados/entities/feriado.entity';
+import * as crypto from 'crypto';
 
 @Injectable()
 export class MarcasService {
@@ -14,6 +16,8 @@ export class MarcasService {
     private marcaRepository: Repository<Marca>,
     @InjectRepository(MarcasAuditoria)
     private marcasAuditoriaRepository: Repository<MarcasAuditoria>,
+    @InjectRepository(Feriado)
+    private readonly feriadosRepository: Repository<Feriado>,
   ) { }
 
   async create(createMarcaDto: CreateMarcaDto) {
@@ -21,6 +25,9 @@ export class MarcasService {
       throw new HttpException('No se proporcionaron los datos para crear la marca', 404);
     }
     const nuevaMarca = this.marcaRepository.create(createMarcaDto);
+
+    nuevaMarca.hashcode = crypto.createHash('md5').update(JSON.stringify(nuevaMarca.evento + ';' + nuevaMarca.fecha_marca + ';' + nuevaMarca.hora_marca + ';' + nuevaMarca.num_ficha + ';' + nuevaMarca.id_tipo_marca + ';' + nuevaMarca.info_adicional + ';' + nuevaMarca.comentario)).digest('hex');
+
     const guardar = await this.marcaRepository.save(nuevaMarca);
     if (!guardar) {
       throw new HttpException('No se pudo crear la marca', 404);
@@ -77,6 +84,8 @@ export class MarcasService {
       }
     });
 
+    const feriados = await this.feriadosRepository.find();
+
     const result: any[] = [];
 
     let empleadoInfo: Empleado | null = null;
@@ -124,6 +133,13 @@ export class MarcasService {
 
       let diaSemana = currentDate.getDay();
       if (diaSemana === 0) diaSemana = 7;
+
+      const isFeriado = feriados.some(fer => {
+        let fStr = '';
+        if (fer.fecha instanceof Date) fStr = fer.fecha.toISOString().substring(0, 10);
+        else if (typeof fer.fecha === 'string') fStr = fer.fecha.substring(0, 10);
+        return fStr === dateKey;
+      });
 
       const diasNombres = ['', 'Lu.', 'Ma.', 'Mi.', 'Ju.', 'Vi.', 'Sá.', 'Do.'];
       const fechaFormatExt = `${diasNombres[diaSemana]} ${day}-${month}-${year}`;
@@ -187,13 +203,17 @@ export class MarcasService {
         }
       } else {
         const dtDia = empleadoInfo?.turno?.detalle_turno?.find((dt: any) => dt.dia?.cod_dia === diaSemana);
+
+        let infoTexto = tieneTurnoHoy ? 'Faltan ambas marcas ' : 'Día libre';
+        if (isFeriado) infoTexto = 'Feriado';
+
         result.push({
           id_marca: null,
           fecha_marca: fechaFormatExt as any,
           hora_marca: null,
           evento: null,
           hashcode: null,
-          info_adicional: tieneTurnoHoy ? 'Faltan ambas marcas ' : 'Día libre',
+          info_adicional: infoTexto,
           dispositivo: null,
           tieneTurno: tieneTurnoHoy,
           empleado: {

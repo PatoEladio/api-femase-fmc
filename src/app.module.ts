@@ -55,6 +55,10 @@ import { Marca } from './marcas/entities/marca.entity';
 import { MarcasAuditoriaModule } from './marcas-auditoria/marcas-auditoria.module';
 import { MarcasAuditoria } from './marcas-auditoria/entities/marcas-auditoria.entity';
 
+import { ReportesModule } from './reportes/reportes.module';
+import { VacacionesModule } from './vacaciones/vacaciones.module';
+import { Vacaciones } from './vacaciones/entities/vacaciones.entity';
+
 @Module({
   imports: [
     ConfigModule.forRoot(),
@@ -91,7 +95,8 @@ import { MarcasAuditoria } from './marcas-auditoria/entities/marcas-auditoria.en
         TipoMarca,
         AsignacionTurnoRotativo,
         Marca,
-        MarcasAuditoria
+        MarcasAuditoria,
+        Vacaciones
       ]
     }),
     MailerModule.forRoot({
@@ -135,7 +140,9 @@ import { MarcasAuditoria } from './marcas-auditoria/entities/marcas-auditoria.en
     TipoMarcasModule,
     AsignacionTurnoRotativoModule,
     MarcasModule,
-    MarcasAuditoriaModule
+    MarcasAuditoriaModule,
+    ReportesModule,
+    VacacionesModule
   ],
   providers: [PerfilesService],
   controllers: [PerfilesController],
