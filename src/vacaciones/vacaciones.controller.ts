@@ -7,9 +7,14 @@ import { UpdateVacacioneDto } from './dto/update-vacacione.dto';
 export class VacacionesController {
   constructor(private readonly vacacionesService: VacacionesService) { }
 
-  @Post()
-  create(@Body() createVacacioneDto: CreateVacacioneDto) {
-    return this.vacacionesService.create(createVacacioneDto);
+  @Patch('aprobar-rechazar')
+  aprobarRechazarSolicitud(@Query('idSolicitud') idSolicitud: number, @Query('estado') estado: string, @Query('numFicha') numFicha: string) {
+    return this.vacacionesService.aprobarRechazarSolicitud(idSolicitud, estado, '21264235-5');
+  }
+
+  @Get('dias-disponibles')
+  getDiasDisponibles(@Query('numFicha') numFicha: string) {
+    return this.vacacionesService.getDiasDisponibles(numFicha);
   }
 
   @Get()
@@ -17,9 +22,9 @@ export class VacacionesController {
     return this.vacacionesService.findAll(numFicha, fechaInicio, fechaFin);
   }
 
-  @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.vacacionesService.findOne(+id);
+  @Post('solicitud')
+  createSolicitudVacaciones(@Body() createVacacioneDto: CreateVacacioneDto, @Query('numFicha') numFicha: string) {
+    return this.vacacionesService.createSolicitudVacaciones(createVacacioneDto, numFicha);
   }
 
   @Patch(':id')

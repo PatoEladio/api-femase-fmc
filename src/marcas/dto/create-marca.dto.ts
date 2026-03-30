@@ -17,7 +17,7 @@ export class CreateMarcaDto {
   @ApiProperty({ description: 'Tipo de evento (1=Entrada, 2=Salida, etc.)', example: 1 })
   evento: number;
 
-
+  @IsString()
   @IsOptional()
   @ApiProperty({ description: 'Hashcode generado', example: 'abc123hash' })
   hashcode?: string;
