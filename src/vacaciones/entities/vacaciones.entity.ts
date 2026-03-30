@@ -15,13 +15,13 @@ export class Vacaciones {
   @Column()
   fecha_fin: Date;
 
-  @Column()
+  @Column({ type: 'decimal', precision: 5, scale: 2 })
   dias_acumulados: number;
 
-  @Column()
+  @Column({ type: 'decimal', precision: 5, scale: 2 })
   dias_efectivos: number;
 
-  @Column()
+  @Column({ type: 'decimal', precision: 5, scale: 2 })
   saldo_vacaciones: number;
 
   @Column()
