@@ -6,6 +6,7 @@ import { Empleado } from '../empleado/entities/empleado.entity';
 import { Feriado } from '../feriados/entities/feriado.entity';
 import { Repository } from 'typeorm';
 import { AttendanceRecordDto, UserReportDto } from './dto/attendance-report.dto';
+import { Vacaciones } from 'src/vacaciones/entities/vacaciones.entity';
 
 @Injectable()
 export class ReportesService {
@@ -14,7 +15,9 @@ export class ReportesService {
     @InjectRepository(Empleado)
     private readonly empleadoRepository: Repository<Empleado>,
     @InjectRepository(Feriado)
-    private readonly feriadosRepository: Repository<Feriado>
+    private readonly feriadosRepository: Repository<Feriado>,
+    @InjectRepository(Vacaciones)
+    private readonly vacacionesRepository: Repository<Vacaciones>,
   ) { }
 
   async generateAttendancePdf(numFicha: string, fechaInicio: string, fechaFin: string): Promise<Buffer> {
@@ -148,29 +151,22 @@ export class ReportesService {
       let isFeriadoLibre = false;
       if (isFeriado) {
         if (entReal === '-' && salReal === '-') {
-           reg.observacion = 'Feriado';
-           isFeriadoLibre = true;
+          reg.observacion = 'Feriado';
+          isFeriadoLibre = true;
         }
       }
 
       // Calculation of days stats
       if (entReal !== '-' || salReal !== '-') {
-        totalDiasTrabajados++; // Any mark means the person showed up
+        totalDiasTrabajados++;
       } else if (isFeriadoLibre) {
         totalDiasFeriado++;
       } else if (hrsTeoricasMs === 0) {
-        totalDiasDescanso++; // No scheduled shift = day off
+        totalDiasDescanso++;
       } else {
-        totalDiasAusente++; // Scheduled shift but zero marks = absent
+        totalDiasAusente++;
       }
-
-      return {
-        ...reg,
-        entrada: entReal,
-        salida: salReal,
-        entradaTeorica: entTeo,
-        salidaTeorica: salTeo,
-      };
+      return { ...reg, entrada: entReal, salida: salReal, entradaTeorica: entTeo, salidaTeorica: salTeo, };
     });
 
     const data: UserReportDto = {
@@ -179,8 +175,7 @@ export class ReportesService {
       rut: empleado.run,
       centroCosto: empleado.cenco?.nombre_cenco || 'Sin cenco',
       fechaIngreso: empleado.fecha_ini_contrato ? new Date(empleado.fecha_ini_contrato).toLocaleDateString('es-CL') : 'N/A',
-      periodo: { desde: fechaInicio, hasta: fechaFin },
-      registros
+      periodo: { desde: fechaInicio, hasta: fechaFin }, registros
     };
 
     const parseMs = (timeStr: string): number => {
@@ -215,7 +210,7 @@ export class ReportesService {
 
     for (let i = 0; i < data.registros.length; i++) {
       const reg = data.registros[i];
-      
+
       semTeoricasMs += parseMs(reg.horasTeoricas);
       semPresencialesMs += parseMs(reg.horasPresenciales);
       semAtrasoMs += parseMs(reg.atraso);
@@ -242,7 +237,7 @@ export class ReportesService {
           { text: formatMs(semDiaMs), style: 'tableHeader' },
           { text: '', style: 'tableHeader' }
         ]);
-        
+
         semTeoricasMs = 0;
         semPresencialesMs = 0;
         semAtrasoMs = 0;
@@ -308,6 +303,153 @@ export class ReportesService {
         tableHeader: { bold: true, fontSize: 8 }
       },
       defaultStyle: { font: 'Helvetica', fontSize: 8 }
+    };
+
+    pdfmake.setFonts(fonts);
+    const pdfDoc = pdfmake.createPdf(docDefinition);
+    return await pdfDoc.getBuffer();
+  }
+
+  async generarReporteVacaciones(numFicha: string): Promise<Buffer> {
+    const busquedaEmpleado = await this.empleadoRepository.findOne({
+      where: {
+        num_ficha: numFicha
+      },
+      relations: ['cenco', 'empresa', 'cargo']
+    });
+
+    if (!busquedaEmpleado) {
+      throw new HttpException('Empleado no encontrado', 404);
+    }
+
+    const busquedaVacaciones = await this.vacacionesRepository.find({
+      where: {
+        empleado: {
+          num_ficha: busquedaEmpleado?.num_ficha
+        },
+        estado: 'A'
+      },
+      relations: ['empleado'],
+      order: {
+        fecha_ingreso: 'ASC'
+      }
+    });
+
+    const formatDate = (d: any) => {
+      if (!d) return 'N/A';
+      if (typeof d === 'string') return d.substring(0, 10).split('-').reverse().join('-');
+      if (d instanceof Date) return d.toISOString().substring(0, 10).split('-').reverse().join('-');
+      return String(d);
+    };
+
+    const tableBody: any[] = [
+      [
+        { text: 'Fecha Inicio', style: 'tableHeader' },
+        { text: 'Fecha Fin', style: 'tableHeader' },
+        { text: 'Días\nAcum.', style: 'tableHeader' },
+        { text: 'Días\nEfectivos', style: 'tableHeader' },
+        { text: 'Saldo Días\nAsignados', style: 'tableHeader' },
+        { text: 'Autorizada\nPor', style: 'tableHeader' },
+        { text: 'Días Efec.\nVBA', style: 'tableHeader' },
+        { text: 'Días Efec.\nVP', style: 'tableHeader' },
+        { text: 'Saldo VBA\nPrevio', style: 'tableHeader' },
+        { text: 'Saldo VP\nPrevio', style: 'tableHeader' },
+        { text: 'Saldo VBA\nPost', style: 'tableHeader' },
+        { text: 'Saldo VP\nPost', style: 'tableHeader' }
+      ]
+    ];
+
+    for (let i = 0; i < busquedaVacaciones.length; i++) {
+      const vacacion = busquedaVacaciones[i];
+
+      const fInicio = formatDate(vacacion.fecha_inicio);
+      const fFin = formatDate(vacacion.fecha_fin);
+
+      const diasAcumulados = Number(vacacion.dias_acumulados || 0).toFixed(2);
+      const diasEfectivos = Number(vacacion.dias_efectivos || 0).toFixed(2);
+
+      const diasEfectivosVBA = diasEfectivos;
+      const diasEfectivosVP = '0.00';
+
+      const saldoVBAPrevioNumber = Number(vacacion.dias_acumulados || 0);
+      const saldoVPPrevio = '0.00';
+      const diasEf = Number(vacacion.dias_efectivos || 0);
+
+      const saldoAsignados = (saldoVBAPrevioNumber - diasEf).toFixed(2);
+      const saldoVBAPost = (saldoVBAPrevioNumber - diasEf).toFixed(2);
+      const saldoVPPost = '0.00';
+
+      const saldoVBAPrevio = saldoVBAPrevioNumber.toFixed(2);
+      const autorizadaPor = vacacion.autorizador || 'S/I';
+
+      tableBody.push([
+        fInicio, fFin, diasAcumulados, diasEfectivos, saldoAsignados, autorizadaPor,
+        diasEfectivosVBA, diasEfectivosVP, saldoVBAPrevio, saldoVPPrevio, saldoVBAPost, saldoVPPost
+      ]);
+    }
+
+    if (busquedaVacaciones.length === 0) {
+      tableBody.push([{ text: 'No hay vacaciones registradas', colSpan: 12, alignment: 'center' }, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}]);
+    }
+
+    const fonts = {
+      Helvetica: {
+        normal: 'Helvetica',
+        bold: 'Helvetica-Bold',
+        italics: 'Helvetica-Oblique',
+        bolditalics: 'Helvetica-BoldOblique'
+      }
+    };
+
+    const docDefinition = {
+      pageOrientation: 'landscape',
+      content: [
+        {
+          columns: [
+            { text: busquedaEmpleado.empresa?.nombre_empresa || 'Fundación Mi Casa', style: 'header', alignment: 'left', width: '*' },
+            { text: 'Fecha generación documento: ' + new Date().toLocaleString('es-CL'), alignment: 'right', fontSize: 10, margin: [0, 2, 0, 0], width: 'auto' }
+          ]
+        },
+        { text: 'Historial de Vacaciones por Persona', style: 'subheader', alignment: 'center', margin: [0, 10, 0, 0] },
+        {
+          columns: [
+            { text: `Nombre: ${busquedaEmpleado.nombres} ${busquedaEmpleado.apellido_paterno} ${busquedaEmpleado.apellido_materno}\nCargo: ${busquedaEmpleado.cargo?.nombre || 'Sin cargo'}`, width: '*', fontSize: 11 },
+            { text: `RUT: ${busquedaEmpleado.run}\nFecha Ingreso: ${formatDate(busquedaEmpleado.fecha_ini_contrato)}\nCenco: ${busquedaEmpleado.cenco?.nombre_cenco || 'Sin cenco'}`, width: '*', fontSize: 11 }
+          ],
+          margin: [0, 10, 0, 10]
+        },
+        {
+          table: {
+            headerRows: 1,
+            widths: ['auto', 'auto', 'auto', 'auto', 'auto', '*', 'auto', 'auto', 'auto', 'auto', 'auto', 'auto'],
+            body: tableBody
+          }
+        },
+        {
+          margin: [0, 30, 0, 0],
+          columns: [
+            {
+              width: '40%',
+              text: '',
+              style: 'subheader',
+              alignment: 'left'
+            },
+            {
+              width: '60%',
+              columns: [
+                { text: '__________________\nV° B° Recursos Humanos', alignment: 'center', fontSize: 11 },
+                { text: '__________________\nV° B° Trabajador', alignment: 'center', fontSize: 11 }
+              ]
+            }
+          ]
+        }
+      ],
+      styles: {
+        header: { fontSize: 14, bold: true },
+        subheader: { fontSize: 13, bold: true, margin: [0, 5, 0, 5] as [number, number, number, number] },
+        tableHeader: { bold: true, fontSize: 10, alignment: 'center' }
+      },
+      defaultStyle: { font: 'Helvetica', fontSize: 10, alignment: 'center' }
     };
 
     pdfmake.setFonts(fonts);

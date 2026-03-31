@@ -5,6 +5,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Vacaciones } from './entities/vacaciones.entity';
 import { Between, Repository } from 'typeorm';
 import { Empleado } from '../empleado/entities/empleado.entity';
+import { User } from '../users/user.entity';
 
 @Injectable()
 export class VacacionesService {
@@ -13,13 +14,15 @@ export class VacacionesService {
     private readonly vacacionesRepository: Repository<Vacaciones>,
     @InjectRepository(Empleado)
     private readonly empleadoRepository: Repository<Empleado>,
+    @InjectRepository(User)
+    private readonly usuarioRepository: Repository<User>,
   ) { }
 
   create(createVacacioneDto: CreateVacacioneDto) {
     return 'This action adds a new vacacione';
   }
 
-  async aprobarRechazarSolicitud(idSolicitud: number, estado: string, numFicha: string) {
+  async aprobarRechazarSolicitud(idSolicitud: number, estado: string, usuario: string) {
     const busquedaSolicitud = await this.vacacionesRepository.findOne({
       where: {
         id_vacaciones: idSolicitud
@@ -30,11 +33,21 @@ export class VacacionesService {
       throw new HttpException('Solicitud no encontrada', 404);
     }
 
+    const autorizador = await this.usuarioRepository.findOne({
+      where: {
+        username: usuario
+      }
+    })
+
+    if (!autorizador) {
+      throw new HttpException('Autorizador no encontrado', 404);
+    }
+
     busquedaSolicitud.estado = estado;
-    busquedaSolicitud.autorizador = numFicha;
+    busquedaSolicitud.autorizador = autorizador.username;
 
     const { diasDisponibles } = await this.getDiasDisponibles(busquedaSolicitud.empleado.num_ficha);
-    busquedaSolicitud.dias_acumulados = diasDisponibles;
+
     // Calcular en rango fecha inicio y fin dias que hay entre medio sin contar fines de semana 
     const startDate = new Date(busquedaSolicitud.fecha_inicio);
     const endDate = new Date(busquedaSolicitud.fecha_fin);
@@ -176,16 +189,54 @@ export class VacacionesService {
       current.setDate(current.getDate() + 1);
     }
 
+
     if (diasATomar > diasDisponibles) {
       throw new HttpException('El rango de vacaciones solicitado es mayor a la cantidad de dias disponibles', 404);
     }
+
+    let multiplicadorDias: number;
+
+    if (empleado.cenco.zona_extrema) {
+      multiplicadorDias = 1.67;
+    } else {
+      multiplicadorDias = 1.25;
+    }
+
+    // Se debe calcular en base a la fecha de inicio de contrato y fecha de inicio de vacaciones.
+    const fechaInicioContrato = new Date(empleado.fecha_ini_contrato);
+    fechaInicioContrato.setHours(0, 0, 0, 0);
+    const fechaActual = new Date(fechaInicio);
+    fechaActual.setHours(0, 0, 0, 0);
+
+    let mesesTrabajados = (fechaActual.getFullYear() - fechaInicioContrato.getFullYear()) * 12 + (fechaActual.getMonth() - fechaInicioContrato.getMonth());
+
+    if (fechaActual.getDate() < fechaInicioContrato.getDate()) {
+      mesesTrabajados--;
+    }
+
+    if (mesesTrabajados < 0) mesesTrabajados = 0;
+
+    const diasDelMesActual = new Date(fechaActual.getFullYear(), fechaActual.getMonth() + 1, 0).getDate();
+
+    let fechaUltimoCumpleMes = new Date(fechaInicioContrato);
+    fechaUltimoCumpleMes.setMonth(fechaInicioContrato.getMonth() + mesesTrabajados);
+
+    const diffTime = fechaActual.getTime() - fechaUltimoCumpleMes.getTime();
+    const diasSueltos = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+
+    const diasProporcionales = (multiplicadorDias / diasDelMesActual) * diasSueltos;
+    let diasAcumulados = (mesesTrabajados * multiplicadorDias) + diasProporcionales;
+
+    diasAcumulados = parseFloat(diasAcumulados.toFixed(2));
 
     const vacaciones = this.vacacionesRepository.create({
       empleado: empleado,
       fecha_inicio: fechaInicio,
       fecha_fin: fechaFin,
       estado: 'P',
+      dias_acumulados: diasAcumulados,
       zona_extrema: empleado.cenco.zona_extrema,
+      saldo_vba_previo: diasDisponibles,
     });
 
     return this.vacacionesRepository.save(vacaciones);

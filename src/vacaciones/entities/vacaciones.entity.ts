@@ -24,6 +24,9 @@ export class Vacaciones {
   @Column({ type: 'decimal', precision: 5, scale: 2 })
   saldo_vacaciones: number;
 
+  @Column({ type: 'decimal', precision: 5, scale: 2 })
+  saldo_vba_previo: number;
+
   @Column()
   zona_extrema: boolean;
 
