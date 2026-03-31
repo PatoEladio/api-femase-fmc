@@ -9,6 +9,7 @@ import { MarcasAuditoria } from '../marcas-auditoria/entities/marcas-auditoria.e
 import { Feriado } from '../feriados/entities/feriado.entity';
 import * as crypto from 'crypto';
 import { MailerService } from '@nestjs-modules/mailer';
+import { Cenco } from 'src/cencos/cenco.entity';
 
 @Injectable()
 export class MarcasService {
@@ -38,12 +39,13 @@ export class MarcasService {
 
     try {
       const empleadoInfo = await this.marcaRepository.manager.findOne(Empleado, {
-        where: { num_ficha: nuevaMarca.num_ficha }
+        where: { num_ficha: nuevaMarca.num_ficha }, relations: ['cenco']
       });
 
       if (empleadoInfo && empleadoInfo.email) {
         const correoEmpleado = empleadoInfo.email;  // CAMBIAR A CORREO LABORAL SIESQUE ES NECESARIO
         const nombreEmpleado = empleadoInfo.nombres;
+        const correoCenco = empleadoInfo.cenco.email_notificacion;
         
         let eventoNombre = 'Marca';
         if (nuevaMarca.evento === 1) eventoNombre = 'Salida';
@@ -55,7 +57,8 @@ export class MarcasService {
         }
 
         await this.mailerService.sendMail({
-          to: correoEmpleado,
+          to: correoEmpleado, // agregar correo del cenco
+          cc: correoCenco,
           subject: 'Nueva Marca Registrada',
           html: `
           <div style="font-family: Arial, sans-serif; color: #333;">
@@ -65,6 +68,7 @@ export class MarcasService {
               <li><strong>Fecha:</strong> ${fechaFormat}</li>
               <li><strong>Hora:</strong> ${nuevaMarca.hora_marca}</li>
               <li><strong>Evento:</strong> ${eventoNombre}</li>
+              <li><strong>Hashcode:</strong> ${nuevaMarca.hashcode}</li>
             </ul>
             <p>Si no reconoces esta marca o tienes dudas, puedes contactar al administrador.</p>
           </div>`,
@@ -333,13 +337,14 @@ export class MarcasService {
 
     try {
       const empleadoInfo = await this.marcaRepository.manager.findOne(Empleado, {
-        where: { num_ficha: marca.num_ficha }
+        where: { num_ficha: marca.num_ficha }, relations: ['cenco']
       });
 
-      if (empleadoInfo && empleadoInfo.email) {
+      if (empleadoInfo && empleadoInfo.email && empleadoInfo.cenco.email_notificacion) {
         const correoEmpleado = empleadoInfo.email;  // CAMBIAR A CORREO LABORAL SIESQUE ES NECESARIO
         const nombreEmpleado = empleadoInfo.nombres;
-        
+        const correoCenco = empleadoInfo.cenco.email_notificacion;
+
         let eventoNombre = 'Marca';
         if (marca.evento === 1) eventoNombre = 'Salida';
         if (marca.evento === 2) eventoNombre = 'Entrada';
@@ -350,7 +355,8 @@ export class MarcasService {
         }
 
         await this.mailerService.sendMail({
-          to: correoEmpleado,
+          to: correoEmpleado, 
+          cc: correoCenco,
           subject: 'Actualización de Marca Registrada',
           html: `
           <div style="font-family: Arial, sans-serif; color: #333;">
@@ -361,6 +367,7 @@ export class MarcasService {
               <li><strong>Hora:</strong> ${marca.hora_marca}</li>
               <li><strong>Evento:</strong> ${eventoNombre}</li>
               <li><strong>Comentario:</strong> ${marca.comentario}</li>
+              <li><strong>Hashcode:</strong> ${marca.hashcode}</li>
             </ul>
             <p>Si no reconoces esta modificación o tienes dudas, puedes contactar al administrador.</p>
           </div>`,
