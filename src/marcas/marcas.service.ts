@@ -6,6 +6,9 @@ import { Marca } from './entities/marca.entity';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Empleado } from '../empleado/entities/empleado.entity';
 import { MarcasAuditoria } from '../marcas-auditoria/entities/marcas-auditoria.entity';
+import { Feriado } from '../feriados/entities/feriado.entity';
+import * as crypto from 'crypto';
+import { MailerService } from '@nestjs-modules/mailer';
 
 @Injectable()
 export class MarcasService {
@@ -14,6 +17,9 @@ export class MarcasService {
     private marcaRepository: Repository<Marca>,
     @InjectRepository(MarcasAuditoria)
     private marcasAuditoriaRepository: Repository<MarcasAuditoria>,
+    @InjectRepository(Feriado)
+    private readonly feriadosRepository: Repository<Feriado>,
+    private readonly mailerService: MailerService,
   ) { }
 
   async create(createMarcaDto: CreateMarcaDto) {
@@ -21,9 +27,51 @@ export class MarcasService {
       throw new HttpException('No se proporcionaron los datos para crear la marca', 404);
     }
     const nuevaMarca = this.marcaRepository.create(createMarcaDto);
+
+    nuevaMarca.hashcode = crypto.createHash('md5').update(JSON.stringify(nuevaMarca.evento + ';' + nuevaMarca.fecha_marca + ';' + nuevaMarca.hora_marca + ';' + nuevaMarca.num_ficha + ';' + nuevaMarca.id_tipo_marca + ';' + nuevaMarca.info_adicional + ';' + nuevaMarca.comentario)).digest('hex');
+
     const guardar = await this.marcaRepository.save(nuevaMarca);
+
     if (!guardar) {
       throw new HttpException('No se pudo crear la marca', 404);
+    }
+
+    try {
+      const empleadoInfo = await this.marcaRepository.manager.findOne(Empleado, {
+        where: { num_ficha: nuevaMarca.num_ficha }
+      });
+
+      if (empleadoInfo && empleadoInfo.email) {
+        const correoEmpleado = empleadoInfo.email;  // CAMBIAR A CORREO LABORAL SIESQUE ES NECESARIO
+        const nombreEmpleado = empleadoInfo.nombres;
+        
+        let eventoNombre = 'Marca';
+        if (nuevaMarca.evento === 1) eventoNombre = 'Salida';
+        if (nuevaMarca.evento === 2) eventoNombre = 'Entrada';
+
+        let fechaFormat = nuevaMarca.fecha_marca;
+        if (fechaFormat instanceof Date) {
+          fechaFormat = fechaFormat.toISOString().substring(0, 10) as any;
+        }
+
+        await this.mailerService.sendMail({
+          to: correoEmpleado,
+          subject: 'Nueva Marca Registrada',
+          html: `
+          <div style="font-family: Arial, sans-serif; color: #333;">
+            <h2>Hola, ${nombreEmpleado}</h2>
+            <p>Se ha creado una nueva marca en el sistema con los siguientes detalles:</p>
+            <ul>
+              <li><strong>Fecha:</strong> ${fechaFormat}</li>
+              <li><strong>Hora:</strong> ${nuevaMarca.hora_marca}</li>
+              <li><strong>Evento:</strong> ${eventoNombre}</li>
+            </ul>
+            <p>Si no reconoces esta marca o tienes dudas, puedes contactar al administrador.</p>
+          </div>`,
+        });
+      }
+    } catch (error) {
+      console.error('Error al enviar correo de nueva marca:', error);
     }
     return { message: 'Marca creada exitosamente', data: guardar };
   }
@@ -77,6 +125,8 @@ export class MarcasService {
       }
     });
 
+    const feriados = await this.feriadosRepository.find();
+
     const result: any[] = [];
 
     let empleadoInfo: Empleado | null = null;
@@ -124,6 +174,17 @@ export class MarcasService {
 
       let diaSemana = currentDate.getDay();
       if (diaSemana === 0) diaSemana = 7;
+
+      const isFeriado = feriados.some(fer => {
+        let fStr = '';
+        if (fer.fecha instanceof Date) fStr = fer.fecha.toISOString().substring(0, 10);
+        else if (typeof fer.fecha === 'string') fStr = fer.fecha.substring(0, 10);
+        return fStr === dateKey;
+      });
+
+      const diasNombres = ['', 'Lu.', 'Ma.', 'Mi.', 'Ju.', 'Vi.', 'Sá.', 'Do.'];
+      const fechaFormatExt = `${diasNombres[diaSemana]} ${day}-${month}-${year}`;
+
       const tieneTurnoHoy = diasConTurno.includes(diaSemana);
 
       const marcasDelDia = busqueda.filter((m) => {
@@ -142,7 +203,7 @@ export class MarcasService {
           const dtDia = m.empleado?.turno?.detalle_turno?.find((dt: any) => dt.dia?.cod_dia === diaSemana);
           return {
             ...m,
-            fecha_marca: dateKey as any,
+            fecha_marca: fechaFormatExt as any,
             empleado: m.empleado ? {
               ...m.empleado,
               turno: m.empleado.turno ? {
@@ -166,7 +227,7 @@ export class MarcasService {
           const dtDia = empleadoInfo?.turno?.detalle_turno?.find((dt: any) => dt.dia?.cod_dia === diaSemana);
           result.push({
             id_marca: null,
-            fecha_marca: dateKey as any,
+            fecha_marca: fechaFormatExt as any,
             hora_marca: null,
             evento: null,
             hashcode: null,
@@ -183,13 +244,17 @@ export class MarcasService {
         }
       } else {
         const dtDia = empleadoInfo?.turno?.detalle_turno?.find((dt: any) => dt.dia?.cod_dia === diaSemana);
+
+        let infoTexto = tieneTurnoHoy ? 'Faltan ambas marcas ' : 'Día libre';
+        if (isFeriado) infoTexto = 'Feriado';
+
         result.push({
           id_marca: null,
-          fecha_marca: dateKey as any,
+          fecha_marca: fechaFormatExt as any,
           hora_marca: null,
           evento: null,
           hashcode: null,
-          info_adicional: tieneTurnoHoy ? 'Faltan ambas marcas ' : 'Día libre',
+          info_adicional: infoTexto,
           dispositivo: null,
           tieneTurno: tieneTurnoHoy,
           empleado: {
@@ -224,16 +289,29 @@ export class MarcasService {
     }
 
     Object.assign(marca, updateMarcaDto);
+    if (marca.fecha_marca) {
+      if (marca.fecha_marca instanceof Date) marca.fecha_marca = marca.fecha_marca.toISOString().substring(0, 10) as any;
+      else if (typeof marca.fecha_marca === 'string') marca.fecha_marca = (marca.fecha_marca as string).substring(0, 10) as any;
+    }
+    marca.hashcode = crypto.createHash('md5').update(JSON.stringify(marca.evento + ';' + marca.fecha_marca + ';' + marca.hora_marca + ';' + marca.num_ficha + ';' + marca.id_tipo_marca + ';' + marca.info_adicional + ';' + marca.comentario)).digest('hex');
+
     const guardar = await this.marcaRepository.save(marca);
 
     if (!guardar) {
       throw new HttpException('No se pudo actualizar la marca', 500);
     }
 
+    let fMarca = marca.fecha_marca;
+    if (fMarca instanceof Date) {
+      fMarca = fMarca.toISOString().substring(0, 10) as any;
+    } else if (typeof fMarca === 'string') {
+      fMarca = (fMarca as string).substring(0, 10) as any;
+    }
+
     const marcaAuditoria = this.marcasAuditoriaRepository.create({
       id_marca: marca.id_marca,
       marca: { id_marca: marca.id_marca },
-      fecha_marca: marca.fecha_marca,
+      fecha_marca: fMarca,
       hora_marca: marca.hora_marca,
       evento: marca.evento,
       hashcode: marca.hashcode,
@@ -243,7 +321,54 @@ export class MarcasService {
     });
 
     Object.assign(marcaAuditoria, updateMarcaDto);
+    if (marcaAuditoria.fecha_marca) {
+      if (marcaAuditoria.fecha_marca instanceof Date) marcaAuditoria.fecha_marca = marcaAuditoria.fecha_marca.toISOString().substring(0, 10) as any;
+      else if (typeof marcaAuditoria.fecha_marca === 'string') marcaAuditoria.fecha_marca = (marcaAuditoria.fecha_marca as string).substring(0, 10) as any;
+    }
+    if (marcaAuditoria.fecha_actualizacion) {
+      if (marcaAuditoria.fecha_actualizacion instanceof Date) marcaAuditoria.fecha_actualizacion = marcaAuditoria.fecha_actualizacion.toISOString().substring(0, 19).replace('T', ' ') as any;
+      else if (typeof marcaAuditoria.fecha_actualizacion === 'string') marcaAuditoria.fecha_actualizacion = (marcaAuditoria.fecha_actualizacion as string).substring(0, 19).replace('T', ' ') as any;
+    }
     const guardarAuditoria = await this.marcasAuditoriaRepository.save(marcaAuditoria);
+
+    try {
+      const empleadoInfo = await this.marcaRepository.manager.findOne(Empleado, {
+        where: { num_ficha: marca.num_ficha }
+      });
+
+      if (empleadoInfo && empleadoInfo.email) {
+        const correoEmpleado = empleadoInfo.email;  // CAMBIAR A CORREO LABORAL SIESQUE ES NECESARIO
+        const nombreEmpleado = empleadoInfo.nombres;
+        
+        let eventoNombre = 'Marca';
+        if (marca.evento === 1) eventoNombre = 'Salida';
+        if (marca.evento === 2) eventoNombre = 'Entrada';
+
+        let fechaFormat = marca.fecha_marca;
+        if (fechaFormat instanceof Date) {
+          fechaFormat = fechaFormat.toISOString().substring(0, 10) as any;
+        }
+
+        await this.mailerService.sendMail({
+          to: correoEmpleado,
+          subject: 'Actualización de Marca Registrada',
+          html: `
+          <div style="font-family: Arial, sans-serif; color: #333;">
+            <h2>Hola, ${nombreEmpleado}</h2>
+            <p>Se ha modificado o actualizado tu registro de marca en el sistema. Los detalles actualizados son los siguientes:</p>
+            <ul>
+              <li><strong>Fecha:</strong> ${fechaFormat}</li>
+              <li><strong>Hora:</strong> ${marca.hora_marca}</li>
+              <li><strong>Evento:</strong> ${eventoNombre}</li>
+              <li><strong>Comentario:</strong> ${marca.comentario}</li>
+            </ul>
+            <p>Si no reconoces esta modificación o tienes dudas, puedes contactar al administrador.</p>
+          </div>`,
+        });
+      }
+    } catch (error) {
+      console.error('Error al enviar correo de actualización de marca:', error);
+    }
 
     return { message: 'Marca actualizada exitosamente', data: guardar };
   }
