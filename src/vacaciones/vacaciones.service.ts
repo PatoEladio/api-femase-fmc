@@ -156,7 +156,9 @@ export class VacacionesService {
   }
 
   async createSolicitudVacaciones(createVacacioneDto: CreateVacacioneDto, numFicha: string) {
-    const { fechaInicio, fechaFin } = createVacacioneDto;
+    const { fechaInicio, fechaFin, estadoId } = createVacacioneDto;
+
+
     const empleado = await this.empleadoRepository.findOne({
       where: { num_ficha: numFicha }
       , relations: ['cenco']
@@ -183,7 +185,6 @@ export class VacacionesService {
 
     // Obtener dias disponibles (ultimo registro del usuario)
     const { diasDisponibles } = await this.getDiasDisponibles(numFicha);
-
 
     if (diasDisponibles < diasATomar) {
       throw new HttpException('No tienes suficientes dias disponibles', 400);
@@ -228,7 +229,7 @@ export class VacacionesService {
       empleado: empleado,
       fecha_inicio: fechaInicio,
       fecha_fin: fechaFin,
-      estado: 'P',
+      estado: estadoId ? estadoId : 'P',
       dias_acumulados: diasAcumulados,
       zona_extrema: empleado.cenco.zona_extrema,
       saldo_vba_previo: 0,
@@ -239,14 +240,13 @@ export class VacacionesService {
 
   async findAll(numFicha: string, fechaInicio?: Date, fechaFin?: Date) {
     let whereConditions: any = {
-      empleado: { num_ficha: numFicha },
-      estado: 'A'
+      empleado: { num_ficha: numFicha }
     };
 
     if (fechaInicio && fechaFin) {
       whereConditions = [
-        { empleado: { num_ficha: numFicha }, fecha_inicio: Between(fechaInicio, fechaFin), estado: 'A' },
-        { empleado: { num_ficha: numFicha }, fecha_fin: Between(fechaInicio, fechaFin), estado: 'A' }
+        { empleado: { num_ficha: numFicha }, fecha_inicio: Between(fechaInicio, fechaFin) },
+        { empleado: { num_ficha: numFicha }, fecha_fin: Between(fechaInicio, fechaFin) }
       ];
     }
 
