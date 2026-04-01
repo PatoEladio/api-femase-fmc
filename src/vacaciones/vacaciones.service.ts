@@ -185,6 +185,10 @@ export class VacacionesService {
     const { diasDisponibles } = await this.getDiasDisponibles(numFicha);
 
 
+    if (diasDisponibles < diasATomar) {
+      throw new HttpException('No tienes suficientes dias disponibles', 400);
+    }
+
     let multiplicadorDias: number;
 
     if (empleado.cenco.zona_extrema) {
