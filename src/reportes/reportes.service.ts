@@ -431,7 +431,7 @@ export class ReportesService {
     }
     const diasDisponibles = totalAcumulados - diasUtilizados;
 
-    const textoResumen = 
+    const textoResumen =
       `Total de días:\n` +
       `Normales: ${totalNormales.toFixed(2)}  -  Adicionales: 0.00  -  Progresivos: 0.00  -  Zona Extrema: ${totalZonaExtrema.toFixed(2)}  -  Especiales: 0.00\n\n` +
       `Total de vacaciones acumuladas (al ${fechaGeneracion.toLocaleDateString('es-CL')}): ${totalAcumulados.toFixed(2)}\n` +

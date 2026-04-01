@@ -240,14 +240,13 @@ export class VacacionesService {
 
   async findAll(numFicha: string, fechaInicio?: Date, fechaFin?: Date) {
     let whereConditions: any = {
-      empleado: { num_ficha: numFicha },
-      estado: 'A'
+      empleado: { num_ficha: numFicha }
     };
 
     if (fechaInicio && fechaFin) {
       whereConditions = [
-        { empleado: { num_ficha: numFicha }, fecha_inicio: Between(fechaInicio, fechaFin), estado: 'A' },
-        { empleado: { num_ficha: numFicha }, fecha_fin: Between(fechaInicio, fechaFin), estado: 'A' }
+        { empleado: { num_ficha: numFicha }, fecha_inicio: Between(fechaInicio, fechaFin) },
+        { empleado: { num_ficha: numFicha }, fecha_fin: Between(fechaInicio, fechaFin) }
       ];
     }
 
