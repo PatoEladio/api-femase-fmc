@@ -1,4 +1,4 @@
-import { IsNotEmpty, IsString, IsDate } from 'class-validator';
+import { IsNotEmpty, IsString, IsDate, IsOptional } from 'class-validator';
 
 export class CreateVacacioneDto {
   @IsNotEmpty()
@@ -13,7 +13,7 @@ export class CreateVacacioneDto {
   @IsDate()
   fechaFin: Date;
 
-  @IsNotEmpty()
+  @IsOptional()
   @IsString()
-  estadoId: string;
+  estadoId?: string;
 }

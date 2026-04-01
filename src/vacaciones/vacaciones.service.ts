@@ -158,7 +158,6 @@ export class VacacionesService {
   async createSolicitudVacaciones(createVacacioneDto: CreateVacacioneDto, numFicha: string) {
     const { fechaInicio, fechaFin, estadoId } = createVacacioneDto;
 
-    console.log(numFicha);
 
     const empleado = await this.empleadoRepository.findOne({
       where: { num_ficha: numFicha }
@@ -230,7 +229,7 @@ export class VacacionesService {
       empleado: empleado,
       fecha_inicio: fechaInicio,
       fecha_fin: fechaFin,
-      estado: estadoId,
+      estado: estadoId ? estadoId : 'P',
       dias_acumulados: diasAcumulados,
       zona_extrema: empleado.cenco.zona_extrema,
       saldo_vba_previo: 0,
