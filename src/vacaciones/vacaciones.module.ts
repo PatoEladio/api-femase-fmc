@@ -4,9 +4,10 @@ import { VacacionesController } from './vacaciones.controller';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { Vacaciones } from './entities/vacaciones.entity';
 import { Empleado } from '../empleado/entities/empleado.entity';
+import { User } from '../users/user.entity';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Vacaciones, Empleado])],
+  imports: [TypeOrmModule.forFeature([Vacaciones, Empleado, User])],
   controllers: [VacacionesController],
   providers: [VacacionesService],
 })

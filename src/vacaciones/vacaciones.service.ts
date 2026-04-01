@@ -5,6 +5,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Vacaciones } from './entities/vacaciones.entity';
 import { Between, Repository } from 'typeorm';
 import { Empleado } from '../empleado/entities/empleado.entity';
+import { User } from '../users/user.entity';
 
 @Injectable()
 export class VacacionesService {
@@ -13,13 +14,15 @@ export class VacacionesService {
     private readonly vacacionesRepository: Repository<Vacaciones>,
     @InjectRepository(Empleado)
     private readonly empleadoRepository: Repository<Empleado>,
+    @InjectRepository(User)
+    private readonly usuarioRepository: Repository<User>,
   ) { }
 
   create(createVacacioneDto: CreateVacacioneDto) {
     return 'This action adds a new vacacione';
   }
 
-  async aprobarRechazarSolicitud(idSolicitud: number, estado: string, numFicha: string) {
+  async aprobarRechazarSolicitud(idSolicitud: number, estado: string, usuario: string) {
     const busquedaSolicitud = await this.vacacionesRepository.findOne({
       where: {
         id_vacaciones: idSolicitud
@@ -30,11 +33,23 @@ export class VacacionesService {
       throw new HttpException('Solicitud no encontrada', 404);
     }
 
+    const autorizador = await this.usuarioRepository.findOne({
+      where: {
+        username: usuario
+      }
+    })
+
+    if (!autorizador) {
+      throw new HttpException('Autorizador no encontrado', 404);
+    }
+
     busquedaSolicitud.estado = estado;
-    busquedaSolicitud.autorizador = numFicha;
+    busquedaSolicitud.autorizador = autorizador.username;
 
     const { diasDisponibles } = await this.getDiasDisponibles(busquedaSolicitud.empleado.num_ficha);
-    busquedaSolicitud.dias_acumulados = diasDisponibles;
+
+    busquedaSolicitud.saldo_vba_previo = busquedaSolicitud.saldo_vacaciones;
+
     // Calcular en rango fecha inicio y fin dias que hay entre medio sin contar fines de semana 
     const startDate = new Date(busquedaSolicitud.fecha_inicio);
     const endDate = new Date(busquedaSolicitud.fecha_fin);
@@ -83,6 +98,7 @@ export class VacacionesService {
         dias_acumulados: true,
         dias_efectivos: true,
         saldo_vacaciones: true,
+        saldo_vba_previo: true,
         zona_extrema: true,
         autorizador: true,
         estado: true,
@@ -97,18 +113,94 @@ export class VacacionesService {
       }
     });
 
+    const fechaInicioContrato = new Date(busquedaEmpleado.fecha_ini_contrato);
+    fechaInicioContrato.setHours(0, 0, 0, 0);
+    const fechaActual = new Date();
+    fechaActual.setHours(0, 0, 0, 0);
+
+    let mesesTrabajados = (fechaActual.getFullYear() - fechaInicioContrato.getFullYear()) * 12 + (fechaActual.getMonth() - fechaInicioContrato.getMonth());
+
+    if (fechaActual.getDate() < fechaInicioContrato.getDate()) {
+      mesesTrabajados--;
+    }
+    if (mesesTrabajados < 0) mesesTrabajados = 0;
+
+    const diasDelMesActual = new Date(fechaActual.getFullYear(), fechaActual.getMonth() + 1, 0).getDate();
+    let fechaUltimoCumpleMes = new Date(fechaInicioContrato);
+    fechaUltimoCumpleMes.setMonth(fechaInicioContrato.getMonth() + mesesTrabajados);
+
+    const diffTime = fechaActual.getTime() - fechaUltimoCumpleMes.getTime();
+    const diasSueltos = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+
+    const proporcionalesNormales = (1.25 / diasDelMesActual) * diasSueltos;
+    const totalNormales = (mesesTrabajados * 1.25) + proporcionalesNormales;
+
+    let totalZonaExtrema = 0;
+    if (busquedaEmpleado.cenco?.zona_extrema) {
+      const proporcionalesZE = (0.42 / diasDelMesActual) * diasSueltos;
+      totalZonaExtrema = (mesesTrabajados * 0.42) + proporcionalesZE;
+    }
+
+    const diasAcumulados = parseFloat((totalNormales + totalZonaExtrema).toFixed(2));
+
+    const diasUtilizados = busquedaVacaciones.reduce((acc, curr) => acc + Number(curr.dias_efectivos || 0), 0);
+    const diasDisponibles = parseFloat((diasAcumulados - diasUtilizados).toFixed(2));
+
+    return {
+      diasDisponibles,
+      totalNormales: parseFloat(totalNormales.toFixed(2)),
+      totalZonaExtrema: parseFloat(totalZonaExtrema.toFixed(2)),
+      totalAcumulados: diasAcumulados,
+      diasUtilizados: parseFloat(diasUtilizados.toFixed(2))
+    };
+  }
+
+  async createSolicitudVacaciones(createVacacioneDto: CreateVacacioneDto, numFicha: string) {
+    const { fechaInicio, fechaFin } = createVacacioneDto;
+    const empleado = await this.empleadoRepository.findOne({
+      where: { num_ficha: numFicha }
+      , relations: ['cenco']
+    });
+
+    if (!empleado) {
+      throw new HttpException('Empleado no encontrado', 404);
+    }
+
+    // Pasar a cantidad dias entre medio sin fin de semanas
+    const startDate = new Date(fechaInicio);
+    const endDate = new Date(fechaFin);
+
+    let diasATomar = 0;
+    const current = new Date(startDate.getTime());
+
+    while (current <= endDate) {
+      const dayOfWeek = current.getDay();
+      if (dayOfWeek !== 0 && dayOfWeek !== 6) {
+        diasATomar++;
+      }
+      current.setDate(current.getDate() + 1);
+    }
+
+    // Obtener dias disponibles (ultimo registro del usuario)
+    const { diasDisponibles } = await this.getDiasDisponibles(numFicha);
+
+
+    if (diasDisponibles < diasATomar) {
+      throw new HttpException('No tienes suficientes dias disponibles', 400);
+    }
+
     let multiplicadorDias: number;
 
-    if (busquedaEmpleado.cenco.zona_extrema) {
+    if (empleado.cenco.zona_extrema) {
       multiplicadorDias = 1.67;
     } else {
       multiplicadorDias = 1.25;
     }
 
-    // Se procede a calcular en base a fecha contrato ya que no tiene vacaciones previas
-    const fechaInicioContrato = new Date(busquedaEmpleado.fecha_ini_contrato);
+    // Se debe calcular en base a la fecha de inicio de contrato y fecha de inicio de vacaciones.
+    const fechaInicioContrato = new Date(empleado.fecha_ini_contrato);
     fechaInicioContrato.setHours(0, 0, 0, 0);
-    const fechaActual = new Date();
+    const fechaActual = new Date(fechaInicio);
     fechaActual.setHours(0, 0, 0, 0);
 
     let mesesTrabajados = (fechaActual.getFullYear() - fechaInicioContrato.getFullYear()) * 12 + (fechaActual.getMonth() - fechaInicioContrato.getMonth());
@@ -132,60 +224,14 @@ export class VacacionesService {
 
     diasAcumulados = parseFloat(diasAcumulados.toFixed(2));
 
-    if (busquedaVacaciones.length == 0) {
-      return {
-        diasDisponibles: diasAcumulados
-      };
-    } else {
-      // Se calcula en base a los dias totales acumulados menos los utilizados
-      const diasUtilizados = busquedaVacaciones.reduce((acc, curr) => acc + curr.dias_efectivos, 0);
-      let diasDisponibles = parseFloat((diasAcumulados - diasUtilizados).toFixed(2));
-
-      return {
-        diasDisponibles
-      };
-    }
-
-  }
-
-  async createSolicitudVacaciones(createVacacioneDto: CreateVacacioneDto, numFicha: string) {
-    const { fechaInicio, fechaFin } = createVacacioneDto;
-    const empleado = await this.empleadoRepository.findOne({
-      where: { num_ficha: numFicha }
-      , relations: ['cenco']
-    });
-
-    if (!empleado) {
-      throw new HttpException('Empleado no encontrado', 404);
-    }
-
-    const { diasDisponibles } = await this.getDiasDisponibles(numFicha);
-
-    // Pasar a cantidad dias entre medio sin fin de semanas
-    const startDate = new Date(fechaInicio);
-    const endDate = new Date(fechaFin);
-
-    let diasATomar = 0;
-    const current = new Date(startDate.getTime());
-
-    while (current <= endDate) {
-      const dayOfWeek = current.getDay();
-      if (dayOfWeek !== 0 && dayOfWeek !== 6) {
-        diasATomar++;
-      }
-      current.setDate(current.getDate() + 1);
-    }
-
-    if (diasATomar > diasDisponibles) {
-      throw new HttpException('El rango de vacaciones solicitado es mayor a la cantidad de dias disponibles', 404);
-    }
-
     const vacaciones = this.vacacionesRepository.create({
       empleado: empleado,
       fecha_inicio: fechaInicio,
       fecha_fin: fechaFin,
       estado: 'P',
+      dias_acumulados: diasAcumulados,
       zona_extrema: empleado.cenco.zona_extrema,
+      saldo_vba_previo: 0,
     });
 
     return this.vacacionesRepository.save(vacaciones);
@@ -246,7 +292,9 @@ export class VacacionesService {
     }
 
     const fechaInicioContrato = new Date(busqueda[0].empleado.fecha_ini_contrato);
+    fechaInicioContrato.setHours(0, 0, 0, 0);
     const fechaActual = new Date();
+    fechaActual.setHours(0, 0, 0, 0);
 
     let mesesTrabajados = (fechaActual.getFullYear() - fechaInicioContrato.getFullYear()) * 12 + (fechaActual.getMonth() - fechaInicioContrato.getMonth());
 
@@ -256,7 +304,23 @@ export class VacacionesService {
 
     if (mesesTrabajados < 0) mesesTrabajados = 0;
 
-    const diasAcumulados = mesesTrabajados * multiplicadorDias;
+    const diasDelMesActual = new Date(fechaActual.getFullYear(), fechaActual.getMonth() + 1, 0).getDate();
+    let fechaUltimoCumpleMes = new Date(fechaInicioContrato);
+    fechaUltimoCumpleMes.setMonth(fechaInicioContrato.getMonth() + mesesTrabajados);
+
+    const diffTime = fechaActual.getTime() - fechaUltimoCumpleMes.getTime();
+    const diasSueltos = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+
+    const proporcionalesNormales = (1.25 / diasDelMesActual) * diasSueltos;
+    const totalNormales = (mesesTrabajados * 1.25) + proporcionalesNormales;
+
+    let totalZonaExtrema = 0;
+    if (busqueda[0].zona_extrema) {
+      const proporcionalesZE = (0.42 / diasDelMesActual) * diasSueltos;
+      totalZonaExtrema = (mesesTrabajados * 0.42) + proporcionalesZE;
+    }
+
+    const diasAcumulados = totalNormales + totalZonaExtrema;
 
     busqueda.forEach(b => {
       b.dias_acumulados = parseFloat(diasAcumulados.toFixed(2));
@@ -281,7 +345,22 @@ export class VacacionesService {
       }
     });
 
-    return busqueda;
+    let diasUtilizados = 0;
+    for (const v of busqueda) {
+      diasUtilizados += Number(v.dias_efectivos || 0);
+    }
+    const diasDisponibles = parseFloat((diasAcumulados - diasUtilizados).toFixed(2));
+
+    return {
+      vacaciones: busqueda,
+      resumen: {
+        totalNormales: parseFloat(totalNormales.toFixed(2)),
+        totalZonaExtrema: parseFloat(totalZonaExtrema.toFixed(2)),
+        totalAcumulados: parseFloat(diasAcumulados.toFixed(2)),
+        diasUtilizados: parseFloat(diasUtilizados.toFixed(2)),
+        diasDisponibles: diasDisponibles
+      }
+    };
   }
 
   update(id: number, updateVacacioneDto: UpdateVacacioneDto) {

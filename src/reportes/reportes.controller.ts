@@ -29,4 +29,26 @@ export class ReportesController {
       throw new HttpException('Error generando reporte: ' + error.message, 500);
     }
   }
+
+  @Get('vacaciones/pdf')
+  async generateVacacionesReport(
+    @Query('numFicha') numFicha: string,
+    @Res() res: Response
+  ) {
+    if (!numFicha) {
+      throw new HttpException('Faltan parámetros requeridos', 400);
+    }
+
+    try {
+      const pdfBuffer = await this.reportesService.generarReporteVacaciones(numFicha);
+      res.set({
+        'Content-Type': 'application/pdf',
+        'Content-Disposition': `attachment; filename="vacaciones_${numFicha}.pdf"`,
+        'Content-Length': pdfBuffer.length,
+      });
+      res.end(pdfBuffer);
+    } catch (error) {
+      throw new HttpException('Error generando reporte: ' + error.message, 500);
+    }
+  }
 }

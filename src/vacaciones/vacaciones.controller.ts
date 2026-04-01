@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, Query } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, Query, Req } from '@nestjs/common';
 import { VacacionesService } from './vacaciones.service';
 import { CreateVacacioneDto } from './dto/create-vacacione.dto';
 import { UpdateVacacioneDto } from './dto/update-vacacione.dto';
@@ -8,8 +8,8 @@ export class VacacionesController {
   constructor(private readonly vacacionesService: VacacionesService) { }
 
   @Patch('aprobar-rechazar')
-  aprobarRechazarSolicitud(@Query('idSolicitud') idSolicitud: number, @Query('estado') estado: string, @Query('numFicha') numFicha: string) {
-    return this.vacacionesService.aprobarRechazarSolicitud(idSolicitud, estado, '21264235-5');
+  aprobarRechazarSolicitud(@Query('idSolicitud') idSolicitud: number, @Query('estado') estado: string, @Req() req: any) {
+    return this.vacacionesService.aprobarRechazarSolicitud(idSolicitud, estado, req.username);
   }
 
   @Get('dias-disponibles')
