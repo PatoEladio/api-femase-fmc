@@ -58,7 +58,7 @@ export class MarcasService {
 
         await this.mailerService.sendMail({
           to: correoEmpleado, // agregar correo del cenco
-          
+          cc: correoCenco,
           subject: 'Nueva Marca Registrada',
           html: `
           <div style="font-family: Arial, sans-serif; color: #333;">
@@ -405,6 +405,7 @@ export class MarcasService {
 
       await this.mailerService.sendMail({
         to: correoEmpleado,
+        cc: correoCenco,
         subject: 'Eliminacion de Marca Registrada',
         html: `
           <div style="font-family: Arial, sans-serif; color: #333;">

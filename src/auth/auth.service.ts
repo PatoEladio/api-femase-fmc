@@ -17,7 +17,7 @@ export class AuthService {
     username: string,
     pass: string,
     req: Request
-  ): Promise<{ token: string, username: string, profile: string, profile_id: number, empresa_id: number, empresa: string }> {
+  ): Promise<{ token: string, username: string, profile: string, profile_id: number, empresa_id: number, empresa: string, num_ficha: string }> {
 
     const user = await this.usersService.searchActiveUser(username);
 
@@ -31,7 +31,7 @@ export class AuthService {
       throw new UnauthorizedException('Credenciales incorrectas');
     }
 
-    const payload = { sub: user.usuario_id, username: user.username, profile: user.perfil.perfil_id };
+    const payload = { sub: user.usuario_id, username: user.username, profile: user.perfil.perfil_id, num_ficha: user.empleado.num_ficha, nombre_completo: user.empleado.nombres + ' ' + user.empleado.apellido_paterno + ' ' + user.empleado.apellido_materno, empresa: user.empresa.nombre_empresa };
 
     // Registrar la sesión activa
     const ip = req.headers['x-forwarded-for'] as string || req.ip || 'Desconocida';
@@ -45,6 +45,7 @@ export class AuthService {
       profile: user.perfil.nombre_perfil,
       empresa_id: user.empresa.empresa_id,
       empresa: user.empresa.nombre_empresa,
+      num_ficha: user.empleado.num_ficha
     };
   }
 }

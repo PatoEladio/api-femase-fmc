@@ -1,9 +1,11 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, Query, Req } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, Query, Req, UseGuards } from '@nestjs/common';
 import { VacacionesService } from './vacaciones.service';
 import { CreateVacacioneDto } from './dto/create-vacacione.dto';
 import { UpdateVacacioneDto } from './dto/update-vacacione.dto';
+import { AuthGuard } from 'src/auth/auth.guard';
 
 @Controller('vacaciones')
+@UseGuards(AuthGuard)
 export class VacacionesController {
   constructor(private readonly vacacionesService: VacacionesService) { }
 
@@ -13,7 +15,8 @@ export class VacacionesController {
   }
 
   @Get('dias-disponibles')
-  getDiasDisponibles(@Query('numFicha') numFicha: string) {
+  getDiasDisponibles(@Req() req: any) {
+    const numFicha = req.user.num_ficha;
     return this.vacacionesService.getDiasDisponibles(numFicha);
   }
 

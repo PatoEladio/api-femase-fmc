@@ -28,7 +28,8 @@ export class UsersService {
       relations: [
         'perfil',
         'estado',
-        'empresa'
+        'empresa',
+        'empleado'
       ],
     });
   }
