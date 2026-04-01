@@ -155,8 +155,8 @@ export class VacacionesService {
     };
   }
 
-  async createSolicitudVacaciones(createVacacioneDto: CreateVacacioneDto, numFicha: string) {
-    const { fechaInicio, fechaFin, estadoId, autorizador } = createVacacioneDto;
+  async createSolicitudVacaciones(createVacacioneDto: CreateVacacioneDto, numFicha: string, autorizador: string) {
+    const { fechaInicio, fechaFin, estadoId } = createVacacioneDto;
 
 
     const empleado = await this.empleadoRepository.findOne({
