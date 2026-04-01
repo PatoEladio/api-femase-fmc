@@ -253,6 +253,9 @@ export class VacacionesService {
     const busqueda = await this.vacacionesRepository.find({
       where: whereConditions,
       relations: ['empleado'],
+      order: {
+        id_vacaciones: 'ASC'
+      },
       select: {
         id_vacaciones: true,
         fecha_ingreso: true,
