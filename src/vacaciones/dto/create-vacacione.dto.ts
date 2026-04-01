@@ -12,4 +12,8 @@ export class CreateVacacioneDto {
   @IsNotEmpty()
   @IsDate()
   fechaFin: Date;
+
+  @IsNotEmpty()
+  @IsString()
+  estadoId: string;
 }

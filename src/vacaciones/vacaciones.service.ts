@@ -156,7 +156,10 @@ export class VacacionesService {
   }
 
   async createSolicitudVacaciones(createVacacioneDto: CreateVacacioneDto, numFicha: string) {
-    const { fechaInicio, fechaFin } = createVacacioneDto;
+    const { fechaInicio, fechaFin, estadoId } = createVacacioneDto;
+
+    console.log(numFicha);
+
     const empleado = await this.empleadoRepository.findOne({
       where: { num_ficha: numFicha }
       , relations: ['cenco']
@@ -183,7 +186,6 @@ export class VacacionesService {
 
     // Obtener dias disponibles (ultimo registro del usuario)
     const { diasDisponibles } = await this.getDiasDisponibles(numFicha);
-
 
     if (diasDisponibles < diasATomar) {
       throw new HttpException('No tienes suficientes dias disponibles', 400);
@@ -228,7 +230,7 @@ export class VacacionesService {
       empleado: empleado,
       fecha_inicio: fechaInicio,
       fecha_fin: fechaFin,
-      estado: 'P',
+      estado: estadoId,
       dias_acumulados: diasAcumulados,
       zona_extrema: empleado.cenco.zona_extrema,
       saldo_vba_previo: 0,
