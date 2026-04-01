@@ -156,7 +156,7 @@ export class VacacionesService {
   }
 
   async createSolicitudVacaciones(createVacacioneDto: CreateVacacioneDto, numFicha: string) {
-    const { fechaInicio, fechaFin, estadoId } = createVacacioneDto;
+    const { fechaInicio, fechaFin, estadoId, autorizador } = createVacacioneDto;
 
 
     const empleado = await this.empleadoRepository.findOne({
@@ -233,6 +233,7 @@ export class VacacionesService {
       dias_acumulados: diasAcumulados,
       zona_extrema: empleado.cenco.zona_extrema,
       saldo_vba_previo: 0,
+      autorizador: autorizador,
     });
 
     return this.vacacionesRepository.save(vacaciones);
