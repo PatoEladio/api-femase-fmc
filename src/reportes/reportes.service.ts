@@ -331,7 +331,7 @@ export class ReportesService {
       },
       relations: ['empleado'],
       order: {
-        fecha_ingreso: 'ASC'
+        fecha_inicio: 'ASC'
       }
     });
 
@@ -350,7 +350,6 @@ export class ReportesService {
         { text: 'Días\nEfectivos', style: 'tableHeader' },
         { text: 'Saldo Días\nAsignados', style: 'tableHeader' },
         { text: 'Autorizada\nPor', style: 'tableHeader' },
-        { text: 'Días Efec.\nVBA', style: 'tableHeader' },
         { text: 'Días Efec.\nVP', style: 'tableHeader' },
         { text: 'Saldo VBA\nPrevio', style: 'tableHeader' },
         { text: 'Saldo VP\nPrevio', style: 'tableHeader' },
@@ -358,6 +357,7 @@ export class ReportesService {
         { text: 'Saldo VP\nPost', style: 'tableHeader' }
       ]
     ];
+    let totalDiasEfectivos = 0;
 
     for (let i = 0; i < busquedaVacaciones.length; i++) {
       const vacacion = busquedaVacaciones[i];
@@ -365,32 +365,78 @@ export class ReportesService {
       const fInicio = formatDate(vacacion.fecha_inicio);
       const fFin = formatDate(vacacion.fecha_fin);
 
-      const diasAcumulados = Number(vacacion.dias_acumulados || 0).toFixed(2);
-      const diasEfectivos = Number(vacacion.dias_efectivos || 0).toFixed(2);
+      const diasAcumuladosNumber = Number(vacacion.dias_acumulados || 0);
+      const diasAcumulados = diasAcumuladosNumber.toFixed(2);
 
-      const diasEfectivosVBA = diasEfectivos;
+      const diasEf = Number(vacacion.dias_efectivos || 0);
+      const diasEfectivos = diasEf.toFixed(2);
+
+      totalDiasEfectivos += diasEf;
+
       const diasEfectivosVP = '0.00';
 
-      const saldoVBAPrevioNumber = Number(vacacion.dias_acumulados || 0);
       const saldoVPPrevio = '0.00';
-      const diasEf = Number(vacacion.dias_efectivos || 0);
 
-      const saldoAsignados = (saldoVBAPrevioNumber - diasEf).toFixed(2);
-      const saldoVBAPost = (saldoVBAPrevioNumber - diasEf).toFixed(2);
+      const saldoAsignadosNum = diasAcumuladosNumber - totalDiasEfectivos;
+      const saldoAsignados = saldoAsignadosNum.toFixed(2);
+      const saldoVBAPost = saldoAsignadosNum.toFixed(2);
       const saldoVPPost = '0.00';
 
-      const saldoVBAPrevio = saldoVBAPrevioNumber.toFixed(2);
+      const saldoVBAPrevio = (diasEf + saldoAsignadosNum).toFixed(2);
       const autorizadaPor = vacacion.autorizador || 'S/I';
 
       tableBody.push([
         fInicio, fFin, diasAcumulados, diasEfectivos, saldoAsignados, autorizadaPor,
-        diasEfectivosVBA, diasEfectivosVP, saldoVBAPrevio, saldoVPPrevio, saldoVBAPost, saldoVPPost
+        diasEfectivosVP, saldoVBAPrevio, saldoVPPrevio, saldoVBAPost, saldoVPPost
       ]);
     }
 
     if (busquedaVacaciones.length === 0) {
-      tableBody.push([{ text: 'No hay vacaciones registradas', colSpan: 12, alignment: 'center' }, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}]);
+      tableBody.push([{ text: 'No hay vacaciones registradas', colSpan: 11, alignment: 'center' }, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}]);
     }
+
+    const fechaInicioContrato = new Date(busquedaEmpleado.fecha_ini_contrato);
+    fechaInicioContrato.setHours(0, 0, 0, 0);
+    const fechaGeneracion = new Date();
+    fechaGeneracion.setHours(0, 0, 0, 0);
+
+    let mesesTrabajados = (fechaGeneracion.getFullYear() - fechaInicioContrato.getFullYear()) * 12 + (fechaGeneracion.getMonth() - fechaInicioContrato.getMonth());
+
+    if (fechaGeneracion.getDate() < fechaInicioContrato.getDate()) {
+      mesesTrabajados--;
+    }
+    if (mesesTrabajados < 0) mesesTrabajados = 0;
+
+    const diasDelMesActualGen = new Date(fechaGeneracion.getFullYear(), fechaGeneracion.getMonth() + 1, 0).getDate();
+    let fechaUltimoCumpleMesGen = new Date(fechaInicioContrato);
+    fechaUltimoCumpleMesGen.setMonth(fechaInicioContrato.getMonth() + mesesTrabajados);
+
+    const diffTimeGen = fechaGeneracion.getTime() - fechaUltimoCumpleMesGen.getTime();
+    const diasSueltosGen = Math.floor(diffTimeGen / (1000 * 60 * 60 * 24));
+
+    const proporcionalesNormales = (1.25 / diasDelMesActualGen) * diasSueltosGen;
+    const totalNormales = (mesesTrabajados * 1.25) + proporcionalesNormales;
+
+    let totalZonaExtrema = 0;
+    if (busquedaEmpleado.cenco?.zona_extrema) {
+      const proporcionalesZE = (0.42 / diasDelMesActualGen) * diasSueltosGen;
+      totalZonaExtrema = (mesesTrabajados * 0.42) + proporcionalesZE;
+    }
+
+    const totalAcumulados = totalNormales + totalZonaExtrema;
+
+    let diasUtilizados = 0;
+    for (const v of busquedaVacaciones) {
+      diasUtilizados += Number(v.dias_efectivos || 0);
+    }
+    const diasDisponibles = totalAcumulados - diasUtilizados;
+
+    const textoResumen = 
+      `Total de días:\n` +
+      `Normales: ${totalNormales.toFixed(2)}  -  Adicionales: 0.00  -  Progresivos: 0.00  -  Zona Extrema: ${totalZonaExtrema.toFixed(2)}  -  Especiales: 0.00\n\n` +
+      `Total de vacaciones acumuladas (al ${fechaGeneracion.toLocaleDateString('es-CL')}): ${totalAcumulados.toFixed(2)}\n` +
+      `Total de días utilizados: ${diasUtilizados.toFixed(2)}\n` +
+      `Total de días disponibles: ${diasDisponibles.toFixed(2)}`;
 
     const fonts = {
       Helvetica: {
@@ -421,7 +467,7 @@ export class ReportesService {
         {
           table: {
             headerRows: 1,
-            widths: ['auto', 'auto', 'auto', 'auto', 'auto', '*', 'auto', 'auto', 'auto', 'auto', 'auto', 'auto'],
+            widths: ['auto', 'auto', 'auto', 'auto', 'auto', '*', 'auto', 'auto', 'auto', 'auto', 'auto'],
             body: tableBody
           }
         },
@@ -429,13 +475,13 @@ export class ReportesService {
           margin: [0, 30, 0, 0],
           columns: [
             {
-              width: '40%',
-              text: '',
-              style: 'subheader',
+              width: '60%',
+              text: textoResumen,
+              style: 'resumenTexto',
               alignment: 'left'
             },
             {
-              width: '60%',
+              width: '40%',
               columns: [
                 { text: '__________________\nV° B° Recursos Humanos', alignment: 'center', fontSize: 11 },
                 { text: '__________________\nV° B° Trabajador', alignment: 'center', fontSize: 11 }
@@ -447,6 +493,7 @@ export class ReportesService {
       styles: {
         header: { fontSize: 14, bold: true },
         subheader: { fontSize: 13, bold: true, margin: [0, 5, 0, 5] as [number, number, number, number] },
+        resumenTexto: { fontSize: 11, margin: [0, 5, 0, 5] as [number, number, number, number] },
         tableHeader: { bold: true, fontSize: 10, alignment: 'center' }
       },
       defaultStyle: { font: 'Helvetica', fontSize: 10, alignment: 'center' }

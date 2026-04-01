@@ -48,6 +48,8 @@ export class VacacionesService {
 
     const { diasDisponibles } = await this.getDiasDisponibles(busquedaSolicitud.empleado.num_ficha);
 
+    busquedaSolicitud.saldo_vba_previo = busquedaSolicitud.saldo_vacaciones;
+
     // Calcular en rango fecha inicio y fin dias que hay entre medio sin contar fines de semana 
     const startDate = new Date(busquedaSolicitud.fecha_inicio);
     const endDate = new Date(busquedaSolicitud.fecha_fin);
@@ -96,6 +98,7 @@ export class VacacionesService {
         dias_acumulados: true,
         dias_efectivos: true,
         saldo_vacaciones: true,
+        saldo_vba_previo: true,
         zona_extrema: true,
         autorizador: true,
         estado: true,
@@ -110,15 +113,6 @@ export class VacacionesService {
       }
     });
 
-    let multiplicadorDias: number;
-
-    if (busquedaEmpleado.cenco.zona_extrema) {
-      multiplicadorDias = 1.67;
-    } else {
-      multiplicadorDias = 1.25;
-    }
-
-    // Se procede a calcular en base a fecha contrato ya que no tiene vacaciones previas
     const fechaInicioContrato = new Date(busquedaEmpleado.fecha_ini_contrato);
     fechaInicioContrato.setHours(0, 0, 0, 0);
     const fechaActual = new Date();
@@ -129,36 +123,36 @@ export class VacacionesService {
     if (fechaActual.getDate() < fechaInicioContrato.getDate()) {
       mesesTrabajados--;
     }
-
     if (mesesTrabajados < 0) mesesTrabajados = 0;
 
     const diasDelMesActual = new Date(fechaActual.getFullYear(), fechaActual.getMonth() + 1, 0).getDate();
-
     let fechaUltimoCumpleMes = new Date(fechaInicioContrato);
     fechaUltimoCumpleMes.setMonth(fechaInicioContrato.getMonth() + mesesTrabajados);
 
     const diffTime = fechaActual.getTime() - fechaUltimoCumpleMes.getTime();
     const diasSueltos = Math.floor(diffTime / (1000 * 60 * 60 * 24));
 
-    const diasProporcionales = (multiplicadorDias / diasDelMesActual) * diasSueltos;
-    let diasAcumulados = (mesesTrabajados * multiplicadorDias) + diasProporcionales;
+    const proporcionalesNormales = (1.25 / diasDelMesActual) * diasSueltos;
+    const totalNormales = (mesesTrabajados * 1.25) + proporcionalesNormales;
 
-    diasAcumulados = parseFloat(diasAcumulados.toFixed(2));
-
-    if (busquedaVacaciones.length == 0) {
-      return {
-        diasDisponibles: diasAcumulados
-      };
-    } else {
-      // Se calcula en base a los dias totales acumulados menos los utilizados
-      const diasUtilizados = busquedaVacaciones.reduce((acc, curr) => acc + curr.dias_efectivos, 0);
-      let diasDisponibles = parseFloat((diasAcumulados - diasUtilizados).toFixed(2));
-
-      return {
-        diasDisponibles
-      };
+    let totalZonaExtrema = 0;
+    if (busquedaEmpleado.cenco?.zona_extrema) {
+      const proporcionalesZE = (0.42 / diasDelMesActual) * diasSueltos;
+      totalZonaExtrema = (mesesTrabajados * 0.42) + proporcionalesZE;
     }
 
+    const diasAcumulados = parseFloat((totalNormales + totalZonaExtrema).toFixed(2));
+
+    const diasUtilizados = busquedaVacaciones.reduce((acc, curr) => acc + Number(curr.dias_efectivos || 0), 0);
+    const diasDisponibles = parseFloat((diasAcumulados - diasUtilizados).toFixed(2));
+
+    return {
+      diasDisponibles,
+      totalNormales: parseFloat(totalNormales.toFixed(2)),
+      totalZonaExtrema: parseFloat(totalZonaExtrema.toFixed(2)),
+      totalAcumulados: diasAcumulados,
+      diasUtilizados: parseFloat(diasUtilizados.toFixed(2))
+    };
   }
 
   async createSolicitudVacaciones(createVacacioneDto: CreateVacacioneDto, numFicha: string) {
@@ -171,8 +165,6 @@ export class VacacionesService {
     if (!empleado) {
       throw new HttpException('Empleado no encontrado', 404);
     }
-
-    const { diasDisponibles } = await this.getDiasDisponibles(numFicha);
 
     // Pasar a cantidad dias entre medio sin fin de semanas
     const startDate = new Date(fechaInicio);
@@ -189,10 +181,9 @@ export class VacacionesService {
       current.setDate(current.getDate() + 1);
     }
 
+    // Obtener dias disponibles (ultimo registro del usuario)
+    const { diasDisponibles } = await this.getDiasDisponibles(numFicha);
 
-    if (diasATomar > diasDisponibles) {
-      throw new HttpException('El rango de vacaciones solicitado es mayor a la cantidad de dias disponibles', 404);
-    }
 
     let multiplicadorDias: number;
 
@@ -236,7 +227,7 @@ export class VacacionesService {
       estado: 'P',
       dias_acumulados: diasAcumulados,
       zona_extrema: empleado.cenco.zona_extrema,
-      saldo_vba_previo: diasDisponibles,
+      saldo_vba_previo: 0,
     });
 
     return this.vacacionesRepository.save(vacaciones);
@@ -297,7 +288,9 @@ export class VacacionesService {
     }
 
     const fechaInicioContrato = new Date(busqueda[0].empleado.fecha_ini_contrato);
+    fechaInicioContrato.setHours(0, 0, 0, 0);
     const fechaActual = new Date();
+    fechaActual.setHours(0, 0, 0, 0);
 
     let mesesTrabajados = (fechaActual.getFullYear() - fechaInicioContrato.getFullYear()) * 12 + (fechaActual.getMonth() - fechaInicioContrato.getMonth());
 
@@ -307,7 +300,23 @@ export class VacacionesService {
 
     if (mesesTrabajados < 0) mesesTrabajados = 0;
 
-    const diasAcumulados = mesesTrabajados * multiplicadorDias;
+    const diasDelMesActual = new Date(fechaActual.getFullYear(), fechaActual.getMonth() + 1, 0).getDate();
+    let fechaUltimoCumpleMes = new Date(fechaInicioContrato);
+    fechaUltimoCumpleMes.setMonth(fechaInicioContrato.getMonth() + mesesTrabajados);
+
+    const diffTime = fechaActual.getTime() - fechaUltimoCumpleMes.getTime();
+    const diasSueltos = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+
+    const proporcionalesNormales = (1.25 / diasDelMesActual) * diasSueltos;
+    const totalNormales = (mesesTrabajados * 1.25) + proporcionalesNormales;
+
+    let totalZonaExtrema = 0;
+    if (busqueda[0].zona_extrema) {
+      const proporcionalesZE = (0.42 / diasDelMesActual) * diasSueltos;
+      totalZonaExtrema = (mesesTrabajados * 0.42) + proporcionalesZE;
+    }
+
+    const diasAcumulados = totalNormales + totalZonaExtrema;
 
     busqueda.forEach(b => {
       b.dias_acumulados = parseFloat(diasAcumulados.toFixed(2));
@@ -332,7 +341,22 @@ export class VacacionesService {
       }
     });
 
-    return busqueda;
+    let diasUtilizados = 0;
+    for (const v of busqueda) {
+      diasUtilizados += Number(v.dias_efectivos || 0);
+    }
+    const diasDisponibles = parseFloat((diasAcumulados - diasUtilizados).toFixed(2));
+
+    return {
+      vacaciones: busqueda,
+      resumen: {
+        totalNormales: parseFloat(totalNormales.toFixed(2)),
+        totalZonaExtrema: parseFloat(totalZonaExtrema.toFixed(2)),
+        totalAcumulados: parseFloat(diasAcumulados.toFixed(2)),
+        diasUtilizados: parseFloat(diasUtilizados.toFixed(2)),
+        diasDisponibles: diasDisponibles
+      }
+    };
   }
 
   update(id: number, updateVacacioneDto: UpdateVacacioneDto) {
