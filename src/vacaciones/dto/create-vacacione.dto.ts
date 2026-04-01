@@ -16,4 +16,8 @@ export class CreateVacacioneDto {
   @IsOptional()
   @IsString()
   estadoId?: string;
+
+  @IsOptional()
+  @IsString()
+  autorizador?: string;
 }
