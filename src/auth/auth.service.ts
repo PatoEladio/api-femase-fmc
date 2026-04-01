@@ -44,7 +44,7 @@ export class AuthService {
       profile_id: user.perfil.perfil_id,
       profile: user.perfil.nombre_perfil,
       empresa_id: user.empresa.empresa_id,
-      empresa: user.empresa.nombre_empresa
+      empresa: user.empresa.nombre_empresa,
     };
   }
 }

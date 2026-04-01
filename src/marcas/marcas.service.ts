@@ -46,7 +46,7 @@ export class MarcasService {
         const correoEmpleado = empleadoInfo.email;  // CAMBIAR A CORREO LABORAL SIESQUE ES NECESARIO
         const nombreEmpleado = empleadoInfo.nombres;
         const correoCenco = empleadoInfo.cenco.email_notificacion;
-        
+
         let eventoNombre = 'Marca';
         if (nuevaMarca.evento === 1) eventoNombre = 'Salida';
         if (nuevaMarca.evento === 2) eventoNombre = 'Entrada';
@@ -58,7 +58,7 @@ export class MarcasService {
 
         await this.mailerService.sendMail({
           to: correoEmpleado, // agregar correo del cenco
-          cc: correoCenco,
+          
           subject: 'Nueva Marca Registrada',
           html: `
           <div style="font-family: Arial, sans-serif; color: #333;">
@@ -355,7 +355,7 @@ export class MarcasService {
         }
 
         await this.mailerService.sendMail({
-          to: correoEmpleado, 
+          to: correoEmpleado,
           cc: correoCenco,
           subject: 'Actualización de Marca Registrada',
           html: `
@@ -380,7 +380,48 @@ export class MarcasService {
     return { message: 'Marca actualizada exitosamente', data: guardar };
   }
 
-  remove(id: number) {
-    return `This action removes a #${id} marca`;
+  async remove(id: number) {
+    const marca = await this.marcaRepository.findOne({ where: { id_marca: id } });
+    if (!marca) {
+      throw new HttpException('No se encontró la marca a eliminar', 404);
+    }
+    const empleadoInfo = await this.marcaRepository.manager.findOne(Empleado, {
+      where: { num_ficha: marca.num_ficha }, relations: ['cenco']
+    });
+
+    if (empleadoInfo && empleadoInfo.email && empleadoInfo.cenco.email_notificacion) {
+      const correoEmpleado = empleadoInfo.email;  // CAMBIAR A CORREO LABORAL SIESQUE ES NECESARIO
+      const nombreEmpleado = empleadoInfo.nombres;
+      const correoCenco = empleadoInfo.cenco.email_notificacion;
+
+      let eventoNombre = 'Marca';
+      if (marca.evento === 1) eventoNombre = 'Salida';
+      if (marca.evento === 2) eventoNombre = 'Entrada';
+
+      let fechaFormat = marca.fecha_marca;
+      if (fechaFormat instanceof Date) {
+        fechaFormat = fechaFormat.toISOString().substring(0, 10) as any;
+      }
+
+      await this.mailerService.sendMail({
+        to: correoEmpleado,
+        subject: 'Eliminacion de Marca Registrada',
+        html: `
+          <div style="font-family: Arial, sans-serif; color: #333;">
+            <h2>Hola, ${nombreEmpleado}</h2>
+            <p>Se ha eliminado tu registro de marca en el sistema. Los detalles son los siguientes:</p>
+            <ul>
+              <li><strong>Fecha:</strong> ${fechaFormat}</li>
+              <li><strong>Hora:</strong> ${marca.hora_marca}</li>
+              <li><strong>Evento:</strong> ${eventoNombre}</li>
+              <li><strong>Comentario:</strong> ${marca.comentario}</li>
+              <li><strong>Hashcode:</strong> ${marca.hashcode}</li>
+            </ul>
+            <p>Si tienes dudas, puedes contactar al administrador.</p>
+          </div>`,
+      });
+    }
+    await this.marcasAuditoriaRepository.delete({ id_marca: id });
+    return this.marcaRepository.delete(id);
   }
 }
