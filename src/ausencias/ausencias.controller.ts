@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, Query } from '@nestjs/common';
 import { AusenciasService } from './ausencias.service';
 import { CreateAusenciaDto } from './dto/create-ausencia.dto';
 import { UpdateAusenciaDto } from './dto/update-ausencia.dto';
@@ -20,5 +20,10 @@ export class AusenciasController {
   @Delete(':id')
   remove(@Param('id') id: string) {
     return this.ausenciasService.remove(+id);
+  }
+
+  @Get()
+  findAll(@Query() query: {numFicha: string, fechaInicio?: Date, fechaFin: Date}){
+    return this.ausenciasService.findAll(query.numFicha, query.fechaInicio, query.fechaFin);
   }
 }
