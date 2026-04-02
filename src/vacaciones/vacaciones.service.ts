@@ -232,7 +232,7 @@ export class VacacionesService {
       dias_acumulados: diasAcumulados,
       zona_extrema: empleado.cenco.zona_extrema,
       saldo_vba_previo: 0,
-      autorizador: estadoId == 'A' ? autorizador : '',
+      autorizador: estadoId == 'A' || estadoId == 'R' ? autorizador : '',
     });
 
     return this.vacacionesRepository.save(vacaciones);
