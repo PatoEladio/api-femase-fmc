@@ -58,6 +58,8 @@ import { MarcasAuditoria } from './marcas-auditoria/entities/marcas-auditoria.en
 import { ReportesModule } from './reportes/reportes.module';
 import { VacacionesModule } from './vacaciones/vacaciones.module';
 import { Vacaciones } from './vacaciones/entities/vacaciones.entity';
+import { AusenciasModule } from './ausencias/ausencias.module';
+import { Ausencia } from './ausencias/entities/ausencia.entity';
 
 @Module({
   imports: [
@@ -67,8 +69,8 @@ import { Vacaciones } from './vacaciones/entities/vacaciones.entity';
       host: 'localhost',
       port: 5432,
       username: 'postgres',
-      password: 'Admin',
-      database: 'postgres',
+      password: 'superadmin',
+      database: 'femase',
       synchronize: false,
       entities: [
         User,
@@ -96,7 +98,8 @@ import { Vacaciones } from './vacaciones/entities/vacaciones.entity';
         AsignacionTurnoRotativo,
         Marca,
         MarcasAuditoria,
-        Vacaciones
+        Vacaciones,
+        Ausencia
       ]
     }),
     MailerModule.forRoot({
@@ -142,7 +145,8 @@ import { Vacaciones } from './vacaciones/entities/vacaciones.entity';
     MarcasModule,
     MarcasAuditoriaModule,
     ReportesModule,
-    VacacionesModule
+    VacacionesModule,
+    AusenciasModule
   ],
   providers: [PerfilesService],
   controllers: [PerfilesController],

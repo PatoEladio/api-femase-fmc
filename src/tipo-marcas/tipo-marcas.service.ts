@@ -28,6 +28,7 @@ export class TipoMarcasService {
     });
   }
 
+  
   findOne(id: number) {
     return `This action returns a #${id} tipoMarca`;
   }

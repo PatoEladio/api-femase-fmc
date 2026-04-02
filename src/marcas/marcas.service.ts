@@ -8,6 +8,8 @@ import { Empleado } from '../empleado/entities/empleado.entity';
 import { MarcasAuditoria } from '../marcas-auditoria/entities/marcas-auditoria.entity';
 import { Feriado } from '../feriados/entities/feriado.entity';
 import * as crypto from 'crypto';
+import { MailerService } from '@nestjs-modules/mailer';
+import { Cenco } from 'src/cencos/cenco.entity';
 
 @Injectable()
 export class MarcasService {
@@ -18,6 +20,7 @@ export class MarcasService {
     private marcasAuditoriaRepository: Repository<MarcasAuditoria>,
     @InjectRepository(Feriado)
     private readonly feriadosRepository: Repository<Feriado>,
+    private readonly mailerService: MailerService,
   ) { }
 
   async create(createMarcaDto: CreateMarcaDto) {
@@ -29,8 +32,50 @@ export class MarcasService {
     nuevaMarca.hashcode = crypto.createHash('md5').update(JSON.stringify(nuevaMarca.evento + ';' + nuevaMarca.fecha_marca + ';' + nuevaMarca.hora_marca + ';' + nuevaMarca.num_ficha + ';' + nuevaMarca.id_tipo_marca + ';' + nuevaMarca.info_adicional + ';' + nuevaMarca.comentario)).digest('hex');
 
     const guardar = await this.marcaRepository.save(nuevaMarca);
+
     if (!guardar) {
       throw new HttpException('No se pudo crear la marca', 404);
+    }
+
+    try {
+      const empleadoInfo = await this.marcaRepository.manager.findOne(Empleado, {
+        where: { num_ficha: nuevaMarca.num_ficha }, relations: ['cenco']
+      });
+
+      if (empleadoInfo && empleadoInfo.email) {
+        const correoEmpleado = empleadoInfo.email;  // CAMBIAR A CORREO LABORAL SIESQUE ES NECESARIO
+        const nombreEmpleado = empleadoInfo.nombres;
+        const correoCenco = empleadoInfo.cenco.email_notificacion;
+
+        let eventoNombre = 'Marca';
+        if (nuevaMarca.evento === 1) eventoNombre = 'Salida';
+        if (nuevaMarca.evento === 2) eventoNombre = 'Entrada';
+
+        let fechaFormat = nuevaMarca.fecha_marca;
+        if (fechaFormat instanceof Date) {
+          fechaFormat = fechaFormat.toISOString().substring(0, 10) as any;
+        }
+
+        await this.mailerService.sendMail({
+          to: correoEmpleado, // agregar correo del cenco
+          cc: correoCenco,
+          subject: 'Nueva Marca Registrada',
+          html: `
+          <div style="font-family: Arial, sans-serif; color: #333;">
+            <h2>Hola, ${nombreEmpleado}</h2>
+            <p>Se ha creado una nueva marca en el sistema con los siguientes detalles:</p>
+            <ul>
+              <li><strong>Fecha:</strong> ${fechaFormat}</li>
+              <li><strong>Hora:</strong> ${nuevaMarca.hora_marca}</li>
+              <li><strong>Evento:</strong> ${eventoNombre}</li>
+              <li><strong>Hashcode:</strong> ${nuevaMarca.hashcode}</li>
+            </ul>
+            <p>Si no reconoces esta marca o tienes dudas, puedes contactar al administrador.</p>
+          </div>`,
+        });
+      }
+    } catch (error) {
+      console.error('Error al enviar correo de nueva marca:', error);
     }
     return { message: 'Marca creada exitosamente', data: guardar };
   }
@@ -252,6 +297,8 @@ export class MarcasService {
       if (marca.fecha_marca instanceof Date) marca.fecha_marca = marca.fecha_marca.toISOString().substring(0, 10) as any;
       else if (typeof marca.fecha_marca === 'string') marca.fecha_marca = (marca.fecha_marca as string).substring(0, 10) as any;
     }
+    marca.hashcode = crypto.createHash('md5').update(JSON.stringify(marca.evento + ';' + marca.fecha_marca + ';' + marca.hora_marca + ';' + marca.num_ficha + ';' + marca.id_tipo_marca + ';' + marca.info_adicional + ';' + marca.comentario)).digest('hex');
+
     const guardar = await this.marcaRepository.save(marca);
 
     if (!guardar) {
@@ -288,10 +335,94 @@ export class MarcasService {
     }
     const guardarAuditoria = await this.marcasAuditoriaRepository.save(marcaAuditoria);
 
+    try {
+      const empleadoInfo = await this.marcaRepository.manager.findOne(Empleado, {
+        where: { num_ficha: marca.num_ficha }, relations: ['cenco']
+      });
+
+      if (empleadoInfo && empleadoInfo.email && empleadoInfo.cenco.email_notificacion) {
+        const correoEmpleado = empleadoInfo.email;  // CAMBIAR A CORREO LABORAL SIESQUE ES NECESARIO
+        const nombreEmpleado = empleadoInfo.nombres;
+        const correoCenco = empleadoInfo.cenco.email_notificacion;
+
+        let eventoNombre = 'Marca';
+        if (marca.evento === 1) eventoNombre = 'Salida';
+        if (marca.evento === 2) eventoNombre = 'Entrada';
+
+        let fechaFormat = marca.fecha_marca;
+        if (fechaFormat instanceof Date) {
+          fechaFormat = fechaFormat.toISOString().substring(0, 10) as any;
+        }
+
+        await this.mailerService.sendMail({
+          to: correoEmpleado,
+          cc: correoCenco,
+          subject: 'Actualización de Marca Registrada',
+          html: `
+          <div style="font-family: Arial, sans-serif; color: #333;">
+            <h2>Hola, ${nombreEmpleado}</h2>
+            <p>Se ha modificado o actualizado tu registro de marca en el sistema. Los detalles actualizados son los siguientes:</p>
+            <ul>
+              <li><strong>Fecha:</strong> ${fechaFormat}</li>
+              <li><strong>Hora:</strong> ${marca.hora_marca}</li>
+              <li><strong>Evento:</strong> ${eventoNombre}</li>
+              <li><strong>Comentario:</strong> ${marca.comentario}</li>
+              <li><strong>Hashcode:</strong> ${marca.hashcode}</li>
+            </ul>
+            <p>Si no reconoces esta modificación o tienes dudas, puedes contactar al administrador.</p>
+          </div>`,
+        });
+      }
+    } catch (error) {
+      console.error('Error al enviar correo de actualización de marca:', error);
+    }
+
     return { message: 'Marca actualizada exitosamente', data: guardar };
   }
 
-  remove(id: number) {
-    return `This action removes a #${id} marca`;
+  async remove(id: number) {
+    const marca = await this.marcaRepository.findOne({ where: { id_marca: id } });
+    if (!marca) {
+      throw new HttpException('No se encontró la marca a eliminar', 404);
+    }
+    const empleadoInfo = await this.marcaRepository.manager.findOne(Empleado, {
+      where: { num_ficha: marca.num_ficha }, relations: ['cenco']
+    });
+
+    if (empleadoInfo && empleadoInfo.email && empleadoInfo.cenco.email_notificacion) {
+      const correoEmpleado = empleadoInfo.email;  // CAMBIAR A CORREO LABORAL SIESQUE ES NECESARIO
+      const nombreEmpleado = empleadoInfo.nombres;
+      const correoCenco = empleadoInfo.cenco.email_notificacion;
+
+      let eventoNombre = 'Marca';
+      if (marca.evento === 1) eventoNombre = 'Salida';
+      if (marca.evento === 2) eventoNombre = 'Entrada';
+
+      let fechaFormat = marca.fecha_marca;
+      if (fechaFormat instanceof Date) {
+        fechaFormat = fechaFormat.toISOString().substring(0, 10) as any;
+      }
+
+      await this.mailerService.sendMail({
+        to: correoEmpleado,
+        cc: correoCenco,
+        subject: 'Eliminacion de Marca Registrada',
+        html: `
+          <div style="font-family: Arial, sans-serif; color: #333;">
+            <h2>Hola, ${nombreEmpleado}</h2>
+            <p>Se ha eliminado tu registro de marca en el sistema. Los detalles son los siguientes:</p>
+            <ul>
+              <li><strong>Fecha:</strong> ${fechaFormat}</li>
+              <li><strong>Hora:</strong> ${marca.hora_marca}</li>
+              <li><strong>Evento:</strong> ${eventoNombre}</li>
+              <li><strong>Comentario:</strong> ${marca.comentario}</li>
+              <li><strong>Hashcode:</strong> ${marca.hashcode}</li>
+            </ul>
+            <p>Si tienes dudas, puedes contactar al administrador.</p>
+          </div>`,
+      });
+    }
+    await this.marcasAuditoriaRepository.delete({ id_marca: id });
+    return this.marcaRepository.delete(id);
   }
 }

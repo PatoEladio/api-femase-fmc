@@ -1,6 +1,7 @@
 import { ApiProperty } from "@nestjs/swagger";
+import { Ausencia } from "src/ausencias/entities/ausencia.entity";
 import { Estado } from "src/estado/estado.entity";
-import { Column, Entity, JoinColumn, ManyToOne, PrimaryGeneratedColumn } from "typeorm";
+import { Column, Entity, JoinColumn, ManyToOne, OneToMany, PrimaryGeneratedColumn } from "typeorm";
 
 @Entity("tipo_ausencia", {schema: 'db_fmc'})
 export class TipoAusencia {
@@ -29,4 +30,7 @@ export class TipoAusencia {
     @Column()
     @ApiProperty({description:"pagadas por el empleador", example:true})
     pagada_empleador:boolean
+
+    @OneToMany(() => Ausencia, (ausencia) => ausencia.tipo_ausencia)
+    ausencias: Ausencia[];
 }

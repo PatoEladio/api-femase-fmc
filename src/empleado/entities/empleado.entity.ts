@@ -1,5 +1,6 @@
 import { ApiProperty } from "@nestjs/swagger";
 import { AsignacionTurnoRotativo } from "src/asignacion_turno_rotativo/entities/asignacion_turno_rotativo.entity";
+import { Ausencia } from "src/ausencias/entities/ausencia.entity";
 import { Cargo } from "src/cargos/entities/cargo.entity";
 import { Cenco } from "src/cencos/cenco.entity";
 import { Empresa } from "src/empresas/empresas.entity";
@@ -130,4 +131,7 @@ export class Empleado {
 
   @OneToMany(() => Vacaciones, (vacaciones) => vacaciones.empleado)
   vacaciones: Vacaciones[];
+
+  @OneToMany(() => Ausencia, (ausencia) => ausencia.num_ficha)
+  ausencias: Ausencia[];
 }

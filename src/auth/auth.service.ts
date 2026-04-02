@@ -31,7 +31,7 @@ export class AuthService {
       throw new UnauthorizedException('Credenciales incorrectas');
     }
 
-    const payload = { sub: user.usuario_id, username: user.username, profile: user.perfil.perfil_id, num_ficha: user.empleado.num_ficha };
+    const payload = { sub: user.usuario_id, username: user.username, profile: user.perfil.perfil_id, num_ficha: user.empleado.num_ficha, nombre_completo: user.empleado.nombres + ' ' + user.empleado.apellido_paterno + ' ' + user.empleado.apellido_materno, empresa: user.empresa.nombre_empresa };
 
     // Registrar la sesión activa
     const ip = req.headers['x-forwarded-for'] as string || req.ip || 'Desconocida';

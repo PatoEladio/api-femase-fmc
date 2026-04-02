@@ -20,7 +20,7 @@ export class CreateMarcaDto {
   @IsString()
   @IsOptional()
   @ApiProperty({ description: 'Hashcode generado', example: 'abc123hash' })
-  hashcode: string;
+  hashcode?: string;
 
   @IsString()
   @IsOptional()
