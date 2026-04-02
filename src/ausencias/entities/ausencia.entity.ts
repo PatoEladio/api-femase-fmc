@@ -9,7 +9,7 @@ export class Ausencia {
     id: number;
 
     @ManyToOne(() => Empleado, (empleado) => empleado.ausencias)
-    @JoinColumn({ name: 'num_ficha' })
+    @JoinColumn({ name: 'num_ficha', referencedColumnName: 'num_ficha' })
     num_ficha: Empleado;
 
     @Column()
