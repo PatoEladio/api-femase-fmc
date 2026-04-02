@@ -27,7 +27,7 @@ export class Cargo {
   usuario_creador: string;
 
   @CreateDateColumn({
-    type: 'timestamp', // O 'date' según prefieras
+    type: 'timestamp',
     default: () => 'CURRENT_TIMESTAMP'
   })
   fecha_creacion: Date;
@@ -42,4 +42,8 @@ export class Cargo {
 
   @OneToMany(() => Empleado, (empleado) => empleado.cargo)
   empleados: Empleado[];
+
+  @Column()
+  @ApiProperty({ description: "tipo_cargo", example: 1 })
+  tipo_cargo:number
 }
