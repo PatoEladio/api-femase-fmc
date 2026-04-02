@@ -26,8 +26,8 @@ export class VacacionesController {
   }
 
   @Post('solicitud')
-  createSolicitudVacaciones(@Body() createVacacioneDto: CreateVacacioneDto, @Query('numFicha') numFicha: string, @Req() req: any) {
-    return this.vacacionesService.createSolicitudVacaciones(createVacacioneDto, numFicha, req.user.username);
+  createSolicitudVacaciones(@Body() createVacacioneDto: CreateVacacioneDto, @Req() req: any) {
+    return this.vacacionesService.createSolicitudVacaciones(createVacacioneDto, req.user.num_ficha, req.user.username);
   }
 
   @Patch(':id')

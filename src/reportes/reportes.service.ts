@@ -4,9 +4,10 @@ import { MarcasService } from '../marcas/marcas.service';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Empleado } from '../empleado/entities/empleado.entity';
 import { Feriado } from '../feriados/entities/feriado.entity';
-import { Repository } from 'typeorm';
+import { Between, Repository } from 'typeorm';
 import { AttendanceRecordDto, UserReportDto } from './dto/attendance-report.dto';
 import { Vacaciones } from 'src/vacaciones/entities/vacaciones.entity';
+import { Ausencia } from 'src/ausencias/entities/ausencia.entity';
 
 @Injectable()
 export class ReportesService {
@@ -18,6 +19,8 @@ export class ReportesService {
     private readonly feriadosRepository: Repository<Feriado>,
     @InjectRepository(Vacaciones)
     private readonly vacacionesRepository: Repository<Vacaciones>,
+    @InjectRepository(Ausencia)
+    private readonly ausenciaRepository: Repository<Ausencia>,
   ) { }
 
   async generateAttendancePdf(numFicha: string, fechaInicio: string, fechaFin: string): Promise<Buffer> {
@@ -477,6 +480,141 @@ export class ReportesService {
             {
               width: '60%',
               text: textoResumen,
+              style: 'resumenTexto',
+              alignment: 'left'
+            },
+            {
+              width: '40%',
+              columns: [
+                { text: '__________________\nV° B° Recursos Humanos', alignment: 'center', fontSize: 11 },
+                { text: '__________________\nV° B° Trabajador', alignment: 'center', fontSize: 11 }
+              ]
+            }
+          ]
+        }
+      ],
+      styles: {
+        header: { fontSize: 14, bold: true },
+        subheader: { fontSize: 13, bold: true, margin: [0, 5, 0, 5] as [number, number, number, number] },
+        resumenTexto: { fontSize: 11, margin: [0, 5, 0, 5] as [number, number, number, number] },
+        tableHeader: { bold: true, fontSize: 10, alignment: 'center' }
+      },
+      defaultStyle: { font: 'Helvetica', fontSize: 10, alignment: 'center' }
+    };
+
+    pdfmake.setFonts(fonts);
+    const pdfDoc = pdfmake.createPdf(docDefinition);
+    return await pdfDoc.getBuffer();
+  }
+
+  async generarReporteAusencias(numFicha: string, fechaInicioStr?: string, fechaFinStr?: string): Promise<Buffer> {
+    const busquedaEmpleado = await this.empleadoRepository.findOne({
+      where: {
+        num_ficha: numFicha
+      },
+      relations: ['cenco', 'empresa', 'cargo']
+    });
+
+    if (!busquedaEmpleado) {
+      throw new HttpException('Empleado no encontrado', 404);
+    }
+
+    const where: any = {
+      num_ficha: numFicha
+    };
+
+    if (fechaInicioStr && fechaFinStr) {
+      where.fecha_fin = Between(new Date(fechaInicioStr), new Date(fechaFinStr));
+    }
+
+    const busquedaAusencias = await this.ausenciaRepository.find({
+      order: {
+        id: 'ASC'
+      },
+      relations: ['tipo_ausencia'],
+      where: where
+    });
+
+    const formatDate = (d: any) => {
+      if (!d) return 'N/A';
+      if (typeof d === 'string') return d.substring(0, 10).split('-').reverse().join('-');
+      if (d instanceof Date) return d.toISOString().substring(0, 10).split('-').reverse().join('-');
+      return String(d);
+    };
+
+    const tableBody: any[] = [
+      [
+        { text: 'Fecha', style: 'tableHeader' },
+        { text: 'Tipo', style: 'tableHeader' },
+        { text: '¿Por horas?', style: 'tableHeader' },
+        { text: 'Fecha Inicio', style: 'tableHeader' },
+        { text: 'Hora Inicio', style: 'tableHeader' },
+        { text: 'Fecha Fin', style: 'tableHeader' },
+        { text: 'Hora Fin', style: 'tableHeader' },
+        { text: '¿Autorizada?', style: 'tableHeader' },
+        { text: 'Autoriza', style: 'tableHeader' }
+      ]
+    ];
+
+    for (let i = 0; i < busquedaAusencias.length; i++) {
+      const ausencia = busquedaAusencias[i];
+
+      tableBody.push([
+        '-',
+        ausencia.tipo_ausencia?.nombre || 'S/I',
+        ausencia.dia_completo ? 'No' : 'Sí',
+        formatDate(ausencia.fecha_inicio),
+        ausencia.hora_inicio || '-',
+        formatDate(ausencia.fecha_fin),
+        ausencia.hora_fin || '-',
+        '-',
+        '-'
+      ]);
+    }
+
+    if (busquedaAusencias.length === 0) {
+      tableBody.push([{ text: 'No hay ausencias registradas', colSpan: 9, alignment: 'center' }, {}, {}, {}, {}, {}, {}, {}, {}]);
+    }
+
+    const fonts = {
+      Helvetica: {
+        normal: 'Helvetica',
+        bold: 'Helvetica-Bold',
+        italics: 'Helvetica-Oblique',
+        bolditalics: 'Helvetica-BoldOblique'
+      }
+    };
+
+    const docDefinition = {
+      pageOrientation: 'landscape',
+      content: [
+        {
+          columns: [
+            { text: busquedaEmpleado.empresa?.nombre_empresa || 'Fundación Mi Casa', style: 'header', alignment: 'left', width: '*' },
+            { text: 'Fecha generación documento: ' + new Date().toLocaleString('es-CL'), alignment: 'right', fontSize: 10, margin: [0, 2, 0, 0], width: 'auto' }
+          ]
+        },
+        { text: 'Reporte de Ausencias por Persona', style: 'subheader', alignment: 'center', margin: [0, 10, 0, 0] },
+        {
+          columns: [
+            { text: `Nombre: ${busquedaEmpleado.nombres} ${busquedaEmpleado.apellido_paterno} ${busquedaEmpleado.apellido_materno}\nCargo: ${busquedaEmpleado.cargo?.nombre || 'Sin cargo'}`, width: '*', fontSize: 11 },
+            { text: `RUT: ${busquedaEmpleado.run}\nFecha Ingreso: ${formatDate(busquedaEmpleado.fecha_ini_contrato)}\nCenco: ${busquedaEmpleado.cenco?.nombre_cenco || 'Sin cenco'}`, width: '*', fontSize: 11 }
+          ],
+          margin: [0, 10, 0, 10]
+        },
+        {
+          table: {
+            headerRows: 1,
+            widths: ['auto', '*', 'auto', 'auto', 'auto', 'auto', 'auto', 'auto', 'auto'],
+            body: tableBody
+          }
+        },
+        {
+          margin: [0, 30, 0, 0],
+          columns: [
+            {
+              width: '60%',
+              text: '',
               style: 'resumenTexto',
               alignment: 'left'
             },
