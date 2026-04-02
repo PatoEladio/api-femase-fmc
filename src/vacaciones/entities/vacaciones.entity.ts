@@ -30,7 +30,7 @@ export class Vacaciones {
   @Column()
   zona_extrema: boolean;
 
-  @Column()
+  @Column({ nullable: true })
   autorizador: string;
 
   @Column()

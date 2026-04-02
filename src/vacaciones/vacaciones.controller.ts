@@ -11,7 +11,7 @@ export class VacacionesController {
 
   @Patch('aprobar-rechazar')
   aprobarRechazarSolicitud(@Query('idSolicitud') idSolicitud: number, @Query('estado') estado: string, @Req() req: any) {
-    return this.vacacionesService.aprobarRechazarSolicitud(idSolicitud, estado, req.username);
+    return this.vacacionesService.aprobarRechazarSolicitud(idSolicitud, estado, req.user.username);
   }
 
   @Get('dias-disponibles')
@@ -27,7 +27,7 @@ export class VacacionesController {
 
   @Post('solicitud')
   createSolicitudVacaciones(@Body() createVacacioneDto: CreateVacacioneDto, @Query('numFicha') numFicha: string, @Req() req: any) {
-    return this.vacacionesService.createSolicitudVacaciones(createVacacioneDto, numFicha, req.username);
+    return this.vacacionesService.createSolicitudVacaciones(createVacacioneDto, numFicha, req.user.username);
   }
 
   @Patch(':id')

@@ -69,8 +69,8 @@ import { Ausencia } from './ausencias/entities/ausencia.entity';
       host: 'localhost',
       port: 5432,
       username: 'postgres',
-      password: 'superadmin',
-      database: 'femase',
+      password: 'Admin',
+      database: 'postgres',
       synchronize: false,
       entities: [
         User,
