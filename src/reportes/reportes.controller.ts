@@ -51,4 +51,28 @@ export class ReportesController {
       throw new HttpException('Error generando reporte: ' + error.message, 500);
     }
   }
+
+  @Get('ausencias/pdf')
+  async generateAusenciasReport(
+    @Query('numFicha') numFicha: string,
+    @Query('fechaInicio') fechaInicio: string,
+    @Query('fechaFin') fechaFin: string,
+    @Res() res: Response
+  ) {
+    if (!numFicha) {
+      throw new HttpException('Faltan parámetros requeridos', 400);
+    }
+
+    try {
+      const pdfBuffer = await this.reportesService.generarReporteAusencias(numFicha, fechaInicio, fechaFin);
+      res.set({
+        'Content-Type': 'application/pdf',
+        'Content-Disposition': `attachment; filename="ausencias_${numFicha}.pdf"`,
+        'Content-Length': pdfBuffer.length,
+      });
+      res.end(pdfBuffer);
+    } catch (error) {
+      throw new HttpException('Error generando reporte: ' + error.message, 500);
+    }
+  }
 }
