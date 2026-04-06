@@ -5,9 +5,10 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { Marca } from './entities/marca.entity';
 import { MarcasAuditoria } from 'src/marcas-auditoria/entities/marcas-auditoria.entity';
 import { Feriado } from '../feriados/entities/feriado.entity';
+import { AutorizaHorasExtra } from 'src/autoriza_horas_extras/entities/autoriza_horas_extra.entity';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Marca, MarcasAuditoria, Feriado])],
+  imports: [TypeOrmModule.forFeature([Marca, MarcasAuditoria, Feriado, AutorizaHorasExtra])],
   controllers: [MarcasController],
   providers: [MarcasService],
   exports: [MarcasService]

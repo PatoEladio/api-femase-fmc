@@ -1,8 +1,9 @@
 import { ApiProperty } from "@nestjs/swagger";
+import { AutorizaHorasExtra } from "src/autoriza_horas_extras/entities/autoriza_horas_extra.entity";
 import { Empleado } from "src/empleado/entities/empleado.entity";
 import { Empresa } from "src/empresas/empresas.entity";
 import { Estado } from "src/estado/estado.entity";
-import { Column, CreateDateColumn, Entity, JoinColumn, OneToMany, OneToOne, PrimaryGeneratedColumn, UpdateDateColumn } from "typeorm";
+import { Column, CreateDateColumn, Entity, JoinColumn, ManyToOne, OneToMany, OneToOne, PrimaryGeneratedColumn, UpdateDateColumn } from "typeorm";
 
 @Entity({ name: 'cargo', schema: 'db_fmc' })
 export class Cargo {
@@ -46,4 +47,5 @@ export class Cargo {
   @Column()
   @ApiProperty({ description: "tipo_cargo", example: 1 })
   tipo_cargo:number
+
 }

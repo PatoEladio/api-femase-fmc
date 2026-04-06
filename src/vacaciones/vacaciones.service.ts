@@ -239,7 +239,7 @@ export class VacacionesService {
 
     await this.mailerService.sendMail({
       to: empleado.email, // CAMBIAR A CORREO LABORAL SI ES NECESARIO
-      cc: empleado.cenco.email_notificacion,
+      cc: empleado.email_noti,
       subject: 'Solicitud de Vacaciones',
       html: `
           <div style="font-family: Arial, sans-serif; color: #333;">
