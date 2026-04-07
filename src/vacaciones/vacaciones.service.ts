@@ -66,7 +66,14 @@ export class VacacionesService {
     }
 
     busquedaSolicitud.dias_efectivos = diasUtilizados;
-    busquedaSolicitud.saldo_vacaciones = diasDisponibles - busquedaSolicitud.dias_efectivos;
+
+    if (estado === 'A' && diasDisponibles < busquedaSolicitud.dias_efectivos) {
+      throw new HttpException('El empleado no tiene suficientes días disponibles para aprobar esta solicitud', 400);
+    }
+
+    busquedaSolicitud.saldo_vacaciones = estado === 'A' 
+      ? diasDisponibles - busquedaSolicitud.dias_efectivos 
+      : diasDisponibles;
 
     return this.vacacionesRepository.save(busquedaSolicitud);
   }
@@ -165,6 +172,31 @@ export class VacacionesService {
 
     if (!empleado) {
       throw new HttpException('Empleado no encontrado', 404);
+    }
+
+    const solicitudesPrevias = await this.vacacionesRepository.find({
+      where: {
+        empleado: { num_ficha: numFicha }
+      }
+    });
+
+    const newStart = new Date(fechaInicio);
+    const newEnd = new Date(fechaFin);
+    newStart.setHours(0, 0, 0, 0);
+    newEnd.setHours(0, 0, 0, 0);
+
+    const hasOverlap = solicitudesPrevias.some(solicitud => {
+      if (solicitud.estado === 'R') return false; 
+      const existingStart = new Date(solicitud.fecha_inicio);
+      const existingEnd = new Date(solicitud.fecha_fin);
+      existingStart.setHours(0, 0, 0, 0);
+      existingEnd.setHours(0, 0, 0, 0);
+
+      return existingStart <= newEnd && newStart <= existingEnd;
+    });
+
+    if (hasOverlap) {
+      throw new HttpException('Ya existe una solicitud de vacaciones en las fechas seleccionadas', 400);
     }
 
     // Pasar a cantidad dias entre medio sin fin de semanas
