@@ -10,6 +10,7 @@ import { Feriado } from '../feriados/entities/feriado.entity';
 import * as crypto from 'crypto';
 import { MailerService } from '@nestjs-modules/mailer';
 import { AutorizaHorasExtra } from 'src/autoriza_horas_extras/entities/autoriza_horas_extra.entity';
+import { AsignacionTurnoRotativo } from '../asignacion_turno_rotativo/entities/asignacion_turno_rotativo.entity';
 
 @Injectable()
 export class MarcasService {
@@ -231,6 +232,16 @@ export class MarcasService {
       throw new HttpException('No se pudo encontrar el empleado', 404);
     }
 
+    let asignacionesRotativas: AsignacionTurnoRotativo[] = [];
+    if (empleadoInfo.permite_rotativo) {
+      asignacionesRotativas = await this.marcaRepository.manager.find(AsignacionTurnoRotativo, {
+        where: {
+          empleado: { num_ficha: numFicha }
+        },
+        relations: ['horario']
+      });
+    }
+
     const diasTurnoQuery = await this.marcaRepository.manager.query(
       `SELECT e.turno_id, dt.id_dia 
        FROM db_fmc.empleado e 
@@ -271,7 +282,28 @@ export class MarcasService {
       const diasNombres = ['', 'Lu.', 'Ma.', 'Mi.', 'Ju.', 'Vi.', 'Sá.', 'Do.'];
       const fechaFormatExt = `${diasNombres[diaSemana]} ${day}-${month}-${year}`;
 
-      const tieneTurnoHoy = diasConTurno.includes(diaSemana);
+      let horarioTurnoRotativo: any = null;
+      if (empleadoInfo?.permite_rotativo) {
+        const asignacion = asignacionesRotativas.find(a => {
+          let start = '';
+          if (a.fecha_inicio_turno instanceof Date) start = a.fecha_inicio_turno.toISOString().substring(0, 10);
+          else start = String(a.fecha_inicio_turno).substring(0, 10);
+
+          let end = '';
+          if (a.fecha_fin_turno instanceof Date) end = a.fecha_fin_turno.toISOString().substring(0, 10);
+          else end = String(a.fecha_fin_turno).substring(0, 10);
+
+          return dateKey >= start && dateKey <= end;
+        });
+        if (asignacion) {
+          horarioTurnoRotativo = asignacion.horario;
+        }
+      }
+
+      let tieneTurnoHoy = diasConTurno.includes(diaSemana);
+      if (empleadoInfo?.permite_rotativo) {
+        tieneTurnoHoy = !!horarioTurnoRotativo;
+      }
 
       const marcasDelDia = busqueda.filter((m) => {
         let mDateKey = '';
@@ -286,7 +318,12 @@ export class MarcasService {
 
       if (marcasDelDia.length > 0) {
         const formateadas = marcasDelDia.map(m => {
-          const dtDia = m.empleado?.turno?.detalle_turno?.find((dt: any) => dt.dia?.cod_dia === diaSemana);
+          let dtDia = m.empleado?.turno?.detalle_turno?.find((dt: any) => dt.dia?.cod_dia === diaSemana);
+          let overrideHorario = dtDia && (dtDia as any).horario ? (dtDia as any).horario : null;
+          if (empleadoInfo?.permite_rotativo && horarioTurnoRotativo) {
+            overrideHorario = horarioTurnoRotativo;
+          }
+
           return {
             ...m,
             fecha_marca: fechaFormatExt as any,
@@ -294,8 +331,8 @@ export class MarcasService {
               ...m.empleado,
               turno: m.empleado.turno ? {
                 ...m.empleado.turno,
-                detalle_turno: dtDia && dtDia.horario ? { horario: dtDia.horario } : null
-              } : null
+                detalle_turno: overrideHorario ? { horario: overrideHorario } : null
+              } : (overrideHorario ? { detalle_turno: { horario: overrideHorario } } : null)
             } : null
           };
         });
@@ -310,7 +347,12 @@ export class MarcasService {
             infoFaltante = 'Falta Marca Entrada';
           }
 
-          const dtDia = empleadoInfo?.turno?.detalle_turno?.find((dt: any) => dt.dia?.cod_dia === diaSemana);
+          let dtDia = empleadoInfo?.turno?.detalle_turno?.find((dt: any) => dt.dia?.cod_dia === diaSemana);
+          let overrideHorario = dtDia && (dtDia as any).horario ? (dtDia as any).horario : null;
+          if (empleadoInfo?.permite_rotativo && horarioTurnoRotativo) {
+            overrideHorario = horarioTurnoRotativo;
+          }
+
           result.push({
             id_marca: null,
             fecha_marca: fechaFormatExt as any,
@@ -319,20 +361,26 @@ export class MarcasService {
             hashcode: null,
             info_adicional: infoFaltante,
             dispositivo: null,
+            tieneTurno: tieneTurnoHoy,
             empleado: {
               num_ficha: empleadoInfo?.num_ficha,
               turno: empleadoInfo?.turno ? {
                 turno_id: empleadoInfo.turno.turno_id,
-                detalle_turno: dtDia && dtDia.horario ? { horario: dtDia.horario } : null
-              } : null
+                detalle_turno: overrideHorario ? { horario: overrideHorario } : null
+              } : (overrideHorario ? { detalle_turno: { horario: overrideHorario } } : null)
             },
           } as any);
         }
       } else {
-        const dtDia = empleadoInfo?.turno?.detalle_turno?.find((dt: any) => dt.dia?.cod_dia === diaSemana);
+        let dtDia = empleadoInfo?.turno?.detalle_turno?.find((dt: any) => dt.dia?.cod_dia === diaSemana);
 
         let infoTexto = tieneTurnoHoy ? 'Faltan ambas marcas ' : 'Día libre';
         if (isFeriado) infoTexto = 'Feriado';
+
+        let overrideHorario = dtDia && (dtDia as any).horario ? (dtDia as any).horario : null;
+        if (empleadoInfo?.permite_rotativo && horarioTurnoRotativo) {
+          overrideHorario = horarioTurnoRotativo;
+        }
 
         result.push({
           id_marca: null,
@@ -347,8 +395,8 @@ export class MarcasService {
             num_ficha: empleadoInfo?.num_ficha,
             turno: empleadoInfo?.turno ? {
               turno_id: empleadoInfo.turno.turno_id,
-              detalle_turno: dtDia && dtDia.horario ? { horario: dtDia.horario } : null
-            } : null
+              detalle_turno: overrideHorario ? { horario: overrideHorario } : null
+            } : (overrideHorario ? { detalle_turno: { horario: overrideHorario } } : null)
           },
         } as any);
       }

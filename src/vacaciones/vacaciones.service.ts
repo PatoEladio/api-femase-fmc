@@ -73,8 +73,8 @@ export class VacacionesService {
       throw new HttpException('El empleado no tiene suficientes días disponibles para aprobar esta solicitud', 400);
     }
 
-    busquedaSolicitud.saldo_vacaciones = estado === 'A' 
-      ? diasDisponibles - busquedaSolicitud.dias_efectivos 
+    busquedaSolicitud.saldo_vacaciones = estado === 'A'
+      ? diasDisponibles - busquedaSolicitud.dias_efectivos
       : diasDisponibles;
 
     return this.vacacionesRepository.save(busquedaSolicitud);
@@ -188,7 +188,7 @@ export class VacacionesService {
     newEnd.setHours(0, 0, 0, 0);
 
     const hasOverlap = solicitudesPrevias.some(solicitud => {
-      if (solicitud.estado === 'R') return false; 
+      if (solicitud.estado === 'R') return false;
       const existingStart = new Date(solicitud.fecha_inicio);
       const existingEnd = new Date(solicitud.fecha_fin);
       existingStart.setHours(0, 0, 0, 0);

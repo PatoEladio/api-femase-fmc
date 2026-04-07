@@ -164,13 +164,18 @@ export class DetalleAsistenciaService {
         }
       }
 
+      let hrsTeoricasTrabajoMs = hrsTeoricasMs;
+      if (hrsTeoricasMs > colacionMs) {
+        hrsTeoricasTrabajoMs = hrsTeoricasMs - colacionMs;
+      }
+
       let noTrabajadasMs = 0;
-      if (hrsTeoricasMs > 0 && totalDiaMs === 0) {
-        noTrabajadasMs = hrsTeoricasMs;
+      if (hrsTeoricasTrabajoMs > 0 && totalDiaMs === 0) {
+        noTrabajadasMs = hrsTeoricasTrabajoMs;
         reg.horasNoTrabajadas = formatMs(noTrabajadasMs);
-      } else if (hrsTeoricasMs > 0 && totalDiaMs > 0) {
-        if (hrsTeoricasMs > totalDiaMs) {
-          noTrabajadasMs = hrsTeoricasMs - totalDiaMs;
+      } else if (hrsTeoricasTrabajoMs > 0 && totalDiaMs > 0) {
+        if (hrsTeoricasTrabajoMs > totalDiaMs) {
+          noTrabajadasMs = hrsTeoricasTrabajoMs - totalDiaMs;
           reg.horasNoTrabajadas = formatMs(noTrabajadasMs);
         } else {
           reg.horasNoTrabajadas = '00:00';
@@ -178,8 +183,8 @@ export class DetalleAsistenciaService {
       }
 
       let horasExtraMs = 0;
-      if (hrsPresencialesMs > hrsTeoricasMs) {
-        horasExtraMs = hrsPresencialesMs - hrsTeoricasMs;
+      if (totalDiaMs > hrsTeoricasTrabajoMs) {
+        horasExtraMs = totalDiaMs - hrsTeoricasTrabajoMs;
         reg.horasExtra = formatMs(horasExtraMs);
       } else {
         reg.horasExtra = '00:00';
