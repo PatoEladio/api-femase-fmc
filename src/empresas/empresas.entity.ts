@@ -60,4 +60,8 @@ export class Empresa {
   @Column()
   @ApiProperty({ description: "telefono_contacto", example: 22223333 })
   telefono_contacto:string
+
+  @Column()
+  @ApiProperty({ description: "email notificacion", example: "[EMAIL_ADDRESS]" })
+  email_noti:string
 }

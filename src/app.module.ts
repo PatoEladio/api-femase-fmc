@@ -60,6 +60,8 @@ import { VacacionesModule } from './vacaciones/vacaciones.module';
 import { Vacaciones } from './vacaciones/entities/vacaciones.entity';
 import { AusenciasModule } from './ausencias/ausencias.module';
 import { Ausencia } from './ausencias/entities/ausencia.entity';
+import { AutorizaHorasExtrasModule } from './autoriza_horas_extras/autoriza_horas_extras.module';
+import { AutorizaHorasExtra } from './autoriza_horas_extras/entities/autoriza_horas_extra.entity';
 
 @Module({
   imports: [
@@ -99,7 +101,8 @@ import { Ausencia } from './ausencias/entities/ausencia.entity';
         Marca,
         MarcasAuditoria,
         Vacaciones,
-        Ausencia
+        Ausencia,
+        AutorizaHorasExtra
       ]
     }),
     MailerModule.forRoot({
@@ -146,7 +149,8 @@ import { Ausencia } from './ausencias/entities/ausencia.entity';
     MarcasAuditoriaModule,
     ReportesModule,
     VacacionesModule,
-    AusenciasModule
+    AusenciasModule,
+    AutorizaHorasExtrasModule
   ],
   providers: [PerfilesService],
   controllers: [PerfilesController],

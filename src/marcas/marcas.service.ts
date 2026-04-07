@@ -10,6 +10,8 @@ import { Feriado } from '../feriados/entities/feriado.entity';
 import * as crypto from 'crypto';
 import { MailerService } from '@nestjs-modules/mailer';
 import { Cenco } from 'src/cencos/cenco.entity';
+import { DetalleTurno } from 'src/detalle-turno/entities/detalle-turno.entity';
+import { AutorizaHorasExtra } from 'src/autoriza_horas_extras/entities/autoriza_horas_extra.entity';
 
 @Injectable()
 export class MarcasService {
@@ -21,6 +23,8 @@ export class MarcasService {
     @InjectRepository(Feriado)
     private readonly feriadosRepository: Repository<Feriado>,
     private readonly mailerService: MailerService,
+    @InjectRepository(AutorizaHorasExtra)
+    private readonly autorizaHorasExtrasRepository: Repository<AutorizaHorasExtra>,
   ) { }
 
   async create(createMarcaDto: CreateMarcaDto) {
@@ -30,6 +34,85 @@ export class MarcasService {
     const nuevaMarca = this.marcaRepository.create(createMarcaDto);
 
     nuevaMarca.hashcode = crypto.createHash('md5').update(JSON.stringify(nuevaMarca.evento + ';' + nuevaMarca.fecha_marca + ';' + nuevaMarca.hora_marca + ';' + nuevaMarca.num_ficha + ';' + nuevaMarca.id_tipo_marca + ';' + nuevaMarca.info_adicional + ';' + nuevaMarca.comentario)).digest('hex');
+
+    //LOGICA DE CREACION DE FILA EN TABLA AUTORIZA_HORA_EXTRA
+
+    // 1 busca la marca
+    if (nuevaMarca.evento === 2) {
+      const existeMarcaEntrada = await this.marcaRepository.findOne({
+        where: {
+          num_ficha: nuevaMarca.num_ficha,
+          fecha_marca: nuevaMarca.fecha_marca,
+          evento: 1
+        }
+      })
+      // si la encuentra, busca al empleado de esa marca
+      if (existeMarcaEntrada) {
+        const empleado = await this.marcaRepository.manager.findOne(Empleado, {
+          where: { num_ficha: nuevaMarca.num_ficha }, relations: [
+            'turno',
+            'turno.detalle_turno',
+            'turno.detalle_turno.horario',
+            'turno.detalle_turno.dia',
+            'cargo'
+          ]
+        });
+        //si encuentra al empleado, busca el turno de ese empleado
+        if (empleado && empleado.turno) {
+          // 1. Obtenemos el día de la semana de la marca (manejamos string de fecha local para evitar desfase de zona horaria)
+          const fStr = nuevaMarca.fecha_marca.toString().split('T')[0];
+          const [anio, mes, dia] = fStr.includes('-') ? fStr.split('-').map(Number) : fStr.split('/').map(Number);
+          const fecha = new Date(anio, mes - 1, dia);
+          const diaSemanaJS = fecha.getDay();
+
+          // 2. Mapeo
+          const codDiaBusqueda = diaSemanaJS === 0 ? 7 : diaSemanaJS;
+          // 3. Buscamos el detalle que corresponde a este día específico
+          const detalleHoy = empleado.turno.detalle_turno.find(
+            (detalle) => detalle.dia.cod_dia === codDiaBusqueda
+          );
+          if (detalleHoy && detalleHoy.horario) {
+            const horarioOficial = detalleHoy.horario;
+
+            const getMinutes = (time: string) => {
+              if (!time || typeof time !== 'string') return 0;
+              const [h, m] = time.split(':').map(Number);
+              return (h || 0) * 60 + (m || 0);
+            };
+
+            const minutesToTime = (min: number) => {
+              const h = Math.floor(Math.abs(min) / 60);
+              const m = Math.floor(Math.abs(min) % 60);
+              return `${min < 0 ? '-' : ''}${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:00`;
+            };
+
+            const horaEntradaTeorica = horarioOficial.hora_entrada;
+            const horaSalidaTeorica = horarioOficial.hora_salida;
+            const horaEntradaReal = existeMarcaEntrada.hora_marca;
+            const horaSalidaReal = nuevaMarca.hora_marca;
+
+            const durTurnoMin = getMinutes(horaSalidaTeorica) - getMinutes(horaEntradaTeorica);
+            const hrsPresMin = getMinutes(horaSalidaReal) - getMinutes(horaEntradaReal);
+            const hrsExtrasMin = hrsPresMin - durTurnoMin;
+
+            const creaAutorizaHorasExtras = await this.marcaRepository.manager.save(AutorizaHorasExtra, {
+              cargo: empleado.cargo,
+              fecha_marca: existeMarcaEntrada.fecha_marca,
+              hora_entrada: horaEntradaReal,
+              hora_salida: horaSalidaReal,
+              hora_entrada_teorica: horaEntradaTeorica,
+              hora_salida_teorica: horaSalidaTeorica,
+              duracion_turno: minutesToTime(durTurnoMin),
+              horas_presenciales: minutesToTime(hrsPresMin),
+              horas_extras: minutesToTime(hrsExtrasMin > 0 ? hrsExtrasMin : 0),
+              estado: 'P'
+            });
+          } else {
+            console.log('No se encontró un horario configurado para este día.');
+          }
+        }
+      }
+    }
 
     const guardar = await this.marcaRepository.save(nuevaMarca);
 
@@ -48,8 +131,8 @@ export class MarcasService {
         const correoCenco = empleadoInfo.cenco.email_notificacion;
 
         let eventoNombre = 'Marca';
-        if (nuevaMarca.evento === 1) eventoNombre = 'Salida';
-        if (nuevaMarca.evento === 2) eventoNombre = 'Entrada';
+        if (nuevaMarca.evento === 1) eventoNombre = 'Entrada';
+        if (nuevaMarca.evento === 2) eventoNombre = 'Salida';
 
         let fechaFormat = nuevaMarca.fecha_marca;
         if (fechaFormat instanceof Date) {
@@ -57,8 +140,8 @@ export class MarcasService {
         }
 
         await this.mailerService.sendMail({
-          to: correoEmpleado, // agregar correo del cenco
-          cc: correoCenco,
+          to: correoEmpleado,
+          cc: empleadoInfo.email_noti,
           subject: 'Nueva Marca Registrada',
           html: `
           <div style="font-family: Arial, sans-serif; color: #333;">
@@ -77,6 +160,13 @@ export class MarcasService {
     } catch (error) {
       console.error('Error al enviar correo de nueva marca:', error);
     }
+
+
+
+
+
+
+
     return { message: 'Marca creada exitosamente', data: guardar };
   }
 
@@ -346,8 +436,8 @@ export class MarcasService {
         const correoCenco = empleadoInfo.cenco.email_notificacion;
 
         let eventoNombre = 'Marca';
-        if (marca.evento === 1) eventoNombre = 'Salida';
-        if (marca.evento === 2) eventoNombre = 'Entrada';
+        if (marca.evento === 1) eventoNombre = 'Entrada';
+        if (marca.evento === 2) eventoNombre = 'Salida';
 
         let fechaFormat = marca.fecha_marca;
         if (fechaFormat instanceof Date) {
@@ -356,7 +446,7 @@ export class MarcasService {
 
         await this.mailerService.sendMail({
           to: correoEmpleado,
-          cc: correoCenco,
+          cc: empleadoInfo.email_noti,
           subject: 'Actualización de Marca Registrada',
           html: `
           <div style="font-family: Arial, sans-serif; color: #333;">
@@ -395,8 +485,8 @@ export class MarcasService {
       const correoCenco = empleadoInfo.cenco.email_notificacion;
 
       let eventoNombre = 'Marca';
-      if (marca.evento === 1) eventoNombre = 'Salida';
-      if (marca.evento === 2) eventoNombre = 'Entrada';
+      if (marca.evento === 1) eventoNombre = 'Entrada';
+      if (marca.evento === 2) eventoNombre = 'Salida';
 
       let fechaFormat = marca.fecha_marca;
       if (fechaFormat instanceof Date) {
@@ -405,7 +495,7 @@ export class MarcasService {
 
       await this.mailerService.sendMail({
         to: correoEmpleado,
-        cc: correoCenco,
+        cc: empleadoInfo.email_noti,
         subject: 'Eliminacion de Marca Registrada',
         html: `
           <div style="font-family: Arial, sans-serif; color: #333;">

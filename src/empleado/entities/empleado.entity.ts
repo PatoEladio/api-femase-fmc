@@ -134,4 +134,8 @@ export class Empleado {
 
   @OneToMany(() => Ausencia, (ausencia) => ausencia.num_ficha)
   ausencias: Ausencia[];
+
+  @Column()
+  @ApiProperty({ description: 'email notificacion', example: "cris@femase.noti.cl" })
+  email_noti: string;
 }

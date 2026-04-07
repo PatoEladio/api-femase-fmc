@@ -6,6 +6,7 @@ import { Vacaciones } from './entities/vacaciones.entity';
 import { Between, Repository } from 'typeorm';
 import { Empleado } from '../empleado/entities/empleado.entity';
 import { User } from '../users/user.entity';
+import { MailerService } from '@nestjs-modules/mailer';
 
 @Injectable()
 export class VacacionesService {
@@ -16,6 +17,7 @@ export class VacacionesService {
     private readonly empleadoRepository: Repository<Empleado>,
     @InjectRepository(User)
     private readonly usuarioRepository: Repository<User>,
+    private readonly mailerService: MailerService,
   ) { }
 
   create(createVacacioneDto: CreateVacacioneDto) {
@@ -265,6 +267,27 @@ export class VacacionesService {
       zona_extrema: empleado.cenco.zona_extrema,
       saldo_vba_previo: 0,
       autorizador: estadoId == 'A' || estadoId == 'R' ? autorizador : '',
+    });
+
+    await this.mailerService.sendMail({
+      to: empleado.email, // CAMBIAR A CORREO LABORAL SI ES NECESARIO
+      cc: empleado.email_noti,
+      subject: 'Solicitud de Vacaciones',
+      html: `
+          <div style="font-family: Arial, sans-serif; color: #333;">
+            <h2>Hola, ${empleado.nombres}</h2>
+            <p>Se ha creado una solicitud de vacaciones en el sistema. Los detalles son los siguientes:</p>
+            <ul>
+              <li><strong>Fecha de Inicio:</strong> ${fechaInicio}</li>
+              <li><strong>Fecha de Fin:</strong> ${fechaFin}</li>
+              <li><strong>Dias a Tomar:</strong> ${diasATomar}</li>
+              <li><strong>Dias Disponibles:</strong> ${diasDisponibles}</li>
+              <li><strong>Dias Acumulados:</strong> ${diasAcumulados}</li>
+              <li><strong>Zona Extrema:</strong> ${empleado.cenco.zona_extrema}</li>
+              <li><strong>Autorizador:</strong> ${autorizador}</li>
+            </ul>
+            <p>Si tienes dudas, puedes contactar al administrador.</p>
+          </div>`,
     });
 
     return this.vacacionesRepository.save(vacaciones);
