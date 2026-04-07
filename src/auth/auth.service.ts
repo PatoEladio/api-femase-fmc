@@ -25,6 +25,17 @@ export class AuthService {
       throw new UnauthorizedException('Credenciales incorrectas');
     }
 
+    if (user.empleado && user.empleado.contrato_indefinido === false && user.empleado.fecha_fin_contrato) {
+      const hoy = new Date();
+      hoy.setHours(0, 0, 0, 0);
+      const finContrato = new Date(user.empleado.fecha_fin_contrato);
+      finContrato.setHours(0, 0, 0, 0);
+
+      if (finContrato < hoy) {
+        throw new UnauthorizedException('Su contrato se encuentra vencido. No puede iniciar sesión.');
+      }
+    }
+
     const isMatch = await bcrypt.compare(pass, user.password);
 
     if (!isMatch) {

@@ -63,6 +63,8 @@ import { Ausencia } from './ausencias/entities/ausencia.entity';
 import { AutorizaHorasExtrasModule } from './autoriza_horas_extras/autoriza_horas_extras.module';
 import { AutorizaHorasExtra } from './autoriza_horas_extras/entities/autoriza_horas_extra.entity';
 import { RegistroEventoModule } from './registro_evento/registro_evento.module';
+import { DetalleAsistenciaModule } from './detalle-asistencia/detalle-asistencia.module';
+import { DetalleAsistencia } from './detalle-asistencia/entities/detalle-asistencia.entity';
 
 @Module({
   imports: [
@@ -72,8 +74,8 @@ import { RegistroEventoModule } from './registro_evento/registro_evento.module';
       host: 'localhost',
       port: 5432,
       username: 'postgres',
-      password: 'superadmin',
-      database: 'femase',
+      password: 'Admin',
+      database: 'postgres',
       synchronize: false,
       entities: [
         User,
@@ -103,7 +105,8 @@ import { RegistroEventoModule } from './registro_evento/registro_evento.module';
         MarcasAuditoria,
         Vacaciones,
         Ausencia,
-        AutorizaHorasExtra
+        AutorizaHorasExtra,
+        DetalleAsistencia
       ]
     }),
     MailerModule.forRoot({
@@ -152,7 +155,8 @@ import { RegistroEventoModule } from './registro_evento/registro_evento.module';
     VacacionesModule,
     AusenciasModule,
     AutorizaHorasExtrasModule,
-    RegistroEventoModule
+    RegistroEventoModule,
+    DetalleAsistenciaModule
   ],
   providers: [PerfilesService],
   controllers: [PerfilesController],

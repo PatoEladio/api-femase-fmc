@@ -6,10 +6,11 @@ import { DetalleAsistencia } from './entities/detalle-asistencia.entity';
 import { MarcasModule } from '../marcas/marcas.module';
 import { Empleado } from '../empleado/entities/empleado.entity';
 import { Feriado } from '../feriados/entities/feriado.entity';
+import { Ausencia } from 'src/ausencias/entities/ausencia.entity';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([DetalleAsistencia, Empleado, Feriado]),
+    TypeOrmModule.forFeature([DetalleAsistencia, Empleado, Feriado, Ausencia]),
     forwardRef(() => MarcasModule),
   ],
   controllers: [DetalleAsistenciaController],

@@ -9,8 +9,6 @@ import { MarcasAuditoria } from '../marcas-auditoria/entities/marcas-auditoria.e
 import { Feriado } from '../feriados/entities/feriado.entity';
 import * as crypto from 'crypto';
 import { MailerService } from '@nestjs-modules/mailer';
-import { Cenco } from 'src/cencos/cenco.entity';
-import { DetalleTurno } from 'src/detalle-turno/entities/detalle-turno.entity';
 import { AutorizaHorasExtra } from 'src/autoriza_horas_extras/entities/autoriza_horas_extra.entity';
 
 @Injectable()

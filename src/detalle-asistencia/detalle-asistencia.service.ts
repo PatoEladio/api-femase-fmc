@@ -7,6 +7,7 @@ import { Repository } from 'typeorm';
 import { MarcasService } from '../marcas/marcas.service';
 import { Empleado } from '../empleado/entities/empleado.entity';
 import { Feriado } from '../feriados/entities/feriado.entity';
+import { Ausencia } from 'src/ausencias/entities/ausencia.entity';
 
 @Injectable()
 export class DetalleAsistenciaService {
@@ -18,6 +19,8 @@ export class DetalleAsistenciaService {
     private readonly empleadoRepository: Repository<Empleado>,
     @InjectRepository(Feriado)
     private readonly feriadosRepository: Repository<Feriado>,
+    @InjectRepository(Ausencia)
+    private readonly ausenciasRepository: Repository<Ausencia>,
   ) {}
 
   create(createDetalleAsistenciaDto: CreateDetalleAsistenciaDto) {
@@ -34,6 +37,13 @@ export class DetalleAsistenciaService {
 
     const marcasResult = await this.marcasService.findAll(numFicha, fechaInicio, fechaFin);
     const feriados = await this.feriadosRepository.find();
+    const ausenciasAll = await this.ausenciasRepository.find({
+      where: { autorizada: true },
+      relations: ['num_ficha']
+    });
+    const ausencias = ausenciasAll.filter(a => a.num_ficha?.num_ficha === numFicha);
+    console.log(`[DEBUG] Ausencias fetched for ${numFicha}:`, ausencias);
+    console.log(`[DEBUG] Ausencias fetched for ${numFicha}:`, ausencias);
 
     const registrosMap = new Map<string, any>();
 
@@ -177,6 +187,37 @@ export class DetalleAsistenciaService {
 
       const parts = reg.fecha.split(' ')[1].split('-');
       const formattedDate = `${parts[2]}-${parts[1]}-${parts[0]}`; 
+
+      let justifMs = 0;
+      const ausenciaList = ausencias.filter(aus => {
+        let start = '';
+        if (aus.fecha_inicio instanceof Date) start = aus.fecha_inicio.toISOString().substring(0, 10);
+        else start = String(aus.fecha_inicio).substring(0, 10);
+
+        let end = '';
+        if (aus.fecha_fin instanceof Date) end = aus.fecha_fin.toISOString().substring(0, 10);
+        else end = String(aus.fecha_fin).substring(0, 10);
+
+        return formattedDate >= start && formattedDate <= end;
+      });
+
+      for (const aus of ausenciaList) {
+        if (aus.dia_completo) {
+          justifMs = noTrabajadasMs;
+          break;
+        } else if (aus.hora_inicio && aus.hora_fin) {
+          justifMs += diffMsStr(String(aus.hora_inicio), String(aus.hora_fin));
+        }
+      }
+
+      console.log(`[DEBUG] formattedDate: ${formattedDate}, noTrabajadasMs: ${noTrabajadasMs}, justifMs calculated: ${justifMs}, ausenciaList length: ${ausenciaList.length}`);
+
+      if (justifMs > 0) {
+        if (justifMs > noTrabajadasMs) justifMs = noTrabajadasMs;
+        reg.horasJustificadas = formatMs(justifMs);
+        noTrabajadasMs -= justifMs;
+        reg.horasNoTrabajadas = formatMs(noTrabajadasMs);
+      }
       const isFeriado = feriados.some(fer => {
         let fStr = '';
         if (fer.fecha instanceof Date) fStr = fer.fecha.toISOString().substring(0, 10);
@@ -187,6 +228,10 @@ export class DetalleAsistenciaService {
       if (isFeriado) {
         if (entReal === '-' && salReal === '-') {
           reg.observacion = 'Feriado';
+        }
+      } else if (ausenciaList.length > 0 && ausenciaList.some(a => a.dia_completo)) {
+        if (entReal === '-' && salReal === '-') {
+          reg.observacion = 'Ausencia Autorizada';
         }
       }
 
@@ -199,7 +244,7 @@ export class DetalleAsistenciaService {
 
       let savedId: number | null = null;
 
-      if (reg.marcasDia && reg.marcasDia.length > 0) {
+      if ((reg.marcasDia && reg.marcasDia.length > 0) || ausenciaList.length > 0) {
         let dbRecord = await this.detalleAsistenciaRepository.findOne({
           where: {
               empleado: { num_ficha: numFicha },

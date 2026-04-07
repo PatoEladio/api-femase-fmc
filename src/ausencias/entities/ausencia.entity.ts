@@ -30,4 +30,13 @@ export class Ausencia {
     @ManyToOne(() => TipoAusencia, (tipoAusencia) => tipoAusencia.ausencias)
     @JoinColumn({ name: 'motivo_ausencia' })
     tipo_ausencia: TipoAusencia;
+
+    @Column()
+    autorizador: string;
+
+    @Column()
+    autorizada: boolean;
+
+    @Column()
+    fecha_creacion: Date;
 }

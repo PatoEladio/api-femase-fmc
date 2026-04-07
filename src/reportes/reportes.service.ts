@@ -97,6 +97,9 @@ export class ReportesService {
     let semTeoricasMs = 0;
     let semPresencialesMs = 0;
     let semAtrasoMs = 0;
+    let semJustificadasMs = 0;
+    let semExtraMs = 0;
+    let semNoTrabajadasMs = 0;
     let semDiaMs = 0;
 
     for (let i = 0; i < data.registros.length; i++) {
@@ -105,6 +108,9 @@ export class ReportesService {
       semTeoricasMs += parseMs(reg.horasTeoricas);
       semPresencialesMs += parseMs(reg.horasPresenciales);
       semAtrasoMs += parseMs(reg.atraso);
+      semJustificadasMs += parseMs(reg.horasJustificadas);
+      semExtraMs += parseMs(reg.horasExtra);
+      semNoTrabajadasMs += parseMs(reg.horasNoTrabajadas);
       semDiaMs += parseMs(reg.totalDia);
 
       tableBody.push([
@@ -122,9 +128,9 @@ export class ReportesService {
           { text: formatMs(semTeoricasMs), style: 'tableHeader' },
           { text: formatMs(semPresencialesMs), style: 'tableHeader' },
           { text: formatMs(semAtrasoMs), style: 'tableHeader' },
-          { text: '', style: 'tableHeader' },
-          { text: '00:00', style: 'tableHeader' },
-          { text: '', style: 'tableHeader' },
+          { text: formatMs(semJustificadasMs), style: 'tableHeader' },
+          { text: formatMs(semExtraMs), style: 'tableHeader' },
+          { text: formatMs(semNoTrabajadasMs), style: 'tableHeader' },
           { text: formatMs(semDiaMs), style: 'tableHeader' },
           { text: '', style: 'tableHeader' }
         ]);
@@ -132,6 +138,9 @@ export class ReportesService {
         semTeoricasMs = 0;
         semPresencialesMs = 0;
         semAtrasoMs = 0;
+        semJustificadasMs = 0;
+        semExtraMs = 0;
+        semNoTrabajadasMs = 0;
         semDiaMs = 0;
       }
     }
@@ -448,15 +457,15 @@ export class ReportesService {
       const ausencia = busquedaAusencias[i];
 
       tableBody.push([
-        '-',
+        formatDate(ausencia.fecha_creacion),
         ausencia.tipo_ausencia?.nombre || 'S/I',
         ausencia.dia_completo ? 'No' : 'Sí',
         formatDate(ausencia.fecha_inicio),
         ausencia.hora_inicio || '-',
         formatDate(ausencia.fecha_fin),
         ausencia.hora_fin || '-',
-        '-',
-        '-'
+        ausencia.autorizada ? 'Sí' : 'No',
+        ausencia.autorizador || '-'
       ]);
     }
 
