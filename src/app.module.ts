@@ -62,6 +62,7 @@ import { AusenciasModule } from './ausencias/ausencias.module';
 import { Ausencia } from './ausencias/entities/ausencia.entity';
 import { AutorizaHorasExtrasModule } from './autoriza_horas_extras/autoriza_horas_extras.module';
 import { AutorizaHorasExtra } from './autoriza_horas_extras/entities/autoriza_horas_extra.entity';
+import { RegistroEventoModule } from './registro_evento/registro_evento.module';
 
 @Module({
   imports: [
@@ -150,7 +151,8 @@ import { AutorizaHorasExtra } from './autoriza_horas_extras/entities/autoriza_ho
     ReportesModule,
     VacacionesModule,
     AusenciasModule,
-    AutorizaHorasExtrasModule
+    AutorizaHorasExtrasModule,
+    RegistroEventoModule
   ],
   providers: [PerfilesService],
   controllers: [PerfilesController],
