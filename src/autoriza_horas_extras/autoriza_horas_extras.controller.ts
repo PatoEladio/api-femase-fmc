@@ -1,11 +1,15 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, Query } from '@nestjs/common';
 import { AutorizaHorasExtrasService } from './autoriza_horas_extras.service';
+import { DetalleAsistenciaService } from 'src/detalle-asistencia/detalle-asistencia.service';
 import { CreateAutorizaHorasExtraDto } from './dto/create-autoriza_horas_extra.dto';
 import { UpdateAutorizaHorasExtraDto } from './dto/update-autoriza_horas_extra.dto';
 
 @Controller('autoriza-horas-extras')
 export class AutorizaHorasExtrasController {
-  constructor(private readonly autorizaHorasExtrasService: AutorizaHorasExtrasService) {}
+  constructor(
+    private readonly autorizaHorasExtrasService: AutorizaHorasExtrasService,
+    private readonly detalleAsistenciaService: DetalleAsistenciaService
+  ) {}
 
   @Post()
   create(@Body() createAutorizaHorasExtraDto: CreateAutorizaHorasExtraDto) {
@@ -13,7 +17,10 @@ export class AutorizaHorasExtrasController {
   }
 
   @Get()
-  findAll() {
+  async findAll(@Query("numFicha") numFicha?: string, @Query("fechaInicio") fechaInicio?: string, @Query("fechaFin") fechaFin?: string) {
+    if (numFicha && fechaInicio && fechaFin) {
+      await this.detalleAsistenciaService.calcularAsistencia(numFicha, fechaInicio, fechaFin);
+    }
     return this.autorizaHorasExtrasService.findAll();
   }
 

@@ -8,6 +8,7 @@ import { Between, Repository } from 'typeorm';
 import { AttendanceRecordDto, UserReportDto } from './dto/attendance-report.dto';
 import { Vacaciones } from 'src/vacaciones/entities/vacaciones.entity';
 import { Ausencia } from 'src/ausencias/entities/ausencia.entity';
+import { DetalleAsistenciaService } from '../detalle-asistencia/detalle-asistencia.service';
 
 @Injectable()
 export class ReportesService {
@@ -21,155 +22,35 @@ export class ReportesService {
     private readonly vacacionesRepository: Repository<Vacaciones>,
     @InjectRepository(Ausencia)
     private readonly ausenciaRepository: Repository<Ausencia>,
+    private readonly detalleAsistenciaService: DetalleAsistenciaService,
   ) { }
 
   async generateAttendancePdf(numFicha: string, fechaInicio: string, fechaFin: string): Promise<Buffer> {
-    const empleado = await this.empleadoRepository.findOne({
-      where: { num_ficha: numFicha },
-      relations: ['cargo', 'cenco', 'empresa', 'turno']
-    });
-
-    if (!empleado) throw new HttpException('Empleado no encontrado', 404);
-
-    const marcasResult = await this.marcasService.findAll(numFicha, fechaInicio, fechaFin);
-    const feriados = await this.feriadosRepository.find();
-
-    const registrosMap = new Map<string, AttendanceRecordDto>();
-
-    for (const m of marcasResult) {
-      const f = String(m.fecha_marca); // 'Lu. 21-03-2026'
-      if (!registrosMap.has(f)) {
-        registrosMap.set(f, {
-          fecha: f,
-          entrada: null as any,
-          salida: null as any,
-          entradaTeorica: m.empleado?.turno?.detalle_turno?.horario?.hora_entrada || '-',
-          salidaTeorica: m.empleado?.turno?.detalle_turno?.horario?.hora_salida || '-',
-          horasTeoricas: '00:00',
-          horasPresenciales: '-',
-          atraso: '-',
-          horasJustificadas: '-',
-          horasExtra: '-',
-          horasNoTrabajadas: '-',
-          totalDia: '-',
-          observacion: m.info_adicional || '',
-        });
-      }
-
-      const entry = registrosMap.get(f)!;
-      // In marcas, evento = 1 is Entrada, evento = 2 is Salida
-      if (m.evento === 1 && m.hora_marca) entry.entrada = String(m.hora_marca);
-      if (m.evento === 2 && m.hora_marca) entry.salida = String(m.hora_marca);
-
-      if (m.info_adicional && entry.observacion !== m.info_adicional) {
-        if (!entry.observacion || entry.observacion.includes('Falta Marca') || entry.observacion.includes('Faltan ambas')) {
-          entry.observacion = m.info_adicional;
-        }
-      }
-    }
-
-    const formatMs = (ms: number): string => {
-      if (ms <= 0) return '00:00';
-      const hrs = Math.floor(ms / 3600000);
-      const mins = Math.floor((ms % 3600000) / 60000);
-      return `${String(hrs).padStart(2, '0')}:${String(mins).padStart(2, '0')}`;
-    };
-
-    const diffMsStr = (t1: string, t2: string): number => {
-      if (t1 === '-' || t2 === '-') return 0;
-      const d1 = new Date(`1970-01-01T${t1}`);
-      let d2 = new Date(`1970-01-01T${t2}`);
-      if (d2 < d1) d2 = new Date(`1970-01-02T${t2}`);
-      return d2.getTime() - d1.getTime();
-    };
+    const dataAsistencia = await this.detalleAsistenciaService.calcularAsistencia(numFicha, fechaInicio, fechaFin);
+    const empleado = dataAsistencia.empleado;
 
     let totalDiasTrabajados = 0;
     let totalDiasAusente = 0;
     let totalDiasDescanso = 0;
     let totalDiasFeriado = 0;
 
-    const registros = Array.from(registrosMap.values()).map(reg => {
-      const entTeo = reg.entradaTeorica !== '-' ? reg.entradaTeorica.substring(0, 5) : '-';
-      const salTeo = reg.salidaTeorica !== '-' ? reg.salidaTeorica.substring(0, 5) : '-';
-
-      let hrsTeoricasMs = 0;
-      if (entTeo !== '-' && salTeo !== '-') {
-        hrsTeoricasMs = diffMsStr(entTeo, salTeo);
-        reg.horasTeoricas = formatMs(hrsTeoricasMs);
-      } else {
-        reg.horasTeoricas = '-';
-      }
-
-      const entReal = reg.entrada ? reg.entrada.substring(0, 5) : '-';
-      const salReal = reg.salida ? reg.salida.substring(0, 5) : '-';
-
-      let hrsPresencialesMs = 0;
-      if (entReal !== '-' && salReal !== '-') {
-        hrsPresencialesMs = diffMsStr(entReal, salReal);
-        reg.horasPresenciales = formatMs(hrsPresencialesMs);
-      }
-
-      let totalDiaMs = 0;
-      if (hrsPresencialesMs > 30 * 60000) {
-        totalDiaMs = hrsPresencialesMs - (30 * 60000);
-        reg.totalDia = formatMs(totalDiaMs);
-      } else if (hrsPresencialesMs > 0) {
-        totalDiaMs = hrsPresencialesMs;
-        reg.totalDia = formatMs(totalDiaMs);
-      }
-
-      let atrasoMs = 0;
-      if (entReal !== '-' && entTeo !== '-') {
-        const diff = new Date(`1970-01-01T${entReal}`).getTime() - new Date(`1970-01-01T${entTeo}`).getTime();
-        if (diff > 0) {
-          atrasoMs = diff;
-          reg.atraso = formatMs(atrasoMs);
-        } else {
-          reg.atraso = '00:00';
-        }
-      }
-
-      let noTrabajadasMs = 0;
-      if (hrsTeoricasMs > 0 && totalDiaMs === 0) {
-        noTrabajadasMs = hrsTeoricasMs;
-        reg.horasNoTrabajadas = formatMs(noTrabajadasMs);
-      } else if (hrsTeoricasMs > 0 && totalDiaMs > 0) {
-        if (hrsTeoricasMs > totalDiaMs) {
-          noTrabajadasMs = hrsTeoricasMs - totalDiaMs;
-          reg.horasNoTrabajadas = formatMs(noTrabajadasMs);
-        } else {
-          reg.horasNoTrabajadas = '00:00';
-        }
-      }
-
-      const parts = reg.fecha.split(' ')[1].split('-');
-      const formattedDate = `${parts[2]}-${parts[1]}-${parts[0]}`;
-      const isFeriado = feriados.some(fer => {
-        let fStr = '';
-        if (fer.fecha instanceof Date) fStr = fer.fecha.toISOString().substring(0, 10);
-        else if (typeof fer.fecha === 'string') fStr = fer.fecha.substring(0, 10);
-        return fStr === formattedDate;
-      });
-
+    const registros = dataAsistencia.registros.map((reg: any) => {
       let isFeriadoLibre = false;
-      if (isFeriado) {
-        if (entReal === '-' && salReal === '-') {
-          reg.observacion = 'Feriado';
-          isFeriadoLibre = true;
-        }
+      if (reg.observacion === 'Feriado' && reg.entrada === '-' && reg.salida === '-') {
+        isFeriadoLibre = true;
       }
 
-      // Calculation of days stats
-      if (entReal !== '-' || salReal !== '-') {
+      if (reg.entrada !== '-' || reg.salida !== '-') {
         totalDiasTrabajados++;
       } else if (isFeriadoLibre) {
         totalDiasFeriado++;
-      } else if (hrsTeoricasMs === 0) {
+      } else if (reg.horasTeoricas === '-' || reg.horasTeoricas === '00:00') {
         totalDiasDescanso++;
       } else {
         totalDiasAusente++;
       }
-      return { ...reg, entrada: entReal, salida: salReal, entradaTeorica: entTeo, salidaTeorica: salTeo, };
+
+      return reg;
     });
 
     const data: UserReportDto = {
@@ -179,6 +60,13 @@ export class ReportesService {
       centroCosto: empleado.cenco?.nombre_cenco || 'Sin cenco',
       fechaIngreso: empleado.fecha_ini_contrato ? new Date(empleado.fecha_ini_contrato).toLocaleDateString('es-CL') : 'N/A',
       periodo: { desde: fechaInicio, hasta: fechaFin }, registros
+    };
+
+    const formatMs = (ms: number): string => {
+      if (ms <= 0) return '00:00';
+      const hrs = Math.floor(ms / 3600000);
+      const mins = Math.floor((ms % 3600000) / 60000);
+      return `${String(hrs).padStart(2, '0')}:${String(mins).padStart(2, '0')}`;
     };
 
     const parseMs = (timeStr: string): number => {

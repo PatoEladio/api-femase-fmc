@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { Module, forwardRef } from '@nestjs/common';
 import { MarcasService } from './marcas.service';
 import { MarcasController } from './marcas.controller';
 import { TypeOrmModule } from '@nestjs/typeorm';
@@ -7,8 +7,13 @@ import { MarcasAuditoria } from 'src/marcas-auditoria/entities/marcas-auditoria.
 import { Feriado } from '../feriados/entities/feriado.entity';
 import { AutorizaHorasExtra } from 'src/autoriza_horas_extras/entities/autoriza_horas_extra.entity';
 
+import { DetalleAsistenciaModule } from 'src/detalle-asistencia/detalle-asistencia.module';
+
 @Module({
-  imports: [TypeOrmModule.forFeature([Marca, MarcasAuditoria, Feriado, AutorizaHorasExtra])],
+  imports: [
+    TypeOrmModule.forFeature([Marca, MarcasAuditoria, Feriado, AutorizaHorasExtra]),
+    forwardRef(() => DetalleAsistenciaModule)
+  ],
   controllers: [MarcasController],
   providers: [MarcasService],
   exports: [MarcasService]

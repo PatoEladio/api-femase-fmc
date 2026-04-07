@@ -161,12 +161,6 @@ export class MarcasService {
       console.error('Error al enviar correo de nueva marca:', error);
     }
 
-
-
-
-
-
-
     return { message: 'Marca creada exitosamente', data: guardar };
   }
 

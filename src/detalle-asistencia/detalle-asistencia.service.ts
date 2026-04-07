@@ -1,0 +1,257 @@
+import { Injectable, HttpException } from '@nestjs/common';
+import { CreateDetalleAsistenciaDto } from './dto/create-detalle-asistencia.dto';
+import { UpdateDetalleAsistenciaDto } from './dto/update-detalle-asistencia.dto';
+import { InjectRepository } from '@nestjs/typeorm';
+import { DetalleAsistencia } from './entities/detalle-asistencia.entity';
+import { Repository } from 'typeorm';
+import { MarcasService } from '../marcas/marcas.service';
+import { Empleado } from '../empleado/entities/empleado.entity';
+import { Feriado } from '../feriados/entities/feriado.entity';
+
+@Injectable()
+export class DetalleAsistenciaService {
+  constructor(
+    @InjectRepository(DetalleAsistencia)
+    private readonly detalleAsistenciaRepository: Repository<DetalleAsistencia>,
+    private readonly marcasService: MarcasService,
+    @InjectRepository(Empleado)
+    private readonly empleadoRepository: Repository<Empleado>,
+    @InjectRepository(Feriado)
+    private readonly feriadosRepository: Repository<Feriado>,
+  ) {}
+
+  create(createDetalleAsistenciaDto: CreateDetalleAsistenciaDto) {
+    return 'This action adds a new detalleAsistencia';
+  }
+
+  async calcularAsistencia(numFicha: string, fechaInicio: string, fechaFin: string) {
+    const empleado = await this.empleadoRepository.findOne({
+      where: { num_ficha: numFicha },
+      relations: ['cargo', 'cenco', 'empresa', 'turno']
+    });
+
+    if (!empleado) throw new HttpException('Empleado no encontrado', 404);
+
+    const marcasResult = await this.marcasService.findAll(numFicha, fechaInicio, fechaFin);
+    const feriados = await this.feriadosRepository.find();
+
+    const registrosMap = new Map<string, any>();
+
+    for (const m of marcasResult) {
+      const f = String(m.fecha_marca);
+      if (!registrosMap.has(f)) {
+        registrosMap.set(f, {
+          fecha: f,
+          marcasDia: [],
+          entrada: null,
+          salida: null,
+          entradaTeorica: m.empleado?.turno?.detalle_turno?.horario?.hora_entrada || '-',
+          salidaTeorica: m.empleado?.turno?.detalle_turno?.horario?.hora_salida || '-',
+          colacionTeorica: m.empleado?.turno?.detalle_turno?.horario?.colacion || '-',
+          horasTeoricas: '00:00',
+          horasPresenciales: '-',
+          atraso: '-',
+          horasJustificadas: '-',
+          horasExtra: '-',
+          horasNoTrabajadas: '-',
+          totalDia: '-',
+          observacion: m.info_adicional || '',
+        });
+      }
+
+      const entry = registrosMap.get(f)!;
+      if (m.hora_marca) {
+        entry.marcasDia.push(m);
+      }
+
+      if (m.info_adicional && entry.observacion !== m.info_adicional) {
+        if (!entry.observacion || entry.observacion.includes('Falta Marca') || entry.observacion.includes('Faltan ambas')) {
+          entry.observacion = m.info_adicional;
+        }
+      }
+    }
+
+    const formatMs = (ms: number): string => {
+      if (ms <= 0) return '00:00';
+      const hrs = Math.floor(ms / 3600000);
+      const mins = Math.floor((ms % 3600000) / 60000);
+      return `${String(hrs).padStart(2, '0')}:${String(mins).padStart(2, '0')}`;
+    };
+
+    const parseMs = (timeStr: string): number => {
+      if (!timeStr || timeStr === '-' || timeStr === '00:00' || timeStr === '00:00:00') return 0;
+      const p = timeStr.split(':');
+      if (p.length < 2) return 0;
+      return (parseInt(p[0]) * 3600000) + (parseInt(p[1]) * 60000);
+    };
+
+    const diffMsStr = (t1: string, t2: string): number => {
+      if (t1 === '-' || t2 === '-') return 0;
+      const d1 = new Date(`1970-01-01T${t1}`);
+      let d2 = new Date(`1970-01-01T${t2}`);
+      if (d2 < d1) d2 = new Date(`1970-01-02T${t2}`);
+      return d2.getTime() - d1.getTime();
+    };
+
+    const resultadosGuardados: any[] = [];
+
+    for (const reg of Array.from(registrosMap.values())) {
+      if (reg.marcasDia && reg.marcasDia.length > 0) {
+        reg.marcasDia.sort((a: any, b: any) => String(a.hora_marca).localeCompare(String(b.hora_marca)));
+        
+        if (reg.marcasDia.length === 1) {
+            const m = reg.marcasDia[0];
+            if (m.evento === 2) {
+                reg.salida = String(m.hora_marca);
+            } else {
+                reg.entrada = String(m.hora_marca);
+            }
+        } else {
+            reg.entrada = String(reg.marcasDia[0].hora_marca);
+            reg.salida = String(reg.marcasDia[reg.marcasDia.length - 1].hora_marca);
+        }
+      }
+
+      const entTeo = reg.entradaTeorica !== '-' ? reg.entradaTeorica.substring(0, 5) : '-';
+      const salTeo = reg.salidaTeorica !== '-' ? reg.salidaTeorica.substring(0, 5) : '-';
+
+      let hrsTeoricasMs = 0;
+      if (entTeo !== '-' && salTeo !== '-') {
+        hrsTeoricasMs = diffMsStr(entTeo, salTeo);
+        reg.horasTeoricas = formatMs(hrsTeoricasMs);
+      } else {
+        reg.horasTeoricas = '-';
+      }
+
+      const entReal = reg.entrada ? reg.entrada.substring(0, 5) : '-';
+      const salReal = reg.salida ? reg.salida.substring(0, 5) : '-';
+
+      let hrsPresencialesMs = 0;
+      if (entReal !== '-' && salReal !== '-') {
+        hrsPresencialesMs = diffMsStr(entReal, salReal);
+        reg.horasPresenciales = formatMs(hrsPresencialesMs);
+      }
+
+      const colacionMs = parseMs(reg.colacionTeorica);
+
+      let totalDiaMs = 0;
+      if (hrsPresencialesMs > colacionMs) {
+        totalDiaMs = hrsPresencialesMs - colacionMs;
+        reg.totalDia = formatMs(totalDiaMs);
+      } else if (hrsPresencialesMs > 0) {
+        totalDiaMs = hrsPresencialesMs;
+        reg.totalDia = formatMs(totalDiaMs);
+      }
+
+      let atrasoMs = 0;
+      if (entReal !== '-' && entTeo !== '-') {
+        const diff = new Date(`1970-01-01T${entReal}`).getTime() - new Date(`1970-01-01T${entTeo}`).getTime();
+        if (diff > 0) {
+          atrasoMs = diff;
+          reg.atraso = formatMs(atrasoMs);
+        } else {
+          reg.atraso = '00:00';
+        }
+      }
+
+      let noTrabajadasMs = 0;
+      if (hrsTeoricasMs > 0 && totalDiaMs === 0) {
+        noTrabajadasMs = hrsTeoricasMs;
+        reg.horasNoTrabajadas = formatMs(noTrabajadasMs);
+      } else if (hrsTeoricasMs > 0 && totalDiaMs > 0) {
+        if (hrsTeoricasMs > totalDiaMs) {
+          noTrabajadasMs = hrsTeoricasMs - totalDiaMs;
+          reg.horasNoTrabajadas = formatMs(noTrabajadasMs);
+        } else {
+          reg.horasNoTrabajadas = '00:00';
+        }
+      }
+
+      let horasExtraMs = 0;
+      if (hrsPresencialesMs > hrsTeoricasMs) {
+        horasExtraMs = hrsPresencialesMs - hrsTeoricasMs;
+        reg.horasExtra = formatMs(horasExtraMs);
+      } else {
+        reg.horasExtra = '00:00';
+      }
+
+      const parts = reg.fecha.split(' ')[1].split('-');
+      const formattedDate = `${parts[2]}-${parts[1]}-${parts[0]}`; 
+      const isFeriado = feriados.some(fer => {
+        let fStr = '';
+        if (fer.fecha instanceof Date) fStr = fer.fecha.toISOString().substring(0, 10);
+        else if (typeof fer.fecha === 'string') fStr = fer.fecha.substring(0, 10);
+        return fStr === formattedDate;
+      });
+
+      if (isFeriado) {
+        if (entReal === '-' && salReal === '-') {
+          reg.observacion = 'Feriado';
+        }
+      }
+
+      reg.entrada = entReal;
+      reg.salida = salReal;
+      reg.entradaTeorica = entTeo;
+      reg.salidaTeorica = salTeo;
+
+      const dateObj = new Date(formattedDate + 'T12:00:00.000'); 
+
+      let savedId: number | null = null;
+
+      if (reg.marcasDia && reg.marcasDia.length > 0) {
+        let dbRecord = await this.detalleAsistenciaRepository.findOne({
+          where: {
+              empleado: { num_ficha: numFicha },
+              fecha_marca: new Date(formattedDate)
+          }
+        });
+
+        if (!dbRecord) {
+          dbRecord = this.detalleAsistenciaRepository.create({
+              empleado: empleado,
+              num_ficha: numFicha,
+              fecha_marca: new Date(formattedDate)
+          });
+        }
+
+        dbRecord.hora_entrada = reg.entrada !== '-' ? reg.entrada : null;
+        dbRecord.hora_salida = reg.salida !== '-' ? reg.salida : null;
+        dbRecord.entrada_teorica = reg.entradaTeorica !== '-' ? reg.entradaTeorica : null;
+        dbRecord.salida_teorica = reg.salidaTeorica !== '-' ? reg.salidaTeorica : null;
+        dbRecord.horas_teoricas = reg.horasTeoricas !== '-' ? reg.horasTeoricas : null;
+        dbRecord.horas_presenciales = reg.horasPresenciales !== '-' ? reg.horasPresenciales : null;
+        dbRecord.horas_atraso = reg.atraso !== '-' ? reg.atraso : null;
+        dbRecord.horas_justificadas = reg.horasJustificadas !== '-' ? reg.horasJustificadas : null;
+        dbRecord.horas_extras = reg.horasExtra !== '-' ? reg.horasExtra : null;
+        dbRecord.horas_no_trabajadas = reg.horasNoTrabajadas !== '-' ? reg.horasNoTrabajadas : null;
+        dbRecord.total_dia = reg.totalDia !== '-' ? reg.totalDia : null;
+        dbRecord.observacion = reg.observacion;
+
+        const saved = await this.detalleAsistenciaRepository.save(dbRecord);
+        savedId = saved.id;
+      }
+      
+      reg.id = savedId;
+      resultadosGuardados.push(reg);
+    }
+    
+    return { registros: resultadosGuardados, empleado };
+  }
+
+  findAll() {
+    return 'This action returns all detalleAsistencia';
+  }
+
+  findOne(id: number) {
+    return `This action returns a #${id} detalleAsistencia`;
+  }
+
+  update(id: number, updateDetalleAsistenciaDto: UpdateDetalleAsistenciaDto) {
+    return `This action updates a #${id} detalleAsistencia`;
+  }
+
+  remove(id: number) {
+    return `This action removes a #${id} detalleAsistencia`;
+  }
+}

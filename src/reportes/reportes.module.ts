@@ -8,9 +8,11 @@ import { Empleado } from '../empleado/entities/empleado.entity';
 import { Feriado } from '../feriados/entities/feriado.entity';
 import { Vacaciones } from 'src/vacaciones/entities/vacaciones.entity';
 import { Ausencia } from 'src/ausencias/entities/ausencia.entity';
+import { DetalleAsistenciaModule } from '../detalle-asistencia/detalle-asistencia.module';
+import { DetalleAsistencia } from '../detalle-asistencia/entities/detalle-asistencia.entity';
 
 @Module({
-  imports: [MarcasModule, EmpleadoModule, TypeOrmModule.forFeature([Empleado, Feriado, Vacaciones, Ausencia])],
+  imports: [MarcasModule, EmpleadoModule, DetalleAsistenciaModule, TypeOrmModule.forFeature([Empleado, Feriado, Vacaciones, Ausencia, DetalleAsistencia])],
   controllers: [ReportesController],
   providers: [ReportesService],
 })

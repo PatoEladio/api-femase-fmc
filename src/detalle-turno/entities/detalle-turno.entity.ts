@@ -21,5 +21,4 @@ export class DetalleTurno {
     @JoinColumn({ name: 'id_dia' })
     dia: Semana;
 
-
 }

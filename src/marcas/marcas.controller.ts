@@ -3,11 +3,15 @@ import { MarcasService } from './marcas.service';
 import { CreateMarcaDto } from './dto/create-marca.dto';
 import { UpdateMarcaDto } from './dto/update-marca.dto';
 import { AuthGuard } from 'src/auth/auth.guard';
+import { DetalleAsistenciaService } from 'src/detalle-asistencia/detalle-asistencia.service';
 
 @Controller('marcas')
 @UseGuards(AuthGuard)
 export class MarcasController {
-  constructor(private readonly marcasService: MarcasService) { }
+  constructor(
+    private readonly marcasService: MarcasService,
+    private readonly detalleAsistenciaService: DetalleAsistenciaService
+  ) { }
 
   @Post()
   create(@Body() createMarcaDto: CreateMarcaDto) {
@@ -15,7 +19,10 @@ export class MarcasController {
   }
 
   @Get()
-  findAll(@Query("numFicha") numFicha: string, @Query("fechaInicio") fechaInicio: string, @Query("fechaFin") fechaFin: string) {
+  async findAll(@Query("numFicha") numFicha: string, @Query("fechaInicio") fechaInicio: string, @Query("fechaFin") fechaFin: string) {
+    if (numFicha && fechaInicio && fechaFin) {
+      await this.detalleAsistenciaService.calcularAsistencia(numFicha, fechaInicio, fechaFin);
+    }
     return this.marcasService.findAll(numFicha, fechaInicio, fechaFin);
   }
 
