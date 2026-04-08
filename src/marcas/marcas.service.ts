@@ -33,86 +33,6 @@ export class MarcasService {
     const nuevaMarca = this.marcaRepository.create(createMarcaDto);
 
     nuevaMarca.hashcode = crypto.createHash('md5').update(JSON.stringify(nuevaMarca.evento + ';' + nuevaMarca.fecha_marca + ';' + nuevaMarca.hora_marca + ';' + nuevaMarca.num_ficha + ';' + nuevaMarca.id_tipo_marca + ';' + nuevaMarca.info_adicional + ';' + nuevaMarca.comentario)).digest('hex');
-
-    //LOGICA DE CREACION DE FILA EN TABLA AUTORIZA_HORA_EXTRA
-
-    // 1 busca la marca
-    if (nuevaMarca.evento === 2) {
-      const existeMarcaEntrada = await this.marcaRepository.findOne({
-        where: {
-          num_ficha: nuevaMarca.num_ficha,
-          fecha_marca: nuevaMarca.fecha_marca,
-          evento: 1
-        }
-      })
-      // si la encuentra, busca al empleado de esa marca
-      if (existeMarcaEntrada) {
-        const empleado = await this.marcaRepository.manager.findOne(Empleado, {
-          where: { num_ficha: nuevaMarca.num_ficha }, relations: [
-            'turno',
-            'turno.detalle_turno',
-            'turno.detalle_turno.horario',
-            'turno.detalle_turno.dia',
-            'cargo'
-          ]
-        });
-        //si encuentra al empleado, busca el turno de ese empleado
-        if (empleado && empleado.turno) {
-          // 1. Obtenemos el día de la semana de la marca (manejamos string de fecha local para evitar desfase de zona horaria)
-          const fStr = nuevaMarca.fecha_marca.toString().split('T')[0];
-          const [anio, mes, dia] = fStr.includes('-') ? fStr.split('-').map(Number) : fStr.split('/').map(Number);
-          const fecha = new Date(anio, mes - 1, dia);
-          const diaSemanaJS = fecha.getDay();
-
-          // 2. Mapeo
-          const codDiaBusqueda = diaSemanaJS === 0 ? 7 : diaSemanaJS;
-          // 3. Buscamos el detalle que corresponde a este día específico
-          const detalleHoy = empleado.turno.detalle_turno.find(
-            (detalle) => detalle.dia.cod_dia === codDiaBusqueda
-          );
-          if (detalleHoy && detalleHoy.horario) {
-            const horarioOficial = detalleHoy.horario;
-
-            const getMinutes = (time: string) => {
-              if (!time || typeof time !== 'string') return 0;
-              const [h, m] = time.split(':').map(Number);
-              return (h || 0) * 60 + (m || 0);
-            };
-
-            const minutesToTime = (min: number) => {
-              const h = Math.floor(Math.abs(min) / 60);
-              const m = Math.floor(Math.abs(min) % 60);
-              return `${min < 0 ? '-' : ''}${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:00`;
-            };
-
-            const horaEntradaTeorica = horarioOficial.hora_entrada;
-            const horaSalidaTeorica = horarioOficial.hora_salida;
-            const horaEntradaReal = existeMarcaEntrada.hora_marca;
-            const horaSalidaReal = nuevaMarca.hora_marca;
-
-            const durTurnoMin = getMinutes(horaSalidaTeorica) - getMinutes(horaEntradaTeorica);
-            const hrsPresMin = getMinutes(horaSalidaReal) - getMinutes(horaEntradaReal);
-            const hrsExtrasMin = hrsPresMin - durTurnoMin;
-
-            const creaAutorizaHorasExtras = await this.marcaRepository.manager.save(AutorizaHorasExtra, {
-              cargo: empleado.cargo,
-              fecha_marca: existeMarcaEntrada.fecha_marca,
-              hora_entrada: horaEntradaReal,
-              hora_salida: horaSalidaReal,
-              hora_entrada_teorica: horaEntradaTeorica,
-              hora_salida_teorica: horaSalidaTeorica,
-              duracion_turno: minutesToTime(durTurnoMin),
-              horas_presenciales: minutesToTime(hrsPresMin),
-              horas_extras: minutesToTime(hrsExtrasMin > 0 ? hrsExtrasMin : 0),
-              estado: 'P'
-            });
-          } else {
-            console.log('No se encontró un horario configurado para este día.');
-          }
-        }
-      }
-    }
-
     const guardar = await this.marcaRepository.save(nuevaMarca);
 
     if (!guardar) {
@@ -121,12 +41,12 @@ export class MarcasService {
 
     try {
       const empleadoInfo = await this.marcaRepository.manager.findOne(Empleado, {
-        where: { num_ficha: nuevaMarca.num_ficha }, relations: ['cenco']
+        where: { num_ficha: nuevaMarca.num_ficha }, relations: ['cenco', 'empresa']
       });
 
       if (empleadoInfo && empleadoInfo.email) {
         const correoEmpleado = empleadoInfo.email;  // CAMBIAR A CORREO LABORAL SIESQUE ES NECESARIO
-        const nombreEmpleado = empleadoInfo.nombres;
+        const nombreEmpleado = empleadoInfo.nombres + ' ' + empleadoInfo.apellido_paterno + ' ' + empleadoInfo.apellido_materno;
         const correoCenco = empleadoInfo.cenco.email_notificacion;
 
         let eventoNombre = 'Marca';
@@ -137,6 +57,10 @@ export class MarcasService {
         if (fechaFormat instanceof Date) {
           fechaFormat = fechaFormat.toISOString().substring(0, 10) as any;
         }
+        const nombre_empresa = empleadoInfo?.empresa.nombre_empresa;
+        const rut_empresa = empleadoInfo?.empresa.rut_empresa;
+        const direccion = empleadoInfo?.empresa.direccion_empresa;
+        const comuna = empleadoInfo?.empresa.comuna_empresa;
 
         await this.mailerService.sendMail({
           to: correoEmpleado,
@@ -149,9 +73,21 @@ export class MarcasService {
             <ul>
               <li><strong>Fecha:</strong> ${fechaFormat}</li>
               <li><strong>Hora:</strong> ${nuevaMarca.hora_marca}</li>
+              <li><strong>Nombre:</strong> ${nombreEmpleado}</li>
               <li><strong>Evento:</strong> ${eventoNombre}</li>
               <li><strong>Hashcode:</strong> ${nuevaMarca.hashcode}</li>
             </ul>
+            <p>Sistema exepcional de jordana: No Aplica</p>
+            <p>Resolución Exenta: No Aplica</p>
+            <p>Geolocalización: No Aplica</p>
+            <p>Empleador:</p>
+            <ul>
+              <li><strong>Nombre Empresa:</strong> ${nombre_empresa}</li>
+              <li><strong>Rut Empresa:</strong> ${rut_empresa}</li>
+              <li><strong>Dirección Empresa:</strong> ${direccion}</li>
+              <li><strong>Comuna Empresa:</strong> ${comuna}</li>
+            </ul>
+
             <p>Si no reconoces esta marca o tienes dudas, puedes contactar al administrador.</p>
           </div>`,
         });
@@ -467,12 +403,12 @@ export class MarcasService {
 
     try {
       const empleadoInfo = await this.marcaRepository.manager.findOne(Empleado, {
-        where: { num_ficha: marca.num_ficha }, relations: ['cenco']
+        where: { num_ficha: marca.num_ficha }, relations: ['cenco', 'empresa']
       });
 
       if (empleadoInfo && empleadoInfo.email && empleadoInfo.cenco.email_notificacion) {
         const correoEmpleado = empleadoInfo.email;  // CAMBIAR A CORREO LABORAL SIESQUE ES NECESARIO
-        const nombreEmpleado = empleadoInfo.nombres;
+        const nombreEmpleadoCompleto = empleadoInfo.nombres + ' ' + empleadoInfo.apellido_paterno + ' ' + empleadoInfo.apellido_materno;
         const correoCenco = empleadoInfo.cenco.email_notificacion;
 
         let eventoNombre = 'Marca';
@@ -484,22 +420,39 @@ export class MarcasService {
           fechaFormat = fechaFormat.toISOString().substring(0, 10) as any;
         }
 
+        const nombre_empresa = empleadoInfo?.empresa.nombre_empresa;
+        const rut_empresa = empleadoInfo?.empresa.rut_empresa;
+        const direccion = empleadoInfo?.empresa.direccion_empresa;
+        const comuna = empleadoInfo?.empresa.comuna_empresa;
+
         await this.mailerService.sendMail({
           to: correoEmpleado,
           cc: empleadoInfo.email_noti,
-          subject: 'Actualización de Marca Registrada',
+          subject: 'Marca Modificada',
           html: `
           <div style="font-family: Arial, sans-serif; color: #333;">
-            <h2>Hola, ${nombreEmpleado}</h2>
-            <p>Se ha modificado o actualizado tu registro de marca en el sistema. Los detalles actualizados son los siguientes:</p>
+            <h2>Hola, ${nombreEmpleadoCompleto}</h2>
+            <p>Se ha modificado una marca en el sistema con los siguientes detalles:</p>
             <ul>
               <li><strong>Fecha:</strong> ${fechaFormat}</li>
               <li><strong>Hora:</strong> ${marca.hora_marca}</li>
+              <li><strong>Nombre:</strong> ${nombreEmpleadoCompleto}</li>
               <li><strong>Evento:</strong> ${eventoNombre}</li>
-              <li><strong>Comentario:</strong> ${marca.comentario}</li>
               <li><strong>Hashcode:</strong> ${marca.hashcode}</li>
+              <li><strong>Comentario:</strong> ${marca.comentario}</li>
             </ul>
-            <p>Si no reconoces esta modificación o tienes dudas, puedes contactar al administrador.</p>
+            <p>Sistema exepcional de jordana: No Aplica</p>
+            <p>Resolución Exenta: No Aplica</p>
+            <p>Geolocalización: No Aplica</p>
+            <p>Empleador:</p>
+            <ul>
+              <li><strong>Nombre Empresa:</strong> ${nombre_empresa}</li>
+              <li><strong>Rut Empresa:</strong> ${rut_empresa}</li>
+              <li><strong>Dirección Empresa:</strong> ${direccion}</li>
+              <li><strong>Comuna Empresa:</strong> ${comuna}</li>
+            </ul>
+
+            <p>Si no reconoces esta marca o tienes dudas, puedes contactar al administrador.</p>
           </div>`,
         });
       }
@@ -516,12 +469,12 @@ export class MarcasService {
       throw new HttpException('No se encontró la marca a eliminar', 404);
     }
     const empleadoInfo = await this.marcaRepository.manager.findOne(Empleado, {
-      where: { num_ficha: marca.num_ficha }, relations: ['cenco']
+      where: { num_ficha: marca.num_ficha }, relations: ['cenco', 'empresa']
     });
 
     if (empleadoInfo && empleadoInfo.email && empleadoInfo.cenco.email_notificacion) {
       const correoEmpleado = empleadoInfo.email;  // CAMBIAR A CORREO LABORAL SIESQUE ES NECESARIO
-      const nombreEmpleado = empleadoInfo.nombres;
+      const nombreEmpleado = empleadoInfo.nombres + ' ' + empleadoInfo.apellido_paterno + ' ' + empleadoInfo.apellido_materno;
       const correoCenco = empleadoInfo.cenco.email_notificacion;
 
       let eventoNombre = 'Marca';
@@ -533,6 +486,11 @@ export class MarcasService {
         fechaFormat = fechaFormat.toISOString().substring(0, 10) as any;
       }
 
+      const nombre_empresa = empleadoInfo?.empresa.nombre_empresa;
+      const rut_empresa = empleadoInfo?.empresa.rut_empresa;
+      const direccion = empleadoInfo?.empresa.direccion_empresa;
+      const comuna = empleadoInfo?.empresa.comuna_empresa;
+
       await this.mailerService.sendMail({
         to: correoEmpleado,
         cc: empleadoInfo.email_noti,
@@ -540,19 +498,115 @@ export class MarcasService {
         html: `
           <div style="font-family: Arial, sans-serif; color: #333;">
             <h2>Hola, ${nombreEmpleado}</h2>
-            <p>Se ha eliminado tu registro de marca en el sistema. Los detalles son los siguientes:</p>
+            <p>Se ha eliminado una marca en el sistema con los siguientes detalles:</p>
             <ul>
               <li><strong>Fecha:</strong> ${fechaFormat}</li>
               <li><strong>Hora:</strong> ${marca.hora_marca}</li>
+              <li><strong>Nombre:</strong> ${nombreEmpleado}</li>
               <li><strong>Evento:</strong> ${eventoNombre}</li>
-              <li><strong>Comentario:</strong> ${marca.comentario}</li>
               <li><strong>Hashcode:</strong> ${marca.hashcode}</li>
+              <li><strong>Comentario:</strong> ${marca.comentario}</li>
             </ul>
-            <p>Si tienes dudas, puedes contactar al administrador.</p>
+            <p>Sistema exepcional de jordana: No Aplica</p>
+            <p>Resolución Exenta: No Aplica</p>
+            <p>Geolocalización: No Aplica</p>
+            <p>Empleador:</p>
+            <ul>
+              <li><strong>Nombre Empresa:</strong> ${nombre_empresa}</li>
+              <li><strong>Rut Empresa:</strong> ${rut_empresa}</li>
+              <li><strong>Dirección Empresa:</strong> ${direccion}</li>
+              <li><strong>Comuna Empresa:</strong> ${comuna}</li>
+            </ul>
+
+            <p>Si no reconoces esta marca o tienes dudas, puedes contactar al administrador.</p>
           </div>`,
       });
     }
     await this.marcasAuditoriaRepository.delete({ id_marca: id });
     return this.marcaRepository.delete(id);
+  }
+
+  async getMarcasByHash(hashcode: string) {
+    const marca = await this.marcaRepository.findOne({
+      where: { hashcode: hashcode },
+      relations: [
+        'empleado',
+        'empleado.turno',
+        'empleado.turno.detalle_turno',
+        'empleado.turno.detalle_turno.horario',
+        'empleado.turno.detalle_turno.dia',
+        'tipo_marca',
+        'dispositivo'
+      ],
+      select: {
+        id_marca: true,
+        fecha_marca: true,
+        hora_marca: true,
+        evento: true,
+        hashcode: true,
+        info_adicional: true,
+        comentario: true,
+        tipo_marca: {
+          tipo_marca_id: true,
+          nombre: true,
+        },
+        empleado: {
+          num_ficha: true,
+          nombres: true,
+          apellido_paterno: true,
+          turno: {
+            turno_id: true,
+            nombre: true,
+            detalle_turno: {
+              id_detalle_turno: true,
+              dia: {
+                cod_dia: true,
+              },
+              horario: {
+                hora_entrada: true,
+                hora_salida: true,
+              },
+            },
+          }
+        },
+        dispositivo: {
+          nombre: true,
+        }
+      }
+    });
+
+    if (!marca) return null;
+
+    // Formatear fecha y filtrar turno (siguiendo la lógica de findAll)
+    const fecha = new Date(marca.fecha_marca);
+    const day = String(fecha.getDate()).padStart(2, '0');
+    const month = String(fecha.getMonth() + 1).padStart(2, '0');
+    const year = fecha.getFullYear();
+
+    let diaSemana = fecha.getDay();
+    if (diaSemana === 0) diaSemana = 7;
+
+    const diasNombres = ['', 'Lu.', 'Ma.', 'Mi.', 'Ju.', 'Vi.', 'Sá.', 'Do.'];
+    const fechaFormatExt = `${diasNombres[diaSemana]} ${day}-${month}-${year}`;
+
+    let horarioFinal: any = null;
+    if (marca.empleado?.turno?.detalle_turno) {
+      const dtDia = marca.empleado.turno.detalle_turno.find((dt: any) => dt.dia?.cod_dia === diaSemana);
+      if (dtDia && dtDia.horario) {
+        horarioFinal = dtDia.horario;
+      }
+    }
+
+    return {
+      ...marca,
+      fecha_marca: fechaFormatExt as any,
+      empleado: marca.empleado ? {
+        ...marca.empleado,
+        turno: marca.empleado.turno ? {
+          ...marca.empleado.turno,
+          detalle_turno: horarioFinal ? { horario: horarioFinal } : null
+        } : (horarioFinal ? { detalle_turno: { horario: horarioFinal } } : null)
+      } : null
+    };
   }
 }
