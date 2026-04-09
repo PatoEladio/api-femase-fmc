@@ -73,6 +73,8 @@ export class MarcasService {
             <ul>
               <li><strong>Fecha:</strong> ${fechaFormat}</li>
               <li><strong>Hora:</strong> ${nuevaMarca.hora_marca}</li>
+              <li><strong>Run:</strong> ${empleadoInfo.run}</li>
+              <li><strong>Num ficha:</strong> ${empleadoInfo.num_ficha}</li>
               <li><strong>Nombre:</strong> ${nombreEmpleado}</li>
               <li><strong>Evento:</strong> ${eventoNombre}</li>
               <li><strong>Hashcode:</strong> ${nuevaMarca.hashcode}</li>
@@ -436,6 +438,8 @@ export class MarcasService {
             <ul>
               <li><strong>Fecha:</strong> ${fechaFormat}</li>
               <li><strong>Hora:</strong> ${marca.hora_marca}</li>
+              <li><strong>Run:</strong> ${empleadoInfo.run}</li>
+              <li><strong>Num ficha:</strong> ${empleadoInfo.num_ficha}</li>
               <li><strong>Nombre:</strong> ${nombreEmpleadoCompleto}</li>
               <li><strong>Evento:</strong> ${eventoNombre}</li>
               <li><strong>Hashcode:</strong> ${marca.hashcode}</li>
@@ -502,6 +506,8 @@ export class MarcasService {
             <ul>
               <li><strong>Fecha:</strong> ${fechaFormat}</li>
               <li><strong>Hora:</strong> ${marca.hora_marca}</li>
+              <li><strong>Run:</strong> ${empleadoInfo.run}</li>
+              <li><strong>Num ficha:</strong> ${empleadoInfo.num_ficha}</li>
               <li><strong>Nombre:</strong> ${nombreEmpleado}</li>
               <li><strong>Evento:</strong> ${eventoNombre}</li>
               <li><strong>Hashcode:</strong> ${marca.hashcode}</li>
