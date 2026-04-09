@@ -143,6 +143,40 @@ export class EmpleadoService {
     return `This action removes a #${id} empleado`;
   }
 
+  async findByRun(run: string) {
+    const empleado = await this.empleadoRepository.findOne({
+      where: { run },
+      relations: [
+        'estado',
+        'empresa',
+        'cargo',
+        'turno',
+        "cenco"
+      ]
+    });
+    if (!empleado) {
+      throw new NotFoundException(`El empleado con RUN ${run} no existe`);
+    }
+    return empleado;
+  }
+
+  async findByNombre(nombre: string) {
+    const empleado = await this.empleadoRepository.find({
+      where: { nombres: nombre },
+      relations: [
+        'estado',
+        'empresa',
+        'cargo',
+        'turno',
+        "cenco"
+      ]
+    });
+    if (!empleado) {
+      throw new NotFoundException(`El empleado con nombre ${nombre} no existe`);
+    }
+    return empleado;
+  }
+
 }
 
 

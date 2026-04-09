@@ -26,6 +26,15 @@ export class MarcasService {
     private readonly autorizaHorasExtrasRepository: Repository<AutorizaHorasExtra>,
   ) { }
 
+  private formatRUN(run: string): string {
+    if (!run) return '';
+    let cleanRUN = run.replace(/[.-]/g, '');
+    let dv = cleanRUN.slice(-1).toUpperCase();
+    let body = cleanRUN.slice(0, -1);
+    let formattedBody = body.replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+    return `${formattedBody}-${dv}`;
+  }
+
   async create(createMarcaDto: CreateMarcaDto) {
     if (!createMarcaDto) {
       throw new HttpException('No se proporcionaron los datos para crear la marca', 404);
@@ -53,9 +62,20 @@ export class MarcasService {
         if (nuevaMarca.evento === 1) eventoNombre = 'Entrada';
         if (nuevaMarca.evento === 2) eventoNombre = 'Salida';
 
-        let fechaFormat = nuevaMarca.fecha_marca;
-        if (fechaFormat instanceof Date) {
-          fechaFormat = fechaFormat.toISOString().substring(0, 10) as any;
+        let fMarca = nuevaMarca.fecha_marca;
+        let fechaFormatString = '';
+        if (fMarca instanceof Date) {
+          const day = String(fMarca.getDate()).padStart(2, '0');
+          const month = String(fMarca.getMonth() + 1).padStart(2, '0');
+          const year = fMarca.getFullYear();
+          fechaFormatString = `${day}/${month}/${year}`;
+        } else if (typeof fMarca === 'string') {
+          const parts = (fMarca as string).substring(0, 10).split('-');
+          if (parts.length === 3) {
+            fechaFormatString = `${parts[2]}/${parts[1]}/${parts[0]}`;
+          } else {
+            fechaFormatString = fMarca;
+          }
         }
         const nombre_empresa = empleadoInfo?.empresa.nombre_empresa;
         const rut_empresa = empleadoInfo?.empresa.rut_empresa;
@@ -71,13 +91,14 @@ export class MarcasService {
             <h2>Hola, ${nombreEmpleado}</h2>
             <p>Se ha creado una nueva marca en el sistema con los siguientes detalles:</p>
             <ul>
-              <li><strong>Fecha:</strong> ${fechaFormat}</li>
+              <li><strong>Fecha:</strong> ${fechaFormatString}</li>
               <li><strong>Hora:</strong> ${nuevaMarca.hora_marca}</li>
-              <li><strong>Run:</strong> ${empleadoInfo.run}</li>
+              <li><strong>Run:</strong> ${this.formatRUN(empleadoInfo.run)}</li>
               <li><strong>Num ficha:</strong> ${empleadoInfo.num_ficha}</li>
               <li><strong>Nombre:</strong> ${nombreEmpleado}</li>
               <li><strong>Evento:</strong> ${eventoNombre}</li>
               <li><strong>Hashcode:</strong> ${nuevaMarca.hashcode}</li>
+              <li><strong>Dirección:</strong> ${empleadoInfo.cenco.direccion}</li>
             </ul>
             <p>Sistema exepcional de jordana: No Aplica</p>
             <p>Resolución Exenta: No Aplica</p>
@@ -85,11 +106,13 @@ export class MarcasService {
             <p>Empleador:</p>
             <ul>
               <li><strong>Nombre Empresa:</strong> ${nombre_empresa}</li>
-              <li><strong>Rut Empresa:</strong> ${rut_empresa}</li>
+              <li><strong>Rut Empresa:</strong> ${this.formatRUN(rut_empresa)}</li>
               <li><strong>Dirección Empresa:</strong> ${direccion}</li>
               <li><strong>Comuna Empresa:</strong> ${comuna}</li>
             </ul>
-
+            <p>Empresa Transitoria o Subcontratado: NO APLICA</p>
+            <p>Nombre: NO APLICA</p>
+            <p>Rut: NO APLICA</p>
             <p>Si no reconoces esta marca o tienes dudas, puedes contactar al administrador.</p>
           </div>`,
         });
@@ -417,9 +440,20 @@ export class MarcasService {
         if (marca.evento === 1) eventoNombre = 'Entrada';
         if (marca.evento === 2) eventoNombre = 'Salida';
 
-        let fechaFormat = marca.fecha_marca;
-        if (fechaFormat instanceof Date) {
-          fechaFormat = fechaFormat.toISOString().substring(0, 10) as any;
+        let fMarca = marca.fecha_marca;
+        let fechaFormatString = '';
+        if (fMarca instanceof Date) {
+          const day = String(fMarca.getDate()).padStart(2, '0');
+          const month = String(fMarca.getMonth() + 1).padStart(2, '0');
+          const year = fMarca.getFullYear();
+          fechaFormatString = `${day}/${month}/${year}`;
+        } else if (typeof fMarca === 'string') {
+          const parts = (fMarca as string).substring(0, 10).split('-');
+          if (parts.length === 3) {
+            fechaFormatString = `${parts[2]}/${parts[1]}/${parts[0]}`;
+          } else {
+            fechaFormatString = fMarca;
+          }
         }
 
         const nombre_empresa = empleadoInfo?.empresa.nombre_empresa;
@@ -436,13 +470,14 @@ export class MarcasService {
             <h2>Hola, ${nombreEmpleadoCompleto}</h2>
             <p>Se ha modificado una marca en el sistema con los siguientes detalles:</p>
             <ul>
-              <li><strong>Fecha:</strong> ${fechaFormat}</li>
+              <li><strong>Fecha:</strong> ${fechaFormatString}</li>
               <li><strong>Hora:</strong> ${marca.hora_marca}</li>
-              <li><strong>Run:</strong> ${empleadoInfo.run}</li>
+              <li><strong>Run:</strong> ${this.formatRUN(empleadoInfo.run)}</li>
               <li><strong>Num ficha:</strong> ${empleadoInfo.num_ficha}</li>
               <li><strong>Nombre:</strong> ${nombreEmpleadoCompleto}</li>
               <li><strong>Evento:</strong> ${eventoNombre}</li>
               <li><strong>Hashcode:</strong> ${marca.hashcode}</li>
+              <li><strong>Dirección:</strong> ${empleadoInfo.cenco.direccion}</li>
               <li><strong>Comentario:</strong> ${marca.comentario}</li>
             </ul>
             <p>Sistema exepcional de jordana: No Aplica</p>
@@ -451,11 +486,13 @@ export class MarcasService {
             <p>Empleador:</p>
             <ul>
               <li><strong>Nombre Empresa:</strong> ${nombre_empresa}</li>
-              <li><strong>Rut Empresa:</strong> ${rut_empresa}</li>
+              <li><strong>Rut Empresa:</strong> ${this.formatRUN(rut_empresa)}</li>
               <li><strong>Dirección Empresa:</strong> ${direccion}</li>
               <li><strong>Comuna Empresa:</strong> ${comuna}</li>
             </ul>
-
+            <p>Empresa Transitoria o Subcontratado: NO APLICA</p>
+            <p>Nombre: NO APLICA</p>
+            <p>Rut: NO APLICA</p>
             <p>Si no reconoces esta marca o tienes dudas, puedes contactar al administrador.</p>
           </div>`,
         });
@@ -485,9 +522,20 @@ export class MarcasService {
       if (marca.evento === 1) eventoNombre = 'Entrada';
       if (marca.evento === 2) eventoNombre = 'Salida';
 
-      let fechaFormat = marca.fecha_marca;
-      if (fechaFormat instanceof Date) {
-        fechaFormat = fechaFormat.toISOString().substring(0, 10) as any;
+      let fMarca = marca.fecha_marca;
+      let fechaFormatString = '';
+      if (fMarca instanceof Date) {
+        const day = String(fMarca.getDate()).padStart(2, '0');
+        const month = String(fMarca.getMonth() + 1).padStart(2, '0');
+        const year = fMarca.getFullYear();
+        fechaFormatString = `${day}/${month}/${year}`;
+      } else if (typeof fMarca === 'string') {
+        const parts = (fMarca as string).substring(0, 10).split('-');
+        if (parts.length === 3) {
+          fechaFormatString = `${parts[2]}/${parts[1]}/${parts[0]}`;
+        } else {
+          fechaFormatString = fMarca;
+        }
       }
 
       const nombre_empresa = empleadoInfo?.empresa.nombre_empresa;
@@ -504,13 +552,14 @@ export class MarcasService {
             <h2>Hola, ${nombreEmpleado}</h2>
             <p>Se ha eliminado una marca en el sistema con los siguientes detalles:</p>
             <ul>
-              <li><strong>Fecha:</strong> ${fechaFormat}</li>
+              <li><strong>Fecha:</strong> ${fechaFormatString}</li>
               <li><strong>Hora:</strong> ${marca.hora_marca}</li>
-              <li><strong>Run:</strong> ${empleadoInfo.run}</li>
+              <li><strong>Run:</strong> ${this.formatRUN(empleadoInfo.run)}</li>
               <li><strong>Num ficha:</strong> ${empleadoInfo.num_ficha}</li>
               <li><strong>Nombre:</strong> ${nombreEmpleado}</li>
               <li><strong>Evento:</strong> ${eventoNombre}</li>
               <li><strong>Hashcode:</strong> ${marca.hashcode}</li>
+              <li><strong>Dirección:</strong> ${empleadoInfo.cenco.direccion}</li>
               <li><strong>Comentario:</strong> ${marca.comentario}</li>
             </ul>
             <p>Sistema exepcional de jordana: No Aplica</p>
@@ -519,11 +568,13 @@ export class MarcasService {
             <p>Empleador:</p>
             <ul>
               <li><strong>Nombre Empresa:</strong> ${nombre_empresa}</li>
-              <li><strong>Rut Empresa:</strong> ${rut_empresa}</li>
+              <li><strong>Rut Empresa:</strong> ${this.formatRUN(rut_empresa)}</li>
               <li><strong>Dirección Empresa:</strong> ${direccion}</li>
               <li><strong>Comuna Empresa:</strong> ${comuna}</li>
             </ul>
-
+            <p>Empresa Transitoria o Subcontratado: NO APLICA</p>
+            <p>Nombre: NO APLICA</p>
+            <p>Rut: NO APLICA</p>
             <p>Si no reconoces esta marca o tienes dudas, puedes contactar al administrador.</p>
           </div>`,
       });

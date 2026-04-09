@@ -24,6 +24,15 @@ export class EmpleadoController {
     return this.empleadoService.findAll();
   }
 
+  @Get(':run')
+  findByRun(@Param('run') run: string) {
+    return this.empleadoService.findByRun(run);
+  }
+
+  @Get(':nombre')
+  findByNombre(@Param('nombre') nombre: string) {
+    return this.empleadoService.findByNombre(nombre);
+  }
 
   @Delete(':id')
   remove(@Param('id') id: string) {
