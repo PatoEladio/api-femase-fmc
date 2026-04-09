@@ -528,7 +528,7 @@ export class MarcasService {
 
   async getMarcasByHash(hashcode: string) {
     const marca = await this.marcaRepository.findOne({
-      where: { hashcode: hashcode },
+      where: { hashcode: hashcode.trim() },
       relations: [
         'empleado',
         'empleado.turno',
