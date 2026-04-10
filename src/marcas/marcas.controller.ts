@@ -26,7 +26,12 @@ export class MarcasController {
     return this.marcasService.findAll(numFicha, fechaInicio, fechaFin);
   }
 
-  @Get(':id')
+  @Get(':hashcode')
+  getMarcasByHash(@Param('hashcode') hashcode: string) {
+    return this.marcasService.getMarcasByHash(hashcode);
+  }
+
+  @Get('id/:id')
   findOne(@Param('id') id: string) {
     return this.marcasService.findOne(+id);
   }

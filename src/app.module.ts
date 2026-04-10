@@ -74,8 +74,8 @@ import { DetalleAsistencia } from './detalle-asistencia/entities/detalle-asisten
       host: 'localhost',
       port: 5432,
       username: 'postgres',
-      password: 'Admin',
-      database: 'postgres',
+      password: 'superadmin',
+      database: 'femase',
       synchronize: false,
       entities: [
         User,
