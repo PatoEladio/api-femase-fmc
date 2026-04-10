@@ -3,7 +3,7 @@ import { CreateEmpleadoDto } from './dto/create-empleado.dto';
 import { UpdateEmpleadoDto } from './dto/update-empleado.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Empleado } from './entities/empleado.entity';
-import { Repository } from 'typeorm';
+import { ILike, In, Repository } from 'typeorm';
 import { User } from 'src/users/user.entity';
 import * as bcrypt from 'bcrypt';
 import { Cenco } from 'src/cencos/cenco.entity';
@@ -65,31 +65,61 @@ export class EmpleadoService {
   }
 
 
-  async findAll() {
-    const empleados = await this.empleadoRepository.find({
+  async findAll(page: number, limit: number, empresa_id?: number, estado_id?: number) {
+    const skip = (page - 1) * limit;
+
+    const filters: any = {};
+    if (empresa_id) filters.empresa = { empresa_id };
+    if (estado_id) filters.estado = { estado_id };
+
+    const [empleados, total] = await this.empleadoRepository.findAndCount({
+      where: filters,
       order: {
         empleado_id: 'ASC'
       },
+      skip,
+      take: limit,
       relations: [
         'estado',
         'empresa',
         'cargo',
         'turno',
-        "cenco"
+        "cenco",
+        "turno.detalle_turno.horario",
+        "turno.detalle_turno.dia"
       ]
     });
 
+    if (empleados.length === 0) {
+      return {
+        data: [],
+        total: 0,
+        page,
+        limit
+      }
+    }
+
+    const ids = empleados.map(e => e.empleado_id);
     const usuarios = await this.userRepository.find({
+      where: { empleado: { empleado_id: In(ids) } },
       relations: ['empleado', 'cencos']
     });
 
-    return empleados.map(emp => {
+    const data = empleados.map(emp => {
       const u = usuarios.find(usuario => usuario.empleado?.empleado_id === emp.empleado_id);
       return {
         ...emp,
         cencos: u ? u.cencos : []
       };
     });
+
+    return {
+      data,
+      total,
+      page,
+      limit,
+      totalPages: Math.ceil(total / limit)
+    };
   }
 
   async update(id: number, updateEmpleadoDto: UpdateEmpleadoDto | any): Promise<any> {
@@ -144,37 +174,63 @@ export class EmpleadoService {
   }
 
   async findByRun(run: string) {
-    const empleado = await this.empleadoRepository.findOne({
+    const empleado = await this.empleadoRepository.find({
       where: { run },
       relations: [
         'estado',
         'empresa',
         'cargo',
         'turno',
-        "cenco"
+        "cenco",
+        "turno.detalle_turno.horario",
+        "turno.detalle_turno.dia"
       ]
     });
-    if (!empleado) {
+    if (empleado.length === 0) {
       throw new NotFoundException(`El empleado con RUN ${run} no existe`);
     }
     return empleado;
   }
 
   async findByNombre(nombre: string) {
-    const empleado = await this.empleadoRepository.find({
-      where: { nombres: nombre },
+    const query = this.empleadoRepository.createQueryBuilder('empleado')
+      .leftJoinAndSelect('empleado.estado', 'estado')
+      .leftJoinAndSelect('empleado.empresa', 'empresa')
+      .leftJoinAndSelect('empleado.cargo', 'cargo')
+      .leftJoinAndSelect('empleado.turno', 'turno')
+      .leftJoinAndSelect('turno.detalle_turno', 'detalle_turno')
+      .leftJoinAndSelect('detalle_turno.horario', 'horario')
+      .leftJoinAndSelect('detalle_turno.dia', 'dia')
+      .leftJoinAndSelect('empleado.cenco', 'cenco')
+      .where("CONCAT(empleado.nombres, ' ', empleado.apellido_paterno, ' ', empleado.apellido_materno) ILIKE :nombre", {
+        nombre: `%${nombre}%`
+      });
+
+    const empleados = await query.getMany();
+
+    if (empleados.length === 0) {
+      throw new NotFoundException(`El empleado con nombre ${nombre} no existe`);
+    }
+    return empleados;
+  }
+
+  async findByEmpresa(empresa_id: number) {
+    const empleados = await this.empleadoRepository.find({
+      where: { empresa: { empresa_id } },
       relations: [
         'estado',
         'empresa',
         'cargo',
         'turno',
-        "cenco"
+        "cenco",
+        "turno.detalle_turno.horario",
+        "turno.detalle_turno.dia"
       ]
     });
-    if (!empleado) {
-      throw new NotFoundException(`El empleado con nombre ${nombre} no existe`);
+    if (empleados.length === 0) {
+      throw new NotFoundException(`El empleado con empresa ${empresa_id} no existe`);
     }
-    return empleado;
+    return empleados;
   }
 
 }
