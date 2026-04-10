@@ -39,7 +39,7 @@ export class DetalleAsistenciaService {
     const feriados = await this.feriadosRepository.find();
     const ausenciasAll = await this.ausenciasRepository.find({
       where: { autorizada: true },
-      relations: ['num_ficha']
+      relations: ['num_ficha', 'tipo_ausencia']
     });
     const ausencias = ausenciasAll.filter(a => a.num_ficha?.num_ficha === numFicha);
     console.log(`[DEBUG] Ausencias fetched for ${numFicha}:`, ausencias);
@@ -234,9 +234,10 @@ export class DetalleAsistenciaService {
         if (entReal === '-' && salReal === '-') {
           reg.observacion = 'Feriado';
         }
-      } else if (ausenciaList.length > 0 && ausenciaList.some(a => a.dia_completo)) {
+      } else if (ausenciaList.length > 0) {
         if (entReal === '-' && salReal === '-') {
-          reg.observacion = 'Ausencia Autorizada';
+          const aus = ausenciaList[0];
+          reg.observacion = aus?.tipo_ausencia?.nombre || 'Ausencia Autorizada';
         }
       }
 

@@ -70,27 +70,26 @@ export class ReportesService {
     };
 
     const parseMs = (timeStr: string): number => {
-      if (!timeStr || timeStr === '-' || timeStr === '00:00') return 0;
+      if (!timeStr || timeStr === '-' || timeStr === '00:00' || typeof timeStr !== 'string') return 0;
       const p = timeStr.split(':');
-      if (p.length !== 2) return 0;
-      return (parseInt(p[0]) * 3600000) + (parseInt(p[1]) * 60000);
+      if (p.length < 2) return 0;
+      const hours = parseInt(p[0]);
+      const minutes = parseInt(p[1]);
+      if (isNaN(hours) || isNaN(minutes)) return 0;
+      return (hours * 3600000) + (minutes * 60000);
     };
 
     const tableBody: any[] = [
       [
         { text: 'Fecha', style: 'tableHeader' },
-        { text: 'Entrada', style: 'tableHeader' },
-        { text: 'Salida', style: 'tableHeader' },
-        { text: 'Ent. Téor.', style: 'tableHeader' },
-        { text: 'Sal. Téor.', style: 'tableHeader' },
-        { text: 'Hrs. Téor.', style: 'tableHeader' },
-        { text: 'Hrs. Pres.', style: 'tableHeader' },
-        { text: 'Atraso', style: 'tableHeader' },
-        { text: 'Hrs. Justif.', style: 'tableHeader' },
-        { text: 'Hrs. Extras', style: 'tableHeader' },
-        { text: 'No Trab.', style: 'tableHeader' },
-        { text: 'Total Día', style: 'tableHeader' },
-        { text: 'Observación', style: 'tableHeader' }
+        { text: 'Jornada ordinaria pactada', style: 'tableHeader' },
+        { text: 'Marcaciones jornada', style: 'tableHeader' },
+        { text: 'Colación', style: 'tableHeader' },
+        { text: 'Marcaciones colación', style: 'tableHeader' },
+        { text: 'Tiempo faltante', style: 'tableHeader' },
+        { text: 'Tiempo extra', style: 'tableHeader' },
+        { text: 'Otras marcaciones', style: 'tableHeader' },
+        { text: 'Observaciones', style: 'tableHeader' }
       ]
     ];
 
@@ -100,10 +99,20 @@ export class ReportesService {
     let semJustificadasMs = 0;
     let semExtraMs = 0;
     let semNoTrabajadasMs = 0;
+    let semColacionMs = 0;
     let semDiaMs = 0;
 
+    let totalGralAtrasoMs = 0;
+    let totalGralJustificadasMs = 0;
+    let totalGralExtraMs = 0;
+    let totalGralNoTrabajadasMs = 0;
+    let totalGralDiaMs = 0;
+    let totalGralTeoricaMs = 0;
+    let totalGralPresencialMs = 0;
+    let totalGralColacionMs = 0;
+
     for (let i = 0; i < data.registros.length; i++) {
-      const reg = data.registros[i];
+      const reg: any = data.registros[i];
 
       semTeoricasMs += parseMs(reg.horasTeoricas);
       semPresencialesMs += parseMs(reg.horasPresenciales);
@@ -111,11 +120,54 @@ export class ReportesService {
       semJustificadasMs += parseMs(reg.horasJustificadas);
       semExtraMs += parseMs(reg.horasExtra);
       semNoTrabajadasMs += parseMs(reg.horasNoTrabajadas);
+      semColacionMs += parseMs(reg.colacionTeorica);
       semDiaMs += parseMs(reg.totalDia);
 
+      totalGralTeoricaMs += parseMs(reg.horasTeoricas);
+      totalGralPresencialMs += parseMs(reg.horasPresenciales);
+      totalGralAtrasoMs += parseMs(reg.atraso);
+      totalGralJustificadasMs += parseMs(reg.horasJustificadas);
+      totalGralExtraMs += parseMs(reg.horasExtra);
+      totalGralNoTrabajadasMs += parseMs(reg.horasNoTrabajadas);
+      totalGralColacionMs += parseMs(reg.colacionTeorica);
+      totalGralDiaMs += parseMs(reg.totalDia);
+
+      let jornadaPactada = '-';
+      let colacionLimpia = reg.colacionTeorica && reg.colacionTeorica !== '-' ? String(reg.colacionTeorica).substring(0, 5) : '00:00';
+      if (reg.entradaTeorica && reg.entradaTeorica !== '-' && reg.salidaTeorica && reg.salidaTeorica !== '-') {
+        jornadaPactada = `${reg.entradaTeorica} - ${reg.salidaTeorica} (C: ${colacionLimpia})`;
+      }
+
+      let marcacionesJornada = '-';
+      if (reg.entrada && reg.entrada !== '-') {
+        marcacionesJornada = `${reg.entrada} - ${reg.salida && reg.salida !== '-' ? reg.salida : ''}`;
+      }
+
+      let marcacionesColacion = 'NO APLICA';
+      let otrasMarcaciones = '-';
+      if (reg.marcasDia && reg.marcasDia.length > 2) {
+        otrasMarcaciones = reg.marcasDia.slice(2).map((m: any) => String(m.hora_marca).substring(0, 5)).join(', ');
+      }
+
+      const fechaParts = reg.fecha.split(' ');
+      let fechaFormateada = reg.fecha;
+      if (fechaParts.length === 2) {
+        const dParts = fechaParts[1].split('-');
+        if (dParts.length === 3) {
+          fechaFormateada = `${dParts[0]}/${dParts[1]}/${dParts[2]}`;
+        }
+      }
+
       tableBody.push([
-        reg.fecha, reg.entrada, reg.salida, reg.entradaTeorica, reg.salidaTeorica, reg.horasTeoricas,
-        reg.horasPresenciales, reg.atraso, reg.horasJustificadas, reg.horasExtra, reg.horasNoTrabajadas, reg.totalDia, reg.observacion
+        fechaFormateada,
+        jornadaPactada,
+        marcacionesJornada,
+        colacionLimpia !== '00:00' ? colacionLimpia : '-',
+        marcacionesColacion,
+        '- ' + reg.horasNoTrabajadas,
+        '+ ' + reg.horasExtra,
+        otrasMarcaciones,
+        reg.observacion
       ]);
 
       const isSunday = reg.fecha.startsWith('Do.');
@@ -123,20 +175,20 @@ export class ReportesService {
 
       if (isSunday || isLastRecord) {
         tableBody.push([
-          { text: 'Total Semana', style: 'tableHeader', colSpan: 5, alignment: 'right' },
-          {}, {}, {}, {},
+          { text: 'Total Semana', style: 'tableHeader', alignment: 'right' },
           { text: formatMs(semTeoricasMs), style: 'tableHeader' },
           { text: formatMs(semPresencialesMs), style: 'tableHeader' },
-          { text: formatMs(semAtrasoMs), style: 'tableHeader' },
-          { text: formatMs(semJustificadasMs), style: 'tableHeader' },
-          { text: formatMs(semExtraMs), style: 'tableHeader' },
-          { text: formatMs(semNoTrabajadasMs), style: 'tableHeader' },
-          { text: formatMs(semDiaMs), style: 'tableHeader' },
+          { text: formatMs(semColacionMs), style: 'tableHeader' },
+          { text: '', style: 'tableHeader' },
+          { text: '- ' + formatMs(semNoTrabajadasMs), style: 'tableHeader' },
+          { text: '+ ' + formatMs(semExtraMs), style: 'tableHeader' },
+          { text: '', style: 'tableHeader' },
           { text: '', style: 'tableHeader' }
         ]);
 
         semTeoricasMs = 0;
         semPresencialesMs = 0;
+        semColacionMs = 0;
         semAtrasoMs = 0;
         semJustificadasMs = 0;
         semExtraMs = 0;
@@ -157,45 +209,21 @@ export class ReportesService {
     const docDefinition = {
       pageOrientation: 'landscape',
       content: [
+        { text: `REPORTE DE JORNADA DIARIA\n\nPeriodo: ${data.periodo.desde} hasta ${data.periodo.hasta}`, style: 'subheader', alignment: 'center', margin: [0, 10, 0, 0] },
         {
           columns: [
-            { text: empleado.empresa?.nombre_empresa || 'Fundación Mi Casa', style: 'header', alignment: 'left', width: '*' },
-            { text: 'Fecha generación documento: ' + new Date().toLocaleString('es-CL'), alignment: 'right', fontSize: 10, margin: [0, 2, 0, 0], width: 'auto' }
-          ]
-        },
-        { text: 'Asistencia semanal por Persona', style: 'subheader', alignment: 'center', margin: [0, 10, 0, 0] },
-        {
-          columns: [
-            { text: `Nombre: ${data.nombre}\nCargo: ${data.cargo}`, width: '*', fontSize: 11 },
-            { text: `RUT: ${data.rut}\nPeriodo: ${data.periodo.desde} - ${data.periodo.hasta}\nCenco: ${data.centroCosto}`, width: '*', fontSize: 11 }
+            { text: `Razón Social: ${dataAsistencia.empleado.empresa.nombre_empresa.toUpperCase()}\nRUT Empresa: ${dataAsistencia.empleado.empresa.rut_empresa}\n`, width: '*', fontSize: 11 },
+            { text: `Nombre: ${data.nombre.toUpperCase()}\nRUT: ${data.rut}\nLugar de prestación de servicios: ${data.centroCosto.toUpperCase()}`, width: '*', fontSize: 11 }
           ],
           margin: [0, 10, 0, 10]
         },
         {
           table: {
             headerRows: 1,
-            widths: ['auto', 'auto', 'auto', 'auto', 'auto', 'auto', 'auto', 'auto', 'auto', 'auto', 'auto', 'auto', '*'],
+            widths: ['auto', 'auto', 'auto', 'auto', 'auto', 'auto', 'auto', 'auto', '*'],
             body: tableBody
           }
         },
-        {
-          margin: [0, 30, 0, 0],
-          columns: [
-            {
-              width: '40%',
-              text: `Total Días Trabajados: ${totalDiasTrabajados}\nTotal Días Ausente: ${totalDiasAusente}\nTotal Días Descanso: ${totalDiasDescanso}\nTotal Días Feriado: ${totalDiasFeriado}`,
-              style: 'subheader',
-              alignment: 'left'
-            },
-            {
-              width: '60%',
-              columns: [
-                { text: '__________________\nV° B° Jefe Directo', alignment: 'center', fontSize: 11 },
-                { text: '__________________\nV° B° Trabajador', alignment: 'center', fontSize: 11 }
-              ]
-            }
-          ]
-        }
       ],
       styles: {
         header: { fontSize: 13, bold: true },
@@ -203,6 +231,116 @@ export class ReportesService {
         tableHeader: { bold: true, fontSize: 8 }
       },
       defaultStyle: { font: 'Helvetica', fontSize: 8 }
+    };
+
+    pdfmake.setFonts(fonts);
+    const pdfDoc = pdfmake.createPdf(docDefinition);
+    return await pdfDoc.getBuffer();
+  }
+
+  async generateSimpleAttendancePdf(numFicha: string, fechaInicio: string, fechaFin: string): Promise<Buffer> {
+    const dataAsistencia = await this.detalleAsistenciaService.calcularAsistencia(numFicha, fechaInicio, fechaFin);
+    const empleado = dataAsistencia.empleado;
+
+    const data = {
+      nombre: empleado.nombres + ' ' + empleado.apellido_paterno + ' ' + empleado.apellido_materno,
+      cargo: empleado.cargo?.nombre || 'Sin cargo',
+      rut: empleado.run,
+      centroCosto: empleado.cenco?.nombre_cenco || 'Sin cenco',
+      periodo: { desde: fechaInicio, hasta: fechaFin },
+      empresa: empleado.empresa?.nombre_empresa || 'FEMASE',
+      rutEmpresa: empleado.empresa?.rut_empresa || 'Sin rut'
+    };
+
+    const tableBody: any[] = [
+      [
+        { text: 'Fecha', style: 'tableHeader' },
+        { text: 'Asistencia', style: 'tableHeader' },
+        { text: 'Ausencia', style: 'tableHeader' },
+        { text: 'Observaciones', style: 'tableHeader' }
+      ]
+    ];
+
+    for (let i = 0; i < dataAsistencia.registros.length; i++) {
+      const reg = dataAsistencia.registros[i];
+
+      const fechaParts = reg.fecha.split(' ');
+      let fechaFormateada = reg.fecha;
+      if (fechaParts.length === 2) {
+        const dParts = fechaParts[1].split('-');
+        if (dParts.length === 3) {
+          fechaFormateada = `${dParts[0]}/${dParts[1]}/${dParts[2]}`;
+        }
+      }
+
+      const esLibreOFeriado = reg.observacion === 'FERIADO' || reg.observacion === 'DIA LIBRE' || reg.horasTeoricas === '-' || reg.horasTeoricas === '00:00';
+      const tieneEntradaYSalida = reg.entrada !== '-' && reg.salida !== '-';
+
+      let asistenciaTxt = '';
+      if (tieneEntradaYSalida) {
+        asistenciaTxt = 'SI';
+      } else if (esLibreOFeriado) {
+        asistenciaTxt = '-';
+      } else {
+        asistenciaTxt = 'NO';
+      }
+
+      let ausenciaTxt = '';
+      if (asistenciaTxt === 'NO') {
+        if ((reg.horasJustificadas !== '-' && reg.horasJustificadas !== '00:00') || reg.observacion.includes('AUSENCIA') || reg.observacion.includes('JUSTIFICADA')) {
+          ausenciaTxt = 'JUSTIFICADA';
+        } else {
+          ausenciaTxt = 'NO JUSTIFICADA';
+        }
+      }
+
+      let observacionEfectiva = reg.observacion;
+      if (asistenciaTxt === 'SI') {
+        observacionEfectiva = 'PRESENTE CON MARCA';
+      }
+
+      tableBody.push([
+        fechaFormateada,
+        asistenciaTxt,
+        ausenciaTxt,
+        observacionEfectiva.toUpperCase()
+      ]);
+    }
+
+    const fonts = {
+      Helvetica: {
+        normal: 'Helvetica',
+        bold: 'Helvetica-Bold',
+        italics: 'Helvetica-Oblique',
+        bolditalics: 'Helvetica-BoldOblique'
+      }
+    };
+
+    const docDefinition = {
+      pageOrientation: 'landscape',
+      content: [
+        { text: `REPORTE DE ASISTENCIA\n\nPeriodo: ${data.periodo.desde} hasta ${data.periodo.hasta}`, style: 'subheader', alignment: 'center', margin: [0, 10, 0, 0] },
+        {
+          columns: [
+            { text: `Razón Social: ${data.empresa.toUpperCase()}\nRUT Empresa: ${data.rutEmpresa}\n`, width: '*', fontSize: 11 },
+            { text: `Nombre: ${data.nombre.toUpperCase()}\nRUT: ${data.rut}\nLugar de prestación de servicios: ${data.centroCosto.toUpperCase()}`, width: '*', fontSize: 11 }
+          ],
+          margin: [0, 10, 0, 10]
+        },
+        {
+          table: {
+            headerRows: 1,
+            widths: ['auto', '15%', '25%', '*'],
+            body: tableBody
+          }
+        }
+      ],
+      styles: {
+        header: { fontSize: 13, bold: true },
+        subheader: { fontSize: 12, bold: true, margin: [0, 5, 0, 5] as [number, number, number, number] },
+        tableHeader: { bold: true, fontSize: 10 }
+      },
+      defaultStyle: { font: 'Helvetica', fontSize: 10 }
     };
 
     pdfmake.setFonts(fonts);
@@ -532,6 +670,138 @@ export class ReportesService {
         tableHeader: { bold: true, fontSize: 10, alignment: 'center' }
       },
       defaultStyle: { font: 'Helvetica', fontSize: 10, alignment: 'center' }
+    };
+
+    pdfmake.setFonts(fonts);
+    const pdfDoc = pdfmake.createPdf(docDefinition);
+    return await pdfDoc.getBuffer();
+  }
+
+  async generateDomFestPdf(numFicha: string, fechaInicio: string, fechaFin: string): Promise<Buffer> {
+    const dataAsistencia = await this.detalleAsistenciaService.calcularAsistencia(numFicha, fechaInicio, fechaFin);
+    const empleado = dataAsistencia.empleado;
+    const feriados = await this.feriadosRepository.find();
+
+    const data = {
+      nombre: empleado.nombres + ' ' + empleado.apellido_paterno + ' ' + empleado.apellido_materno,
+      rut: empleado.run,
+      centroCosto: empleado.cenco?.nombre_cenco || 'Sin cenco',
+      periodo: { desde: fechaInicio, hasta: fechaFin },
+      empresa: empleado.empresa?.nombre_empresa || 'FEMASE',
+      rutEmpresa: empleado.empresa?.rut_empresa || 'Sin rut'
+    };
+
+    const tableBody: any[] = [
+      [
+        { text: 'Beneficiario descanso adicionales', style: 'tableHeader' },
+        { text: 'Fecha', style: 'tableHeader' },
+        { text: 'Asistencia', style: 'tableHeader' },
+        { text: 'Ausencia', style: 'tableHeader' },
+        { text: 'Observaciones', style: 'tableHeader' }
+      ]
+    ];
+
+    // Mapear registros por fecha pura para búsqueda rápida
+    const registrosMap = new Map<string, any>();
+    dataAsistencia.registros.forEach((reg: any) => {
+      // reg.fecha format is usually "Do. 05-04-2026" or similar. 
+      // We need to extract the date part "DD-MM-YYYY"
+      const parts = reg.fecha.split(' ');
+      if (parts.length === 2) {
+        registrosMap.set(parts[1], reg);
+      }
+    });
+
+    const start = new Date(fechaInicio + 'T12:00:00');
+    const end = new Date(fechaFin + 'T12:00:00');
+
+    for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
+      const dayOfWeek = d.getDay(); // 0 is Sunday
+      const fStr = d.toISOString().split('T')[0]; // YYYY-MM-DD
+      const fDisplay = fStr.split('-').reverse().join('-'); // DD-MM-YYYY
+
+      const isFeriado = feriados.some(fer => {
+        let ferStr = '';
+        if (fer.fecha instanceof Date) ferStr = fer.fecha.toISOString().split('T')[0];
+        else ferStr = String(fer.fecha).substring(0, 10);
+        return ferStr === fStr;
+      });
+
+      if (dayOfWeek === 0 || isFeriado) {
+        const reg = registrosMap.get(fDisplay);
+
+        let asistenciaTxt = 'NO';
+        let ausenciaTxt = '-';
+        let observacionTxt = isFeriado ? 'FERIADO' : 'DOMINGO';
+
+        if (reg) {
+          const tieneEntrada = reg.entrada && reg.entrada !== '-';
+          const tieneSalida = reg.salida && reg.salida !== '-';
+          
+          if (tieneEntrada || tieneSalida) {
+            asistenciaTxt = 'SI';
+            observacionTxt = 'PRESENTE CON MARCA';
+          } else {
+            asistenciaTxt = 'NO';
+            if ((reg.horasJustificadas !== '-' && reg.horasJustificadas !== '00:00') || reg.observacion.includes('AUSENCIA') || reg.observacion.includes('JUSTIFICADA')) {
+              ausenciaTxt = 'JUSTIFICADA';
+              observacionTxt = 'DIA LIBRE';
+            } else if (reg.horasNoTrabajadas !== '-' && reg.horasNoTrabajadas !== '00:00' && reg.horasTeoricas !== '-' && reg.horasTeoricas !== '00:00') {
+              ausenciaTxt = 'INJUSTIFICADA';
+              if (reg.observacion) observacionTxt = reg.observacion;
+            } else {
+              observacionTxt = 'DIA LIBRE';
+            }
+          }
+        } else {
+          // No hay registro de marca ni de ausencia, por defecto es un día libre (Domingo o Feriado)
+          observacionTxt = 'DIA LIBRE';
+        }
+
+        tableBody.push([
+          numFicha,
+          fDisplay,
+          asistenciaTxt,
+          ausenciaTxt,
+          observacionTxt.toUpperCase()
+        ]);
+      }
+    }
+
+    const fonts = {
+      Helvetica: {
+        normal: 'Helvetica',
+        bold: 'Helvetica-Bold',
+        italics: 'Helvetica-Oblique',
+        bolditalics: 'Helvetica-BoldOblique'
+      }
+    };
+
+    const docDefinition = {
+      pageOrientation: 'landscape',
+      content: [
+        { text: `REPORTE DOMINGOS Y FESTIVOS\n\nPeriodo: ${data.periodo.desde} hasta ${data.periodo.hasta}`, style: 'subheader', alignment: 'center', margin: [0, 10, 0, 0] },
+        {
+          columns: [
+            { text: `Razón Social: ${data.empresa.toUpperCase()}\nRUT Empresa: ${data.rutEmpresa}\n`, width: '*', fontSize: 11 },
+            { text: `Nombre: ${data.nombre.toUpperCase()}\nRUT: ${data.rut}\nLugar de prestación de servicios: ${data.centroCosto.toUpperCase()}`, width: '*', fontSize: 11 }
+          ],
+          margin: [0, 10, 0, 10]
+        },
+        {
+          table: {
+            headerRows: 1,
+            widths: ['auto', 'auto', 'auto', 'auto', '*'],
+            body: tableBody
+          }
+        }
+      ],
+      styles: {
+        header: { fontSize: 13, bold: true },
+        subheader: { fontSize: 12, bold: true, margin: [0, 5, 0, 5] as [number, number, number, number] },
+        tableHeader: { bold: true, fontSize: 10 }
+      },
+      defaultStyle: { font: 'Helvetica', fontSize: 10 }
     };
 
     pdfmake.setFonts(fonts);
