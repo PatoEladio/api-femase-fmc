@@ -1,4 +1,6 @@
-import { HttpException, Injectable } from '@nestjs/common';
+import { HttpException, Injectable, Logger } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
+import { Cron, CronExpression } from '@nestjs/schedule';
 import { CreateMarcaDto } from './dto/create-marca.dto';
 import { UpdateMarcaDto } from './dto/update-marca.dto';
 import { Between, Repository } from 'typeorm';
@@ -24,7 +26,10 @@ export class MarcasService {
     private readonly mailerService: MailerService,
     @InjectRepository(AutorizaHorasExtra)
     private readonly autorizaHorasExtrasRepository: Repository<AutorizaHorasExtra>,
+    private readonly configService: ConfigService,
   ) { }
+
+  private readonly logger = new Logger(MarcasService.name);
 
   private formatRUN(run: string): string {
     if (!run) return '';
@@ -377,58 +382,55 @@ export class MarcasService {
       throw new HttpException('No se proporcionaron los datos para actualizar la marca', 400);
     }
 
-    const marca = await this.marcaRepository.findOne({ where: { id_marca: id } });
+    const marcaOriginal = await this.marcaRepository.findOne({ where: { id_marca: id } });
 
-    if (!marca) {
+    if (!marcaOriginal) {
       throw new HttpException('No se encontró la marca a actualizar', 404);
     }
 
-    Object.assign(marca, updateMarcaDto);
-    if (marca.fecha_marca) {
-      if (marca.fecha_marca instanceof Date) marca.fecha_marca = marca.fecha_marca.toISOString().substring(0, 10) as any;
-      else if (typeof marca.fecha_marca === 'string') marca.fecha_marca = (marca.fecha_marca as string).substring(0, 10) as any;
-    }
-    marca.hashcode = crypto.createHash('md5').update(JSON.stringify(marca.evento + ';' + marca.fecha_marca + ';' + marca.hora_marca + ';' + marca.num_ficha + ';' + marca.id_tipo_marca + ';' + marca.info_adicional + ';' + marca.comentario)).digest('hex');
+    // Generamos un Token único (UUID) para los enlaces del correo
+    const tokenSeguridad = crypto.randomBytes(32).toString('hex');
 
-    const guardar = await this.marcaRepository.save(marca);
-
-    if (!guardar) {
-      throw new HttpException('No se pudo actualizar la marca', 500);
+    // Procesamos la fecha propuesta para la auditoría
+    let fechaPropuesta = updateMarcaDto.fecha_marca || marcaOriginal.fecha_marca;
+    if (fechaPropuesta instanceof Date) {
+      fechaPropuesta = fechaPropuesta.toISOString().substring(0, 10) as any;
+    } else if (typeof fechaPropuesta === 'string') {
+      fechaPropuesta = (fechaPropuesta as string).substring(0, 10) as any;
     }
 
-    let fMarca = marca.fecha_marca;
-    if (fMarca instanceof Date) {
-      fMarca = fMarca.toISOString().substring(0, 10) as any;
-    } else if (typeof fMarca === 'string') {
-      fMarca = (fMarca as string).substring(0, 10) as any;
-    }
-
+    // Creamos el registro en MarcasAuditoria con estado 'Pendiente' (3)
     const marcaAuditoria = this.marcasAuditoriaRepository.create({
-      id_marca: marca.id_marca,
-      marca: { id_marca: marca.id_marca },
-      fecha_marca: fMarca,
-      hora_marca: marca.hora_marca,
-      evento: marca.evento,
-      hashcode: marca.hashcode,
-      num_ficha: marca.num_ficha,
+      id_marca: id,
+      marca: { id_marca: id },
+      num_ficha: marcaOriginal.num_ficha,
+      fecha_marca: fechaPropuesta,
+      hora_marca: updateMarcaDto.hora_marca || marcaOriginal.hora_marca,
+      evento: updateMarcaDto.evento || marcaOriginal.evento,
+      id_tipo_marca: updateMarcaDto.id_tipo_marca || marcaOriginal.id_tipo_marca,
+      info_adicional: updateMarcaDto.info_adicional !== undefined ? updateMarcaDto.info_adicional : marcaOriginal.info_adicional,
+      comentario: updateMarcaDto.comentario !== undefined ? updateMarcaDto.comentario : marcaOriginal.comentario,
+      estado_id: 3, // Pendiente
+      token: tokenSeguridad,
+      datos_update: updateMarcaDto as any,
       fecha_actualizacion: new Date(),
       usuario_actualizador: usuarioActualizador
     });
 
-    Object.assign(marcaAuditoria, updateMarcaDto);
-    if (marcaAuditoria.fecha_marca) {
-      if (marcaAuditoria.fecha_marca instanceof Date) marcaAuditoria.fecha_marca = marcaAuditoria.fecha_marca.toISOString().substring(0, 10) as any;
-      else if (typeof marcaAuditoria.fecha_marca === 'string') marcaAuditoria.fecha_marca = (marcaAuditoria.fecha_marca as string).substring(0, 10) as any;
-    }
     if (marcaAuditoria.fecha_actualizacion) {
-      if (marcaAuditoria.fecha_actualizacion instanceof Date) marcaAuditoria.fecha_actualizacion = marcaAuditoria.fecha_actualizacion.toISOString().substring(0, 19).replace('T', ' ') as any;
-      else if (typeof marcaAuditoria.fecha_actualizacion === 'string') marcaAuditoria.fecha_actualizacion = (marcaAuditoria.fecha_actualizacion as string).substring(0, 19).replace('T', ' ') as any;
+      if (marcaAuditoria.fecha_actualizacion instanceof Date) {
+        marcaAuditoria.fecha_actualizacion = marcaAuditoria.fecha_actualizacion.toISOString().substring(0, 19).replace('T', ' ') as any;
+      }
     }
+
+    // El hashcode se calcula sobre los datos PROPUESTOS
+    marcaAuditoria.hashcode = crypto.createHash('md5').update(JSON.stringify(marcaAuditoria.evento + ';' + marcaAuditoria.fecha_marca + ';' + marcaAuditoria.hora_marca + ';' + marcaAuditoria.num_ficha + ';' + marcaAuditoria.id_tipo_marca + ';' + marcaAuditoria.info_adicional + ';' + marcaAuditoria.comentario)).digest('hex');
+
     const guardarAuditoria = await this.marcasAuditoriaRepository.save(marcaAuditoria);
 
     try {
       const empleadoInfo = await this.marcaRepository.manager.findOne(Empleado, {
-        where: { num_ficha: marca.num_ficha }, relations: ['cenco', 'empresa']
+        where: { num_ficha: marcaOriginal.num_ficha }, relations: ['cenco', 'empresa']
       });
 
       if (empleadoInfo && empleadoInfo.email && empleadoInfo.cenco.email_notificacion) {
@@ -437,10 +439,10 @@ export class MarcasService {
         const correoCenco = empleadoInfo.cenco.email_notificacion;
 
         let eventoNombre = 'Marca';
-        if (marca.evento === 1) eventoNombre = 'Entrada';
-        if (marca.evento === 2) eventoNombre = 'Salida';
+        if (marcaAuditoria.evento === 1) eventoNombre = 'Entrada';
+        if (marcaAuditoria.evento === 2) eventoNombre = 'Salida';
 
-        let fMarca = marca.fecha_marca;
+        let fMarca = marcaAuditoria.fecha_marca;
         let fechaFormatString = '';
         if (fMarca instanceof Date) {
           const day = String(fMarca.getDate()).padStart(2, '0');
@@ -461,25 +463,39 @@ export class MarcasService {
         const direccion = empleadoInfo?.empresa.direccion_empresa;
         const comuna = empleadoInfo?.empresa.comuna_empresa;
 
+        // Se obtiene la URL base desde las variables de entorno o usa una por defecto
+        const urlBase = this.configService.get<string>('API_URL_BASE') || 'https://tu-api.com';
+        const linkAprobar = `${urlBase}/marcas/confirmar?token=${tokenSeguridad}&accion=aprobar`;
+        const linkRechazar = `${urlBase}/marcas/confirmar?token=${tokenSeguridad}&accion=rechazar`;
+
         await this.mailerService.sendMail({
           to: correoEmpleado,
           cc: empleadoInfo.email_noti,
-          subject: 'Marca Modificada',
+          subject: 'Solicitud de Modificación de Marca',
           html: `
           <div style="font-family: Arial, sans-serif; color: #333;">
             <h2>Hola, ${nombreEmpleadoCompleto}</h2>
-            <p>Se ha modificado una marca en el sistema con los siguientes detalles:</p>
+            <p>Se ha solicitado modificar una marca en el sistema con los siguientes detalles <strong>(Datos Propuestos)</strong>:</p>
             <ul>
               <li><strong>Fecha:</strong> ${fechaFormatString}</li>
-              <li><strong>Hora:</strong> ${marca.hora_marca}</li>
+              <li><strong>Hora:</strong> ${marcaAuditoria.hora_marca}</li>
               <li><strong>Run:</strong> ${this.formatRUN(empleadoInfo.run)}</li>
               <li><strong>Num ficha:</strong> ${empleadoInfo.num_ficha}</li>
               <li><strong>Nombre:</strong> ${nombreEmpleadoCompleto}</li>
               <li><strong>Evento:</strong> ${eventoNombre}</li>
-              <li><strong>Hashcode:</strong> ${marca.hashcode}</li>
+              <li><strong>Hashcode:</strong> ${marcaAuditoria.hashcode}</li>
               <li><strong>Dirección:</strong> ${empleadoInfo.cenco.direccion}</li>
-              <li><strong>Comentario:</strong> ${marca.comentario}</li>
             </ul>
+
+            <div style="margin: 30px 0; padding: 20px; background-color: #f8f9fa; border-left: 5px solid #ffc107; border-radius: 4px;">
+              <p style="margin-top: 0; font-size: 16px; font-weight: bold;">¿Autorizas este cambio?</p>
+              <div style="margin-top: 15px;">
+                <a href="${linkAprobar}" style="background-color: #28a745; color: white; padding: 12px 25px; text-decoration: none; border-radius: 5px; margin-right: 15px; font-weight: bold; display: inline-block;">SÍ, APROBAR</a>
+                <a href="${linkRechazar}" style="background-color: #dc3545; color: white; padding: 12px 25px; text-decoration: none; border-radius: 5px; font-weight: bold; display: inline-block;">NO, RECHAZAR</a>
+              </div>
+              <p style="margin-bottom: 0; margin-top: 15px; font-size: 13px; color: #6c757d;">* Si no respondes en 48 horas, el cambio se aprobará automáticamente.</p>
+            </div>
+
             <p>Sistema exepcional de jordana: No Aplica</p>
             <p>Resolución Exenta: No Aplica</p>
             <p>Geolocalización: No Aplica</p>
@@ -501,7 +517,60 @@ export class MarcasService {
       console.error('Error al enviar correo de actualización de marca:', error);
     }
 
-    return { message: 'Marca actualizada exitosamente', data: guardar };
+    return {
+      message: 'Solicitud de modificación enviada exitosamente. El cambio está pendiente de aprobación.',
+      data: guardarAuditoria
+    };
+  }
+
+  async confirmarCambio(token: string, accion: string) {
+    // 1. Buscamos la solicitud por el token asegurándonos que siga Pendiente (3)
+    const auditoria = await this.marcasAuditoriaRepository.findOne({ 
+      where: { token: token, estado_id: 3 } 
+    });
+
+    if (!auditoria) {
+      // Retornamos HTML porque esto se abre en el navegador web del usuario
+      return `
+        <div style="font-family: Arial, sans-serif; text-align: center; margin-top: 50px;">
+          <h2 style="color: #dc3545;">Enlace Inválido</h2>
+          <p>Esta solicitud ya fue procesada, expiró o el enlace es incorrecto.</p>
+        </div>
+      `;
+    }
+
+    if (accion === 'aprobar') {
+      // Buscamos la marca original en la tabla principal
+      const marcaOriginal = await this.marcaRepository.findOne({ where: { id_marca: auditoria.id_marca } });
+      
+      if (marcaOriginal) {
+        // Aplicamos todos los cambios que estaban en el JSON (datos_update)
+        Object.assign(marcaOriginal, auditoria.datos_update);
+        
+        // Asignamos el hashcode que ya habíamos calculado en la auditoría
+        marcaOriginal.hashcode = auditoria.hashcode; 
+        
+        await this.marcaRepository.save(marcaOriginal);
+      }
+      
+      auditoria.estado_id = 1; // Cambiamos a Activo (Aprobado)
+    } else if (accion === 'rechazar') {
+      auditoria.estado_id = 2; // Cambiamos a Inactivo (Rechazado)
+    }
+
+    // Guardamos el nuevo estado en la auditoría
+    await this.marcasAuditoriaRepository.save(auditoria);
+
+    const color = accion === 'aprobar' ? '#28a745' : '#dc3545';
+    const mensaje = accion === 'aprobar' ? 'aprobado y aplicado' : 'rechazado';
+
+    return `
+      <div style="font-family: Arial, sans-serif; text-align: center; margin-top: 50px;">
+        <h2 style="color: ${color};">¡Proceso Exitoso!</h2>
+        <p>El cambio de la marca ha sido <strong>${mensaje}</strong> correctamente.</p>
+        <p>Ya puedes cerrar esta ventana.</p>
+      </div>
+    `;
   }
 
   async remove(id: number) {
@@ -665,5 +734,40 @@ export class MarcasService {
         } : (horarioFinal ? { detalle_turno: { horario: horarioFinal } } : null)
       } : null
     };
+  }
+
+  /**
+   * Procesa aprobaciones automáticas para solicitudes pendientes por más de 44 horas.
+   * Este método se ejecuta automáticamente cada hora.
+   */
+  @Cron(CronExpression.EVERY_HOUR)
+  async procesarAprobacionesAutomaticas() {
+        // Calculamos el límite de 48 horas atrás
+    const hace48Horas = new Date();
+    hace48Horas.setHours(hace48Horas.getHours() - 48);
+
+    // Buscamos solicitudes pendientes creadas hace más de 24 horas
+    const pendientes = await this.marcasAuditoriaRepository.find({
+      where: {
+        estado_id: 3, // Pendiente
+        fecha_actualizacion: Between(new Date(0) as any, hace48Horas as any) // Aproximación para "menor que"
+      }
+    });
+
+    if (pendientes.length === 0) {
+      this.logger.log('No se encontraron marcas pendientes de aprobación automática.');
+      return;
+    }
+
+    for (const auditoria of pendientes) {
+      try {
+        this.logger.log(`Aprobando automáticamente solicitud #${auditoria.correlativo} (Token: ${auditoria.token})`);
+        await this.confirmarCambio(auditoria.token, 'aprobar');
+      } catch (error) {
+        this.logger.error(`Error al aprobar automáticamente la solicitud #${auditoria.correlativo}:`, error);
+      }
+    }
+
+    this.logger.log(`Se procesaron ${pendientes.length} aprobaciones automáticas.`);
   }
 }

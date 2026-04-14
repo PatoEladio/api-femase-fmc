@@ -65,9 +65,11 @@ import { AutorizaHorasExtra } from './autoriza_horas_extras/entities/autoriza_ho
 import { RegistroEventoModule } from './registro_evento/registro_evento.module';
 import { DetalleAsistenciaModule } from './detalle-asistencia/detalle-asistencia.module';
 import { DetalleAsistencia } from './detalle-asistencia/entities/detalle-asistencia.entity';
+import { ScheduleModule } from '@nestjs/schedule';
 
 @Module({
   imports: [
+    ScheduleModule.forRoot(),
     ConfigModule.forRoot(),
     TypeOrmModule.forRoot({
       type: 'postgres',

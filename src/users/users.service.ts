@@ -258,7 +258,6 @@ export class UsersService {
   }
 
 
-
   async enviarCencosPorUsuario(usuarioId: number) {
     const usuario = await this.usersRepository.findOne({
       where: {

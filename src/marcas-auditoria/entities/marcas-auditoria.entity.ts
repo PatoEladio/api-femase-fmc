@@ -1,5 +1,6 @@
 import { Column, Entity, JoinColumn, OneToOne, PrimaryColumn, PrimaryGeneratedColumn } from "typeorm";
 import { Marca } from "src/marcas/entities/marca.entity";
+import { Estado } from "src/estado/estado.entity";
 
 @Entity({ schema: 'db_fmc', name: 'marcas_auditoria' })
 export class MarcasAuditoria {
@@ -33,4 +34,22 @@ export class MarcasAuditoria {
 
   @Column()
   usuario_actualizador: string;
+
+  @Column()
+  token: string;
+
+  @Column({ nullable: true })
+  id_tipo_marca: number;
+
+  @Column({ nullable: true })
+  info_adicional: string;
+
+  @Column({ nullable: true })
+  comentario: string;
+
+  @Column({ name: 'estado_id', default: 3 })
+  estado_id: number;
+
+  @Column('json', { nullable: true })
+  datos_update: any;
 }

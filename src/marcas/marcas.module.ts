@@ -9,10 +9,13 @@ import { AutorizaHorasExtra } from 'src/autoriza_horas_extras/entities/autoriza_
 
 import { DetalleAsistenciaModule } from 'src/detalle-asistencia/detalle-asistencia.module';
 
+import { ConfigModule } from '@nestjs/config';
+
 @Module({
   imports: [
     TypeOrmModule.forFeature([Marca, MarcasAuditoria, Feriado, AutorizaHorasExtra]),
-    forwardRef(() => DetalleAsistenciaModule)
+    forwardRef(() => DetalleAsistenciaModule),
+    ConfigModule
   ],
   controllers: [MarcasController],
   providers: [MarcasService],
