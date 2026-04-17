@@ -30,6 +30,30 @@ export class ReportesController {
     }
   }
 
+  @Get('asistencia-simple/pdf')
+  async generateSimpleAttendanceReport(
+    @Query('numFicha') numFicha: string,
+    @Query('fechaInicio') fechaInicio: string,
+    @Query('fechaFin') fechaFin: string,
+    @Res() res: Response
+  ) {
+    if (!numFicha || !fechaInicio || !fechaFin) {
+      throw new HttpException('Faltan parámetros requeridos', 400);
+    }
+
+    try {
+      const pdfBuffer = await this.reportesService.generateSimpleAttendancePdf(numFicha, fechaInicio, fechaFin);
+      res.set({
+        'Content-Type': 'application/pdf',
+        'Content-Disposition': `attachment; filename="asistencia_simple_${numFicha}.pdf"`,
+        'Content-Length': pdfBuffer.length,
+      });
+      res.end(pdfBuffer);
+    } catch (error) {
+      throw new HttpException('Error generando reporte: ' + error.message, 500);
+    }
+  }
+
   @Get('vacaciones/pdf')
   async generateVacacionesReport(
     @Query('numFicha') numFicha: string,
@@ -68,6 +92,30 @@ export class ReportesController {
       res.set({
         'Content-Type': 'application/pdf',
         'Content-Disposition': `attachment; filename="ausencias_${numFicha}.pdf"`,
+        'Content-Length': pdfBuffer.length,
+      });
+      res.end(pdfBuffer);
+    } catch (error) {
+      throw new HttpException('Error generando reporte: ' + error.message, 500);
+    }
+  }
+
+  @Get('domingos-festivos/pdf')
+  async generateDomFestReport(
+    @Query('numFicha') numFicha: string,
+    @Query('fechaInicio') fechaInicio: string,
+    @Query('fechaFin') fechaFin: string,
+    @Res() res: Response
+  ) {
+    if (!numFicha || !fechaInicio || !fechaFin) {
+      throw new HttpException('Faltan parámetros requeridos', 400);
+    }
+
+    try {
+      const pdfBuffer = await this.reportesService.generateDomFestPdf(numFicha, fechaInicio, fechaFin);
+      res.set({
+        'Content-Type': 'application/pdf',
+        'Content-Disposition': `attachment; filename="domingos_festivos_${numFicha}.pdf"`,
         'Content-Length': pdfBuffer.length,
       });
       res.end(pdfBuffer);

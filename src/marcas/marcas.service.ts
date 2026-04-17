@@ -168,6 +168,7 @@ export class MarcasService {
               horario: {
                 hora_entrada: true,
                 hora_salida: true,
+                colacion: true,
               },
             },
           }
@@ -275,9 +276,18 @@ export class MarcasService {
         let mDateKey = '';
         if (typeof m.fecha_marca === 'string') {
           mDateKey = (m.fecha_marca as string).substring(0, 10);
+        } else if (m.fecha_marca instanceof Date) {
+          // Usar UTC ya que TypeORM suele devolver columnas 'date' en 00:00:00 UTC
+          const year = m.fecha_marca.getUTCFullYear();
+          const month = String(m.fecha_marca.getUTCMonth() + 1).padStart(2, '0');
+          const day = String(m.fecha_marca.getUTCDate()).padStart(2, '0');
+          mDateKey = `${year}-${month}-${day}`;
         } else if (m.fecha_marca) {
-          const d = new Date(m.fecha_marca);
-          mDateKey = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+            const d = new Date(m.fecha_marca);
+            const year = d.getUTCFullYear();
+            const month = String(d.getUTCMonth() + 1).padStart(2, '0');
+            const day = String(d.getUTCDate()).padStart(2, '0');
+            mDateKey = `${year}-${month}-${day}`;
         }
         return mDateKey === dateKey;
       });
