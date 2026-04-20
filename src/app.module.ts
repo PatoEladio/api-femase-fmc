@@ -66,6 +66,8 @@ import { RegistroEventoModule } from './registro_evento/registro_evento.module';
 import { DetalleAsistenciaModule } from './detalle-asistencia/detalle-asistencia.module';
 import { DetalleAsistencia } from './detalle-asistencia/entities/detalle-asistencia.entity';
 import { ScheduleModule } from '@nestjs/schedule';
+import { AlertasModule } from './alertas/alertas.module';
+import { Alerta } from './alertas/entities/alerta.entity';
 
 @Module({
   imports: [
@@ -108,7 +110,8 @@ import { ScheduleModule } from '@nestjs/schedule';
         Vacaciones,
         Ausencia,
         AutorizaHorasExtra,
-        DetalleAsistencia
+        DetalleAsistencia,
+        Alerta
       ]
     }),
     MailerModule.forRoot({
@@ -158,7 +161,8 @@ import { ScheduleModule } from '@nestjs/schedule';
     AusenciasModule,
     AutorizaHorasExtrasModule,
     RegistroEventoModule,
-    DetalleAsistenciaModule
+    DetalleAsistenciaModule,
+    AlertasModule
   ],
   providers: [PerfilesService],
   controllers: [PerfilesController],

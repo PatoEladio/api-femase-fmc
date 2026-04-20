@@ -13,6 +13,7 @@ import * as crypto from 'crypto';
 import { MailerService } from '@nestjs-modules/mailer';
 import { AutorizaHorasExtra } from 'src/autoriza_horas_extras/entities/autoriza_horas_extra.entity';
 import { AsignacionTurnoRotativo } from '../asignacion_turno_rotativo/entities/asignacion_turno_rotativo.entity';
+import { Alerta } from 'src/alertas/entities/alerta.entity';
 
 @Injectable()
 export class MarcasService {
@@ -779,5 +780,162 @@ export class MarcasService {
     }
 
     this.logger.log(`Se procesaron ${pendientes.length} aprobaciones automáticas.`);
+  }
+
+  private async enviarCorreoAlerta(empleado: Empleado, tipo: number) {
+    const correoEmpleado = empleado.email_laboral || empleado.email;
+    const nombreCompleto = `${empleado.nombres} ${empleado.apellido_paterno} ${empleado.apellido_materno}`;
+
+    let subject = '';
+    let htmlMsg = '';
+
+    if (tipo === 1) {
+      subject = 'Recordatorio: Próximo Ingreso de Marca';
+      htmlMsg = `<p>Hola ${nombreCompleto}, quedan aproximadamente 30 min para el ingreso de su marca.</p>`;
+    } else if (tipo === 2) {
+      subject = 'Aviso: Falta de Marca de Entrada';
+      htmlMsg = `<p>Hola ${nombreCompleto}, te recordamos que debes marcar tu entrada.</p>`;
+    }
+
+    try {
+      await this.mailerService.sendMail({
+        to: correoEmpleado,
+        subject: subject,
+        html: `
+        <div style="font-family: Arial, sans-serif; color: #333;">
+          ${htmlMsg}
+        </div>`,
+      });
+    } catch (error) {
+      this.logger.error(`Error al enviar correo de alerta a ${correoEmpleado}:`, error);
+    }
+  }
+
+  /**
+   * Monitor que verifica horarios de entrada de los empleados
+   * para mandar un aviso preventivo 30 min antes y 30 min después si no marcaron.
+   */
+  @Cron('0 */2 * * * *')
+  async verificarNotificacionesMarcas() {
+    this.logger.log('Ejecutando verificación de notificaciones de marcas (cada 2 min)...');
+    try {
+      const ahora = new Date();
+      const year = ahora.getFullYear();
+      const month = String(ahora.getMonth() + 1).padStart(2, '0');
+      const day = String(ahora.getDate()).padStart(2, '0');
+      const dateKey = `${year}-${month}-${day}`; // Formato local asumiendo el CRON corre hora de chile o local.
+
+      let diaSemana = ahora.getDay();
+      if (diaSemana === 0) diaSemana = 7;
+
+      const inicioDia = new Date(ahora.getFullYear(), ahora.getMonth(), ahora.getDate(), 0, 0, 0);
+      const finDia = new Date(ahora.getFullYear(), ahora.getMonth(), ahora.getDate(), 23, 59, 59);
+
+      // Agrupamos todos y evitamos multiples queries
+      const empleados = await this.marcaRepository.manager.find(Empleado, {
+        where: { estado: { estado_id: 1 } },
+        relations: ['turno', 'turno.detalle_turno', 'turno.detalle_turno.horario', 'turno.detalle_turno.dia']
+      });
+
+      for (const empleado of empleados) {
+        let horarioHoy: any = null;
+
+        if (empleado.permite_rotativo) {
+          const asignaciones = await this.marcaRepository.manager.find(AsignacionTurnoRotativo, {
+             where: { empleado: { empleado_id: empleado.empleado_id } },
+             relations: ['horario']
+          });
+          const asigHoy = asignaciones.find(a => {
+            let start = '';
+            if (a.fecha_inicio_turno instanceof Date) start = a.fecha_inicio_turno.toISOString().substring(0, 10);
+            else start = String(a.fecha_inicio_turno).substring(0, 10);
+
+            let end = '';
+            if (a.fecha_fin_turno instanceof Date) end = a.fecha_fin_turno.toISOString().substring(0, 10);
+            else end = String(a.fecha_fin_turno).substring(0, 10);
+
+            return dateKey >= start && dateKey <= end;
+          });
+          if (asigHoy) {
+             horarioHoy = asigHoy.horario;
+          }
+        } else {
+          if (empleado.turno && empleado.turno.detalle_turno) {
+            const dtDia = empleado.turno.detalle_turno.find((dt: any) => dt.dia?.cod_dia === diaSemana);
+            if (dtDia && dtDia.horario) {
+              horarioHoy = dtDia.horario;
+            }
+          }
+        }
+
+        if (horarioHoy && horarioHoy.hora_entrada) {
+          const horaParts = horarioHoy.hora_entrada.split(':');
+          const entradaDate = new Date(ahora.getFullYear(), ahora.getMonth(), ahora.getDate(), parseInt(horaParts[0]), parseInt(horaParts[1]), parseInt(horaParts[2] || '0'), 0);
+
+          const diffMs = entradaDate.getTime() - ahora.getTime();
+          const diffTotalMinutos = diffMs / 60000;
+
+          // Escenario PRE-TURNO: Faltan 30 minutos o menos para entrar (incluso si acaban de asignarle el turno tarde)
+          // La diff es positiva (o cero). Ya que tenemos la tabla de alertas, limitamos a que falten entre 0 y 30 minutos.
+          if (diffTotalMinutos >= 0 && diffTotalMinutos <= 30) {
+            const alertaExistente = await this.marcaRepository.manager.findOne(Alerta, {
+              where: {
+                 empleado: { empleado_id: empleado.empleado_id },
+                 tipo: 1,
+                 fecha: Between(inicioDia, finDia)
+              }
+            });
+            if (!alertaExistente) {
+              if (empleado.email || empleado.email_laboral) {
+                await this.enviarCorreoAlerta(empleado, 1);
+                const nuevaAlerta = this.marcaRepository.manager.create(Alerta, {
+                  tipo: 1,
+                  empleado: { empleado_id: empleado.empleado_id } as Empleado,
+                  fecha: ahora
+                });
+                await this.marcaRepository.manager.save(nuevaAlerta);
+              }
+            }
+          }
+
+          // Escenario POST-TURNO: Pasaron más de 29 minutos desde la hora límite (ampio margen por si el server se cae o el cron tarda)
+          // limitamos a revisar si pasaron entre 29 y 120 minutos tarde.
+          if (diffTotalMinutos <= -29 && diffTotalMinutos >= -120) {
+            const alertaExistente = await this.marcaRepository.manager.findOne(Alerta, {
+              where: {
+                 empleado: { empleado_id: empleado.empleado_id },
+                 tipo: 2,
+                 fecha: Between(inicioDia, finDia)
+              }
+            });
+            
+            if (!alertaExistente) {
+              // Validar si existe marca de ENTRADA en el día para despachar correo
+              const marcasHoy = await this.marcaRepository.find({
+                where: {
+                  num_ficha: empleado.num_ficha,
+                  evento: 1,
+                  fecha_marca: dateKey as any
+                }
+              });
+
+              if (!marcasHoy || marcasHoy.length === 0) {
+                if (empleado.email || empleado.email_laboral) {
+                  await this.enviarCorreoAlerta(empleado, 2);
+                  const nuevaAlerta = this.marcaRepository.manager.create(Alerta, {
+                    tipo: 2,
+                    empleado: { empleado_id: empleado.empleado_id } as Empleado,
+                    fecha: ahora
+                  });
+                  await this.marcaRepository.manager.save(nuevaAlerta);
+                }
+              }
+            }
+          }
+        }
+      }
+    } catch (error) {
+       this.logger.error('Error al ejecutar cron de notificaciones de marcas:', error);
+    }
   }
 }

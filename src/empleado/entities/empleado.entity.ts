@@ -1,4 +1,5 @@
 import { ApiProperty } from "@nestjs/swagger";
+import { Alerta } from "src/alertas/entities/alerta.entity";
 import { AsignacionTurnoRotativo } from "src/asignacion_turno_rotativo/entities/asignacion_turno_rotativo.entity";
 import { Ausencia } from "src/ausencias/entities/ausencia.entity";
 import { Cargo } from "src/cargos/entities/cargo.entity";
@@ -138,4 +139,7 @@ export class Empleado {
   @Column()
   @ApiProperty({ description: 'email notificacion', example: "cris@femase.noti.cl" })
   email_noti: string;
+
+  @OneToMany(() => Alerta, (alerta) => alerta.empleado)
+  alertas: Alerta[];
 }
