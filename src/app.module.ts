@@ -68,6 +68,8 @@ import { DetalleAsistencia } from './detalle-asistencia/entities/detalle-asisten
 import { ScheduleModule } from '@nestjs/schedule';
 import { AlertasModule } from './alertas/alertas.module';
 import { Alerta } from './alertas/entities/alerta.entity';
+import { TeletrabajoModule } from './teletrabajo/teletrabajo.module';
+import { Teletrabajo } from './teletrabajo/entities/teletrabajo.entity';
 
 @Module({
   imports: [
@@ -111,7 +113,8 @@ import { Alerta } from './alertas/entities/alerta.entity';
         Ausencia,
         AutorizaHorasExtra,
         DetalleAsistencia,
-        Alerta
+        Alerta,
+        Teletrabajo
       ]
     }),
     MailerModule.forRoot({
@@ -162,7 +165,8 @@ import { Alerta } from './alertas/entities/alerta.entity';
     AutorizaHorasExtrasModule,
     RegistroEventoModule,
     DetalleAsistenciaModule,
-    AlertasModule
+    AlertasModule,
+    TeletrabajoModule
   ],
   providers: [PerfilesService],
   controllers: [PerfilesController],

@@ -875,30 +875,7 @@ export class MarcasService {
           const diffMs = entradaDate.getTime() - ahora.getTime();
           const diffTotalMinutos = diffMs / 60000;
 
-          // Escenario PRE-TURNO: Faltan 30 minutos o menos para entrar (incluso si acaban de asignarle el turno tarde)
-          // La diff es positiva (o cero). Ya que tenemos la tabla de alertas, limitamos a que falten entre 0 y 30 minutos.
-          if (diffTotalMinutos >= 0 && diffTotalMinutos <= 30) {
-            const alertaExistente = await this.marcaRepository.manager.findOne(Alerta, {
-              where: {
-                 empleado: { empleado_id: empleado.empleado_id },
-                 tipo: 1,
-                 fecha: Between(inicioDia, finDia)
-              }
-            });
-            if (!alertaExistente) {
-              if (empleado.email || empleado.email_laboral) {
-                await this.enviarCorreoAlerta(empleado, 1);
-                const nuevaAlerta = this.marcaRepository.manager.create(Alerta, {
-                  tipo: 1,
-                  empleado: { empleado_id: empleado.empleado_id } as Empleado,
-                  fecha: ahora
-                });
-                await this.marcaRepository.manager.save(nuevaAlerta);
-              }
-            }
-          }
-
-          // Escenario POST-TURNO: Pasaron más de 29 minutos desde la hora límite (ampio margen por si el server se cae o el cron tarda)
+          // Escenario POST-TURNO: Pasaron más de 29 minutos desde la hora límite 
           // limitamos a revisar si pasaron entre 29 y 120 minutos tarde.
           if (diffTotalMinutos <= -29 && diffTotalMinutos >= -120) {
             const alertaExistente = await this.marcaRepository.manager.findOne(Alerta, {

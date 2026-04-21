@@ -21,4 +21,7 @@ export class AsignacionTurnoRotativo {
 
     @Column()
     fecha_fin_turno:Date
+
+    @Column({default:false})
+    teletrabajo:boolean
 }

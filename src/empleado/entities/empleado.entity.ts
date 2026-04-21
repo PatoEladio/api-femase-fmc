@@ -7,6 +7,7 @@ import { Cenco } from "src/cencos/cenco.entity";
 import { Empresa } from "src/empresas/empresas.entity";
 import { Estado } from "src/estado/estado.entity";
 import { Marca } from "src/marcas/entities/marca.entity";
+import { Teletrabajo } from "src/teletrabajo/entities/teletrabajo.entity";
 import { Turno } from "src/turno/entities/turno.entity";
 import { User } from "src/users/user.entity";
 import { Vacaciones } from "src/vacaciones/entities/vacaciones.entity";
@@ -142,4 +143,7 @@ export class Empleado {
 
   @OneToMany(() => Alerta, (alerta) => alerta.empleado)
   alertas: Alerta[];
+
+  @OneToMany(() => Teletrabajo, (teletrabajo) => teletrabajo.id_empleado)
+  teletrabajo: Teletrabajo[];
 }
