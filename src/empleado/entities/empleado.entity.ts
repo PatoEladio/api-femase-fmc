@@ -138,4 +138,8 @@ export class Empleado {
   @Column()
   @ApiProperty({ description: 'email notificacion', example: "cris@femase.noti.cl" })
   email_noti: string;
+
+  @Column({ nullable: true })
+  @ApiProperty({ description: 'fecha asignacion turno', example: "2024-01-01" })
+  fecha_asignacion_turno: Date;
 }

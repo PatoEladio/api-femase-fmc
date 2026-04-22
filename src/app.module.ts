@@ -65,6 +65,7 @@ import { AutorizaHorasExtra } from './autoriza_horas_extras/entities/autoriza_ho
 import { RegistroEventoModule } from './registro_evento/registro_evento.module';
 import { DetalleAsistenciaModule } from './detalle-asistencia/detalle-asistencia.module';
 import { DetalleAsistencia } from './detalle-asistencia/entities/detalle-asistencia.entity';
+import { AuditoriaTurno } from './detalle-turno/entities/auditoria-turno.entity';
 
 @Module({
   imports: [
@@ -74,8 +75,8 @@ import { DetalleAsistencia } from './detalle-asistencia/entities/detalle-asisten
       host: 'localhost',
       port: 5432,
       username: 'postgres',
-      password: 'superadmin',
-      database: 'femase',
+      password: 'Admin',
+      database: 'postgres',
       synchronize: false,
       entities: [
         User,
@@ -106,7 +107,8 @@ import { DetalleAsistencia } from './detalle-asistencia/entities/detalle-asisten
         Vacaciones,
         Ausencia,
         AutorizaHorasExtra,
-        DetalleAsistencia
+        DetalleAsistencia,
+        AuditoriaTurno
       ]
     }),
     MailerModule.forRoot({

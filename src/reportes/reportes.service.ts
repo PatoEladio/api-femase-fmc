@@ -9,6 +9,7 @@ import { AttendanceRecordDto, UserReportDto } from './dto/attendance-report.dto'
 import { Vacaciones } from 'src/vacaciones/entities/vacaciones.entity';
 import { Ausencia } from 'src/ausencias/entities/ausencia.entity';
 import { DetalleAsistenciaService } from '../detalle-asistencia/detalle-asistencia.service';
+import { AuditoriaTurno } from '../detalle-turno/entities/auditoria-turno.entity';
 
 @Injectable()
 export class ReportesService {
@@ -22,6 +23,8 @@ export class ReportesService {
     private readonly vacacionesRepository: Repository<Vacaciones>,
     @InjectRepository(Ausencia)
     private readonly ausenciaRepository: Repository<Ausencia>,
+    @InjectRepository(AuditoriaTurno)
+    private readonly auditoriaTurnoRepository: Repository<AuditoriaTurno>,
     private readonly detalleAsistenciaService: DetalleAsistenciaService,
   ) { }
 
@@ -737,7 +740,7 @@ export class ReportesService {
         if (reg) {
           const tieneEntrada = reg.entrada && reg.entrada !== '-';
           const tieneSalida = reg.salida && reg.salida !== '-';
-          
+
           if (tieneEntrada || tieneSalida) {
             asistenciaTxt = 'SI';
             observacionTxt = 'PRESENTE CON MARCA';
@@ -802,6 +805,109 @@ export class ReportesService {
         tableHeader: { bold: true, fontSize: 10 }
       },
       defaultStyle: { font: 'Helvetica', fontSize: 10 }
+    };
+
+    pdfmake.setFonts(fonts);
+    const pdfDoc = pdfmake.createPdf(docDefinition);
+    return await pdfDoc.getBuffer();
+  }
+
+  async generateAuditTurnoPdf(fechaInicio: string, fechaFin: string, numFicha: string): Promise<Buffer> {
+    const empleado = await this.empleadoRepository.findOne({
+      where: { num_ficha: numFicha },
+      relations: ['empresa', 'cargo', 'cenco']
+    });
+
+    if (!empleado) {
+      throw new HttpException('Empleado no encontrado', 404);
+    }
+
+    const query = this.auditoriaTurnoRepository.createQueryBuilder('audit');
+
+    if (fechaInicio && fechaFin) {
+      query.andWhere('audit.fecha_asignacion_turno BETWEEN :inicio AND :fin', {
+        inicio: new Date(fechaInicio),
+        fin: new Date(fechaFin)
+      });
+    }
+
+    query.andWhere('audit.run_empleado = :numFicha', { numFicha });
+
+    const logs = await query.orderBy('audit.fecha_asignacion_turno', 'DESC').getMany();
+
+    const formatDate = (d: any) => {
+      if (!d) return 'N/A';
+      const date = d instanceof Date ? d : new Date(d);
+      const day = String(date.getDate()).padStart(2, '0');
+      const month = String(date.getMonth() + 1).padStart(2, '0');
+      const year = String(date.getFullYear()).substring(2);
+      return `${day}/${month}/${year}`;
+    };
+
+    const tableBody: any[] = [
+      [
+        { text: 'Fecha asignación turno', style: 'tableHeader' },
+        { text: 'Turno asignado', style: 'tableHeader' },
+        { text: 'Extensión de Turno', style: 'tableHeader' },
+        { text: 'Fecha asignación de turno nuevo', style: 'tableHeader' },
+        { text: 'Turno nuevo', style: 'tableHeader' },
+        { text: 'Extensión de Turno', style: 'tableHeader' },
+        { text: 'Quien asigna el turno', style: 'tableHeader' },
+        { text: 'Observaciones', style: 'tableHeader' }
+      ]
+    ];
+
+    logs.forEach(log => {
+      tableBody.push([
+        formatDate(log.fecha_asignacion_turno),
+        `${log.hora_entrada || '--'} a ${log.hora_salida || '--'}`,
+        log.extension_turno || 'Diario',
+        formatDate(log.inicio_turno),
+        `${log.nuevo_hora_entrada || '--'} a ${log.nuevo_hora_salida || '--'}`,
+        log.extension_nuevo_turno || 'Diario',
+        log.solicitador_cambio || 'Sistema',
+        log.observaciones || ''
+      ]);
+    });
+
+    if (logs.length === 0) {
+      tableBody.push([{ text: 'No hay registros de auditoría para este periodo', colSpan: 8, alignment: 'center' }, {}, {}, {}, {}, {}, {}, {}]);
+    }
+
+    const fonts = {
+      Helvetica: {
+        normal: 'Helvetica',
+        bold: 'Helvetica-Bold',
+        italics: 'Helvetica-Oblique',
+        bolditalics: 'Helvetica-BoldOblique'
+      }
+    };
+
+    const docDefinition = {
+      pageOrientation: 'landscape',
+      content: [
+        { text: `REPORTE AUDITORÍA DE TURNOS\n\nPeriodo: ${fechaInicio} hasta ${fechaFin}`, style: 'subheader', alignment: 'center', margin: [0, 10, 0, 0] },
+        {
+          columns: [
+            { text: `Razón Social: ${empleado.empresa?.nombre_empresa?.toUpperCase() || 'N/A'}\nRUT Empresa: ${empleado.empresa?.rut_empresa || 'N/A'}\n`, width: '*', fontSize: 11 },
+            { text: `Nombre: ${(empleado.nombres + ' ' + empleado.apellido_paterno + ' ' + empleado.apellido_materno).toUpperCase()}\nFicha: ${empleado.num_ficha}\nLugar de prestación de servicios: ${empleado.cenco?.nombre_cenco?.toUpperCase() || 'N/A'}`, width: '*', fontSize: 11 }
+          ],
+          margin: [0, 10, 0, 10]
+        },
+        {
+          table: {
+            headerRows: 1,
+            widths: ['auto', 'auto', 'auto', 'auto', 'auto', 'auto', 'auto', '*'],
+            body: tableBody
+          }
+        }
+      ],
+      styles: {
+        header: { fontSize: 11, bold: true },
+        subheader: { fontSize: 11, bold: true, margin: [0, 5, 0, 5] },
+        tableHeader: { bold: true, fontSize: 8, alignment: 'center' }
+      },
+      defaultStyle: { font: 'Helvetica', fontSize: 8, alignment: 'center' }
     };
 
     pdfmake.setFonts(fonts);

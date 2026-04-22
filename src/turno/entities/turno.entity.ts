@@ -36,5 +36,6 @@ export class Turno {
   @JoinColumn({ name: 'id_detalle_turno' })
   detalle_turno: DetalleTurno[];
 
-
+  @CreateDateColumn()
+  fecha_creacion: Date;
 }
