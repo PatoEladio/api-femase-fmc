@@ -35,13 +35,17 @@ export class TurnoController {
   asignarCencos(@Param('idturno') idturno: string, @Param('idcenco') idcenco: string) {
     return this.turnoService.asignarCenco(+idturno, +idcenco);
   }
+
   @Patch('asignar-horario/:id')
+  @UseGuards(AuthGuard)
   asignarHorario(
     @Param('id') id_turno: string,
     @Body('id_dia') id_dia: number[],
-    @Body('id_horario') id_horario: number[]
+    @Body('id_horario') id_horario: number[],
+    @Req() req
   ) {
-    return this.turnoService.asignarHorario(+id_turno, id_dia, id_horario);
+    const usuario = req.user.username;
+    return this.turnoService.asignarHorario(+id_turno, id_dia, id_horario, usuario);
   }
 
   @Get("obtener-horario/:id")

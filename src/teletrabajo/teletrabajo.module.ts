@@ -7,9 +7,10 @@ import { Empleado } from 'src/empleado/entities/empleado.entity';
 import { Horario } from 'src/horario/entities/horario.entity';
 import { DetalleTurno } from 'src/detalle-turno/entities/detalle-turno.entity';
 import { AsignacionTurnoRotativo } from 'src/asignacion_turno_rotativo/entities/asignacion_turno_rotativo.entity';
+import { Empresa } from 'src/empresas/empresas.entity';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Teletrabajo, Empleado, Horario, DetalleTurno, AsignacionTurnoRotativo])],
+  imports: [TypeOrmModule.forFeature([Teletrabajo, Empleado, Horario, DetalleTurno, AsignacionTurnoRotativo,Empresa])],
   controllers: [TeletrabajoController],
   providers: [TeletrabajoService],
 })

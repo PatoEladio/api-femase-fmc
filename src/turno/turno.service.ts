@@ -9,6 +9,7 @@ import { Cenco } from 'src/cencos/cenco.entity';
 import { Semana } from 'src/semana/entities/semana.entity';
 import { Horario } from 'src/horario/entities/horario.entity';
 import { DetalleTurno } from 'src/detalle-turno/entities/detalle-turno.entity';
+import { AuditoriaTurno } from 'src/detalle-turno/entities/auditoria-turno.entity';
 
 
 @Injectable()
@@ -25,7 +26,9 @@ export class TurnoService {
     @InjectRepository(Horario)
     private horarioRepository: Repository<Horario>,
     @InjectRepository(DetalleTurno)
-    private detalleTurnoRepository: Repository<DetalleTurno>
+    private detalleTurnoRepository: Repository<DetalleTurno>,
+    @InjectRepository(AuditoriaTurno)
+    private auditoriaTurnoRepository: Repository<AuditoriaTurno>
   ) { }
 
   async create(createTurnoDto: Turno, usuario: string) {
@@ -122,7 +125,10 @@ export class TurnoService {
       throw new NotFoundException('No se encontraron empleados con los IDs proporcionados');
     }
 
-    nuevosEmpleados.forEach(emp => emp.turno = turno);
+    nuevosEmpleados.forEach(emp => {
+      emp.turno = turno;
+      emp.fecha_asignacion_turno = new Date();
+    });
     await this.empleadoRepository.save(nuevosEmpleados);
 
     return {
@@ -159,22 +165,106 @@ export class TurnoService {
     return await this.cencoRepository.save(cenco)
   }
 
-
-
-
-  async asignarHorario(id_turno: number, id_dia: number[], id_horario: number[]) {
+  async asignarHorario(id_turno: number, id_dia: number[], id_horario: number[], usuario: string) {
     if (id_dia.length !== id_horario.length) {
       throw new BadRequestException('La lista de días y la lista de horarios deben tener exactamente la misma cantidad de elementos.');
     }
 
     // PASO 2: Buscar que el Turno de verdad exista en la base de datos.
     const turno = await this.turnoRepository.findOne({
-      where: { turno_id: id_turno }
+      where: { turno_id: id_turno },
+      relations: ['empleados']
     });
 
     if (!turno) {
       throw new NotFoundException('El Turno solicitado no existe.');
     }
+
+    // --- LOGICA DE AUDITORIA ---
+    // 1. Obtener detalles antiguos
+    const detallesAntiguos = await this.detalleTurnoRepository.find({
+      where: { turno: { turno_id: id_turno } },
+      relations: ['dia', 'horario']
+    });
+
+    // 2. Mapear horarios antiguos por código de día
+    const mapaAntiguo = new Map<number, { entrada: string, salida: string, extension: string }>();
+    detallesAntiguos.forEach(d => {
+      mapaAntiguo.set(d.dia.cod_dia, {
+        entrada: d.horario?.hora_entrada || '',
+        salida: d.horario?.hora_salida || '',
+        extension: 'Diario' // Por defecto según solicitud previa
+      });
+    });
+
+    // 3. Preparar horarios nuevos para el Mapa
+    const horariosNuevos = await this.horarioRepository.findBy({ horario_id: In(id_horario) });
+    const mapaNuevo = new Map<number, { entrada: string, salida: string, extension: string }>();
+    id_dia.forEach((diaId, index) => {
+      const hId = id_horario[index];
+      const hObj = horariosNuevos.find(h => h.horario_id === hId);
+      if (hObj) {
+        mapaNuevo.set(Number(diaId), { // Asegurar que sea número para coincidir con cod_dia
+          entrada: hObj.hora_entrada,
+          salida: hObj.hora_salida,
+          extension: 'Diario'
+        });
+      }
+    });
+
+    // 4. Identificar cambios y generar logs
+    const logsAuditoria: AuditoriaTurno[] = [];
+    const diasSemana = [1, 2, 3, 4, 5, 6, 7]; // Lunes a Domingo
+
+    diasSemana.forEach(codDia => {
+      const ant = mapaAntiguo.get(codDia);
+      const nue = mapaNuevo.get(codDia);
+
+      // Si hay cambio: solo si existía un horario anterior (para ignorar asignaciones iniciales)
+      const huboCambio = ant && (
+        !nue ||
+        (ant.entrada !== nue.entrada || ant.salida !== nue.salida)
+      );
+
+      if (huboCambio) {
+        const diaNombre = { 1: 'Lunes', 2: 'Martes', 3: 'Miércoles', 4: 'Jueves', 5: 'Viernes', 6: 'Sábado', 7: 'Domingo' }[codDia];
+        
+        const baseLogData = {
+          hora_entrada: ant?.entrada || null,
+          hora_salida: ant?.salida || null,
+          extension_turno: ant ? 'Diario' : '',
+          nuevo_hora_entrada: nue?.entrada || null,
+          nuevo_hora_salida: nue?.salida || null,
+          extension_nuevo_turno: nue ? 'Diario' : '',
+          solicitador_cambio: usuario,
+          inicio_turno: new Date(), // Fecha del cambio
+          fecha_asignacion_turno: new Date(), // Fecha para que el reporte lo encuentre hoy
+        };
+
+        if (turno.empleados && turno.empleados.length > 0) {
+          turno.empleados.forEach(emp => {
+            const fechaAsigOriginal = emp.fecha_asignacion_turno ? new Date(emp.fecha_asignacion_turno).toLocaleDateString('es-CL') : 'N/A';
+            logsAuditoria.push(this.auditoriaTurnoRepository.create({
+              ...baseLogData,
+              run_empleado: emp.num_ficha,
+              observaciones: `${turno.nombre} - ${diaNombre} (Asig. Emp: ${fechaAsigOriginal})`
+            }));
+          });
+        } else {
+          // Fallback log para el turno si no hay empleados
+          logsAuditoria.push(this.auditoriaTurnoRepository.create({
+            ...baseLogData,
+            run_empleado: null,
+            observaciones: `${turno.nombre} - ${diaNombre} (Sin empleados asignados)`
+          }));
+        }
+      }
+    });
+
+    if (logsAuditoria.length > 0) {
+      await this.auditoriaTurnoRepository.save(logsAuditoria);
+    }
+    // --- FIN LOGICA DE AUDITORIA ---
 
     await this.detalleTurnoRepository.delete({ turno: { turno_id: id_turno } });
 
@@ -186,25 +276,18 @@ export class TurnoService {
     }
 
     const dias = await this.semanaRepository.findBy({ cod_dia: In(id_dia) });
-    const horarios = await this.horarioRepository.findBy({ horario_id: In(id_horario) });
+    const horarios = horariosNuevos; // Ya los tenemos
 
     // PASO 6: Combinar los datos.
-    // Recorremos la lista de Días uno por uno.
     const nuevosDetallesAGuardar = id_dia.map((id_del_dia, indice) => {
-
-      // Obtenemos el ID del horario que está en la misma posición (índice) que este día. 
       const id_del_horario = id_horario[indice];
-
-      // Buscamos la información completa del Día y del Horario en los datos que trajimos de la BD.
       const diaEncontrado = dias.find(d => d.cod_dia === id_del_dia);
       const horarioEncontrado = horarios.find(h => h.horario_id === id_del_horario);
 
-      // Si nos pasaron un ID inventado que no está en la base de datos, lanzamos error.
       if (!diaEncontrado || !horarioEncontrado) {
         throw new NotFoundException(`No existe el día con ID ${id_del_dia} o el horario con ID ${id_del_horario} en la base de datos.`);
       }
 
-      // Creamos la nueva fila para la tabla "detalle_turno" (conexión entre el Turno, el Día y el Horario).
       return this.detalleTurnoRepository.create({
         turno: turno,
         dia: diaEncontrado,
@@ -212,9 +295,7 @@ export class TurnoService {
       });
     });
 
-    // PASO 7: Guardar todo en la base de datos al mismo tiempo.
     await this.detalleTurnoRepository.save(nuevosDetallesAGuardar);
-
 
     return {
       mensaje: 'Los horarios han sido asignados y actualizados correctamente en el turno.',

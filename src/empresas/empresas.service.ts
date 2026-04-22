@@ -83,4 +83,31 @@ export class EmpresasService {
       throw new InternalServerErrorException('Error al actualizar la empresa');
     }
   }
+
+  async actualizarHorario(id: number, horario: number) {
+    const empresa = await this.empresaRepository.findOne({ where: { empresa_id: id } });
+    if (!empresa) {
+      throw new NotFoundException('Empresa no encontrada');
+    }
+    empresa.horario = horario;
+    const actualizada = await this.empresaRepository.save(empresa);
+    return {
+      mensaje: 'Horario actualizado con éxito',
+      id: actualizada.empresa_id,
+      horario: actualizada.horario
+    };
+  }
+
+  async actualizarHorarioLegal(horario: number) {
+    // Usamos QueryBuilder para actualizar todas las filas de forma segura
+    await this.empresaRepository
+      .createQueryBuilder()
+      .update()
+      .set({ horario_legal: horario })
+      .execute();
+
+    return {
+      mensaje: 'Horario legal actualizado con éxito para todas las empresas',
+    };
+  }
 }

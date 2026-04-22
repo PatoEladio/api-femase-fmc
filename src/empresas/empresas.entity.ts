@@ -64,4 +64,12 @@ export class Empresa {
   @Column()
   @ApiProperty({ description: "email notificacion", example: "[EMAIL_ADDRESS]" })
   email_noti:string
+
+  @Column()
+  @ApiProperty({ description: "horas laborales", example: 45 })
+  horario_legal:number
+
+  @Column()
+  @ApiProperty({ description: "horas máximas laborales", example: 45 })
+  horario:number
 }

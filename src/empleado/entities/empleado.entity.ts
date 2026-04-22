@@ -146,4 +146,7 @@ export class Empleado {
 
   @OneToMany(() => Teletrabajo, (teletrabajo) => teletrabajo.id_empleado)
   teletrabajo: Teletrabajo[];
+  @Column({ nullable: true })
+  @ApiProperty({ description: 'fecha asignacion turno', example: "2024-01-01" })
+  fecha_asignacion_turno: Date;
 }

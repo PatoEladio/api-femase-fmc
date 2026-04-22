@@ -70,6 +70,7 @@ import { AlertasModule } from './alertas/alertas.module';
 import { Alerta } from './alertas/entities/alerta.entity';
 import { TeletrabajoModule } from './teletrabajo/teletrabajo.module';
 import { Teletrabajo } from './teletrabajo/entities/teletrabajo.entity';
+import { AuditoriaTurno } from './detalle-turno/entities/auditoria-turno.entity';
 
 @Module({
   imports: [
@@ -114,7 +115,8 @@ import { Teletrabajo } from './teletrabajo/entities/teletrabajo.entity';
         AutorizaHorasExtra,
         DetalleAsistencia,
         Alerta,
-        Teletrabajo
+        Teletrabajo,
+        AuditoriaTurno
       ]
     }),
     MailerModule.forRoot({

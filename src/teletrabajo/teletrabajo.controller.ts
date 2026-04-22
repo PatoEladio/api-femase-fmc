@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, Put } from '@nestjs/common';
 import { TeletrabajoService } from './teletrabajo.service';
 
 @Controller('teletrabajo')
@@ -13,5 +13,27 @@ export class TeletrabajoController {
   @Get('tiene/:runEmpleado')
   tieneTeletrabajo(@Param('runEmpleado') runEmpleado: string) {
     return this.teletrabajoService.tieneTeletrabajo(runEmpleado);
+  }
+
+  @Get('obtenerTeletrabajos/:idEmpresa')
+  obtenerTeletrabajos(@Param('idEmpresa') idEmpresa: number) {
+    return this.teletrabajoService.obtenerTeletrabajos(idEmpresa);
+  }
+
+  @Put('editarTeletrabajo/:idEmpleado/:id/:horarioId')
+  editarTeletrabajo(
+    @Param('idEmpleado') idEmpleado: number,
+    @Param('id') id: number,
+    @Param('horarioId') horarioId: number,
+  ) {
+    return this.teletrabajoService.editarTeletrabajo(idEmpleado, id, horarioId);
+  }
+
+  @Delete('eliminarTeletrabajo/:idEmpleado/:id')
+  eliminarTeletrabajo(
+    @Param('idEmpleado') idEmpleado: number,
+    @Param('id') id: number,
+  ) {
+    return this.teletrabajoService.eliminarTeletrabajo(idEmpleado, id);
   }
 }
