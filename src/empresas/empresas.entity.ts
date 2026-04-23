@@ -3,6 +3,7 @@ import { Cargo } from 'src/cargos/entities/cargo.entity';
 import { Departamento } from 'src/departamentos/departamento.entity';
 import { Empleado } from 'src/empleado/entities/empleado.entity';
 import { Estado } from 'src/estado/estado.entity';
+import { HorasLegale } from 'src/horas_legales/entities/horas_legale.entity';
 import { ProveedorCorreo } from 'src/proveedor-correo/entities/proveedor-correo.entity';
 import { Turno } from 'src/turno/entities/turno.entity';
 import { User } from 'src/users/user.entity';
@@ -65,9 +66,10 @@ export class Empresa {
   @ApiProperty({ description: "email notificacion", example: "[EMAIL_ADDRESS]" })
   email_noti:string
 
-  @Column()
-  @ApiProperty({ description: "horas laborales", example: 45 })
-  horario_legal:number
+  @OneToOne(() => HorasLegale)
+  @ApiProperty({ description: "horas legales", example: 44 })
+  horas_legales: HorasLegale;
+
 
   @Column()
   @ApiProperty({ description: "horas máximas laborales", example: 45 })

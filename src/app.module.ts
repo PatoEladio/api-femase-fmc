@@ -71,6 +71,8 @@ import { Alerta } from './alertas/entities/alerta.entity';
 import { TeletrabajoModule } from './teletrabajo/teletrabajo.module';
 import { Teletrabajo } from './teletrabajo/entities/teletrabajo.entity';
 import { AuditoriaTurno } from './detalle-turno/entities/auditoria-turno.entity';
+import { HorasLegalesModule } from './horas_legales/horas_legales.module';
+import { HorasLegale } from './horas_legales/entities/horas_legale.entity';
 
 @Module({
   imports: [
@@ -116,7 +118,8 @@ import { AuditoriaTurno } from './detalle-turno/entities/auditoria-turno.entity'
         DetalleAsistencia,
         Alerta,
         Teletrabajo,
-        AuditoriaTurno
+        AuditoriaTurno,
+        HorasLegale
       ]
     }),
     MailerModule.forRoot({
@@ -168,7 +171,8 @@ import { AuditoriaTurno } from './detalle-turno/entities/auditoria-turno.entity'
     RegistroEventoModule,
     DetalleAsistenciaModule,
     AlertasModule,
-    TeletrabajoModule
+    TeletrabajoModule,
+    HorasLegalesModule
   ],
   providers: [PerfilesService],
   controllers: [PerfilesController],

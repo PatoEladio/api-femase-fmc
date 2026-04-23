@@ -98,16 +98,4 @@ export class EmpresasService {
     };
   }
 
-  async actualizarHorarioLegal(horario: number) {
-    // Usamos QueryBuilder para actualizar todas las filas de forma segura
-    await this.empresaRepository
-      .createQueryBuilder()
-      .update()
-      .set({ horario_legal: horario })
-      .execute();
-
-    return {
-      mensaje: 'Horario legal actualizado con éxito para todas las empresas',
-    };
-  }
 }

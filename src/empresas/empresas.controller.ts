@@ -28,11 +28,6 @@ export class EmpresasController {
     return this.empresaService.actualizarEmpresa(+id, updateDto);
   }
 
-  @Patch('actualizarHorarioLegal/:horario')
-  actualizarHorario(@Param('horario') horario: string) {
-    return this.empresaService.actualizarHorarioLegal(+horario);
-  }
-
   @Patch('actualizarHorario/:id/:horario')
   actualizarHorarioEmpresa(@Param('id') id: string, @Param('horario') horario: string) {
     return this.empresaService.actualizarHorario(+id, +horario);

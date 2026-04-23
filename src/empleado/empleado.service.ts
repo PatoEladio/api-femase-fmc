@@ -20,6 +20,27 @@ export class EmpleadoService {
   async create(createEmpleadoDto: Empleado) {
     // Primero creo el empleado
     const nuevoEmpleado = this.empleadoRepository.create(createEmpleadoDto);
+    if (nuevoEmpleado.email || nuevoEmpleado.email_laboral || nuevoEmpleado.email_noti) {
+      const existeEmail = await this.empleadoRepository.findOne({
+        where: {
+          email: nuevoEmpleado.email,
+        },
+      })
+      if (existeEmail) throw new ConflictException('Ya existe el email');
+      const existeEmailLaboral = await this.empleadoRepository.findOne({
+        where: {
+          email_laboral: nuevoEmpleado.email_laboral,
+        },
+      })
+      if (existeEmailLaboral) throw new ConflictException('Ya existe el email laboral');
+      const existeEmailNoti = await this.empleadoRepository.findOne({
+        where: {
+          email_noti: nuevoEmpleado.email_noti,
+        },
+      })
+      if (existeEmailNoti) throw new ConflictException('Ya existe el email noti');
+
+    }
     const guardarNuevoEmpleado = await this.empleadoRepository.save(nuevoEmpleado);
 
     if (!guardarNuevoEmpleado) throw new HttpException('Error al crear el empleado', 400);
@@ -132,6 +153,29 @@ export class EmpleadoService {
     if (!empleado) {
       throw new NotFoundException(`El empleado con ID ${id} no existe`);
     }
+
+    if (updateEmpleadoDto.email || updateEmpleadoDto.email_laboral || updateEmpleadoDto.email_noti) {
+      const existeEmail = await this.empleadoRepository.findOne({
+        where: {
+          email: updateEmpleadoDto.email,
+        },
+      })
+      if (existeEmail) throw new ConflictException('Ya existe el email');
+      const existeEmailLaboral = await this.empleadoRepository.findOne({
+        where: {
+          email_laboral: updateEmpleadoDto.email_laboral,
+        },
+      })
+      if (existeEmailLaboral) throw new ConflictException('Ya existe el email laboral');
+      const existeEmailNoti = await this.empleadoRepository.findOne({
+        where: {
+          email_noti: updateEmpleadoDto.email_noti,
+        },
+      })
+      if (existeEmailNoti) throw new ConflictException('Ya existe el email noti');
+
+    }
+    
 
     try {
       // 1. Guardar cambios en empleado

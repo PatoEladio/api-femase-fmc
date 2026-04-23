@@ -27,12 +27,16 @@ export class TeletrabajoService {
 
 
   async asignarTeletrabajo(idEmpleado: number, fecha_inicio: string, fecha_fin: string) {
-    const empleado = await this.empleadoRepository.findOne({ where: { empleado_id: idEmpleado }, relations: { turno: true } })
+    const empleado = await this.empleadoRepository.findOne({ 
+      where: { empleado_id: idEmpleado }, 
+      relations: { turno: true } 
+    });
+
     if (!empleado) {
-      throw new NotFoundException("Empleado no encontrado")
+      throw new NotFoundException("Empleado no encontrado");
     }
     if (fecha_inicio > fecha_fin) {
-      throw new NotFoundException("La fecha de inicio debe ser menor a la fecha de fin")
+      throw new NotFoundException("La fecha de inicio debe ser menor a la fecha de fin");
     }
 
     const getFechaLocal = (f: any) => {
@@ -44,14 +48,14 @@ export class TeletrabajoService {
         }
       }
       const d = new Date(f);
-      const dateLocal = new Date(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate(), 0, 0, 0, 0);
-      return dateLocal;
+      return new Date(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate(), 0, 0, 0, 0);
     };
 
     let fechaActual = getFechaLocal(fecha_inicio);
     const fechaTermino = getFechaLocal(fecha_fin);
+    const reporte: { fecha: string; status: 'success' | 'error'; message: string }[] = [];
 
-    //tiene turno Normal
+    // --- CASO: TURNO NORMAL ---
     if (!empleado?.permite_rotativo && empleado?.turno) {
       const id_turno = empleado.turno?.turno_id
       const datos = await this.detalleTurnoRepository.find({
@@ -67,15 +71,16 @@ export class TeletrabajoService {
         throw new NotFoundException("El turno no cuenta con horarios asignados");
       }
 
-      const diasAProcesar: { fecha: Date; detalle: any }[] = [];
       let fechaValidacion = new Date(fechaActual);
 
-      //Validar todas las fechas en el rango
       while (fechaValidacion.getTime() <= fechaTermino.getTime()) {
+        const fechaString = fechaValidacion.toLocaleDateString('en-CA');
         const diaNum = fechaValidacion.getDay() || 7;
         const detalleDia = datos.find((d) => d.dia.cod_dia === diaNum);
 
-        if (detalleDia) {
+        if (!detalleDia) {
+          reporte.push({ fecha: fechaString, status: 'error', message: 'No tiene horario asignado para este día de la semana' });
+        } else {
           const existe = await this.teletrabajoRepository.findOne({
             where: {
               id_empleado: { empleado_id: idEmpleado },
@@ -84,53 +89,35 @@ export class TeletrabajoService {
           });
 
           if (existe) {
-            throw new NotFoundException(
-              `Ya existe un registro de teletrabajo en la fecha ${fechaValidacion.toLocaleDateString('en-CA')}`,
-            );
+            reporte.push({ fecha: fechaString, status: 'error', message: 'Ya existe un registro de teletrabajo para esta fecha' });
+          } else {
+            const nuevoRegistro = this.teletrabajoRepository.create({
+              id_empleado: empleado,
+              fecha_actual: new Date(fechaValidacion),
+              horario_id: { horario_id: detalleDia.horario.horario_id } as any,
+            });
+            await this.teletrabajoRepository.save(nuevoRegistro);
+            reporte.push({ fecha: fechaString, status: 'success', message: 'Teletrabajo asignado correctamente' });
           }
-
-          diasAProcesar.push({
-            fecha: new Date(fechaValidacion),
-            detalle: detalleDia,
-          });
         }
 
         fechaValidacion.setDate(fechaValidacion.getDate() + 1);
         fechaValidacion.setHours(0, 0, 0, 0);
       }
-
-      const resultados: Teletrabajo[] = [];
-
-      //Crear los registros solo si todas las validaciones pasaron
-      for (const item of diasAProcesar) {
-        const nuevoRegistro = this.teletrabajoRepository.create({
-          id_empleado: empleado,
-          fecha_actual: item.fecha,
-          horario_id: { horario_id: item.detalle.horario.horario_id } as any,
-        });
-        const guardado = await this.teletrabajoRepository.save(nuevoRegistro);
-        resultados.push(guardado);
-      }
-
-      return {
-        message: `Se procesaron los días. Registros creados: ${resultados.length}`,
-        detalles: resultados,
-      };
     }
 
 
-    //Tiene turno Rotativo
-    if (empleado?.permite_rotativo && !empleado?.turno) {
+    // --- CASO: TURNO ROTATIVO ---
+    else if (empleado?.permite_rotativo && !empleado?.turno) {
       const datos = await this.asignacionTurnoRotativoRepository.find({
         where: { empleado: { empleado_id: idEmpleado } },
         relations: {
           horario: true,
         },
       });
-      const resultadosModificados: AsignacionTurnoRotativo[] = [];
+      
       let fechaValidacion = new Date(fechaActual);
 
-      //Validar todas las fechas en el rango
       while (fechaValidacion.getTime() <= fechaTermino.getTime()) {
         const fechaBucle = fechaValidacion.toLocaleDateString('en-CA');
 
@@ -139,36 +126,35 @@ export class TeletrabajoService {
             item.fecha_inicio_turno.toISOString().split('T')[0] === fechaBucle,
         );
 
-        if (registroActual) {
-          if (registroActual.teletrabajo) {
-            throw new NotFoundException(
-              `Ya existe un registro de teletrabajo en la fecha ${fechaBucle}`,
-            );
-          }
-
-          resultadosModificados.push(registroActual);
+        if (!registroActual) {
+          reporte.push({ fecha: fechaBucle, status: 'error', message: 'No tiene turno rotativo asignado para esta fecha' });
+        } else if (registroActual.teletrabajo) {
+          reporte.push({ fecha: fechaBucle, status: 'error', message: 'Ya existe un registro de teletrabajo para esta fecha' });
+        } else {
+          await this.asignacionTurnoRotativoRepository.update(registroActual.id, {
+            teletrabajo: true,
+          });
+          reporte.push({ fecha: fechaBucle, status: 'success', message: 'Teletrabajo asignado correctamente' });
         }
+        
         fechaValidacion.setDate(fechaValidacion.getDate() + 1);
         fechaValidacion.setHours(0, 0, 0, 0);
       }
-
-      //Actualizar registros solo si todas las validaciones pasaron
-      for (const registro of resultadosModificados) {
-        await this.asignacionTurnoRotativoRepository.update(registro.id, {
-          teletrabajo: true,
-        });
-      }
-
-      return {
-        message: `Teletrabajo asignado correctamente`,
-        detalles: resultadosModificados,
-      };
     }
 
-    //No tiene turno
-    if (!empleado?.permite_rotativo && !empleado?.turno) {
-      throw new NotFoundException("No tiene turno asignado")
+    const totalExitos = reporte.filter(r => r.status === 'success').length;
+
+    if (totalExitos === 0) {
+      throw new NotFoundException({
+        message: "No se pudo realizar ninguna asignación en el rango seleccionado",
+        detalles: reporte
+      });
     }
+
+    return {
+      message: `Procesamiento completado. Se asignaron ${totalExitos} días correctamente.`,
+      detalles: reporte,
+    };
   }
 
 
