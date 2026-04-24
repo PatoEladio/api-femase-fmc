@@ -487,7 +487,7 @@ export class MarcasService {
           html: `
           <div style="font-family: Arial, sans-serif; color: #333;">
             <h2>Hola, ${nombreEmpleadoCompleto}</h2>
-            <p>Se ha solicitado modificar una marca en el sistema con los siguientes detalles <strong>(Datos Propuestos)</strong>:</p>
+            <p>Se ha solicitado modificar una marca en el sistema con los siguientes detalles:</p>
             <ul>
               <li><strong>Fecha:</strong> ${fechaFormatString}</li>
               <li><strong>Hora:</strong> ${marcaAuditoria.hora_marca}</li>

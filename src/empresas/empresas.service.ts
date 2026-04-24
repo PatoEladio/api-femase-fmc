@@ -6,6 +6,8 @@ import { EmpresaCreadaDto } from './dto/empresa-creada.dto';
 import { UpdateEmpresaDto } from './dto/update-empresa.dto';
 import { BuscarEmpresaDto } from './dto/search-empresa.dto';
 import { log } from 'util';
+import * as fs from 'fs';
+import { join } from 'path';
 
 @Injectable()
 export class EmpresasService {
@@ -96,6 +98,35 @@ export class EmpresasService {
       id: actualizada.empresa_id,
       horario: actualizada.horario
     };
+  }
+
+  async actualizarLogo(id: number, filename: string) {
+    const empresa = await this.empresaRepository.findOne({ where: { empresa_id: id } });
+
+    if (!empresa) {
+      throw new NotFoundException('Empresa no encontrada');
+    }
+    if (empresa.urlLogo) {
+      const pathAnterior = join('C:\\Users\\Crign\\OneDrive\\Desktop\\api-femase-fmc\\imgEmpresas', empresa.urlLogo); // CAMBIAR RUTA
+      if (fs.existsSync(pathAnterior)) {
+        fs.unlinkSync(pathAnterior);
+      }
+    }
+    // Actualizamos el nombre del nuevo archivo en la base de datos
+    empresa.urlLogo = filename;
+    await this.empresaRepository.save(empresa);
+    return {
+      mensaje: 'Logo actualizado con éxito',
+      urlLogo: filename
+    };
+  }
+
+  async obtenerLogoEmpresa(id: number) {
+    const empresa = await this.empresaRepository.findOne({ where: { empresa_id: id } });
+    if (!empresa) {
+      throw new NotFoundException('Empresa no encontrada');
+    }
+    return empresa.urlLogo;
   }
 
 }

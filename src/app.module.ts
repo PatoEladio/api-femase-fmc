@@ -124,19 +124,20 @@ import { HorasLegale } from './horas_legales/entities/horas_legale.entity';
     }),
     MailerModule.forRoot({
       transport: {
-        host: 'smtp.gmail.com',
-        port: 587,
-        secure: false,
+        host: 'mail.femase.cl',
+        port: 465,
+        secure: true, // true para el puerto 465 (SSL), false para el 587 (TLS)
         auth: {
-          user: 'soportefemasetest@gmail.com',
-          pass: 'mskobvyknfujvshj'
+          user: 'no_reply@femase.cl',
+          pass: process.env.MAIL_PASSWORD
         },
         tls: {
+         
           rejectUnauthorized: false
         }
       },
       defaults: {
-        from: '"Soporte FEMASE" <soportefemasetest@gmail.com>'
+        from: '"Soporte FEMASE" <no_reply@femase.cl>'
       }
     }),
     AuthModule,

@@ -9,6 +9,7 @@ import { Turno } from 'src/turno/entities/turno.entity';
 import { User } from 'src/users/user.entity';
 import { Entity, Column, PrimaryGeneratedColumn, OneToOne, JoinColumn, ManyToMany, CreateDateColumn, UpdateDateColumn, OneToMany } from 'typeorm';
 
+
 @Entity({ name: 'empresa', schema: 'db_fmc' })
 export class Empresa {
   @PrimaryGeneratedColumn()
@@ -74,4 +75,8 @@ export class Empresa {
   @Column()
   @ApiProperty({ description: "horas máximas laborales", example: 45 })
   horario:number
+
+  @Column({nullable:true})
+  @ApiProperty({ description: "url logo empresa", example: "https://ejemplo.com/logo.png" })
+  urlLogo:string
 }
