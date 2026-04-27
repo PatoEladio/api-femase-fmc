@@ -132,12 +132,12 @@ import { HorasLegale } from './horas_legales/entities/horas_legale.entity';
           pass: process.env.MAIL_PASSWORD
         },
         tls: {
-         
+
           rejectUnauthorized: false
         }
       },
       defaults: {
-        from: '"Soporte FEMASE" <no_reply@femase.cl>'
+        from: '"no-reply" <no_reply@femase.cl>'
       }
     }),
     AuthModule,

@@ -834,31 +834,39 @@ export class MarcasService {
     let htmlMsg = '';
 
     if (tipo === 2) {
-      subject = 'Alerta de no marcacion 30 minutos de entrada';
-      htmlMsg = `<p>Empresa: ${empleado.empresa?.nombre_empresa || 'N/A'}.</p>
+      subject = 'Alerta de no marcación 30 minutos de entrada';
+      htmlMsg = `
+      <p>--- Datos del empleador ---</p>
+      <p>Empresa: ${empleado.empresa?.nombre_empresa || 'N/A'}.</p>
+      <p>Rut: ${empleado.empresa?.rut_empresa}</p>
       <p>Sucursal: ${empleado.cenco?.nombre_cenco || 'N/A'}</p>
       <P>Direccion: ${empleado.cenco?.direccion}</P>
-      <p>Rut: ${empleado.run}<p>
+      <p>--- Datos del trabajador ---</p>
+      <p>Run: ${empleado.run}<p>
       <p>Nombre: ${nombreCompleto}<p>
       <p>Fecha Entrada: ${fechaDeHoy}</p>
       <p>Horario Entrada: ${horarioEntrada}</p>
-      <p>Siendo el ${fechaDeHoy} a las ${horaActual} horas, usted no registra Marcación de Entrada</p>
+      <p>Siendo el ${fechaDeHoy} a las ${horaActual} horas, usted no registra Marcación de Entrada.</p>
       `;
 
     } else if (tipo === 3) {
-      subject = 'Recordatorio: Próxima Marca de Salida (Teletrabajo)';
-      htmlMsg = `<p>Hola ${nombreCompleto}, Te recordamos que siendo ${fechaDeHoy} a las ${horaActual} horas, le informamosque restan 30 min para el inicio del derecho de desconexión.</p>`;
+      subject = 'Notificación derecho a desconexión';
+      htmlMsg = `<p>Hola ${nombreCompleto}, Te recordamos que siendo ${fechaDeHoy} a las ${horaActual} horas, le informamos que restan 30 min para el inicio del derecho a desconexión.</p>`;
 
     } else if (tipo === 4) {
-      subject = 'Alerta de no marcacion 30 minutos de salida';
-      htmlMsg = `<p>Empresa: ${empleado.empresa?.nombre_empresa || 'N/A'}.</p>
+      subject = 'Alerta de no marcación 30 minutos de salida';
+      htmlMsg = `
+      <p>--- Datos del empleador ---</p>
+      <p>Empresa: ${empleado.empresa?.nombre_empresa || 'N/A'}.</p>
+      <p>Rut: ${empleado.empresa?.rut_empresa}</p>
       <p>Sucursal: ${empleado.cenco?.nombre_cenco || 'N/A'}</p>
       <P>Direccion: ${empleado.cenco?.direccion}</P>
-      <p>Rut: ${empleado.run}<p>
-      <p>Nombre: ${nombreCompleto}<p>
+      <p>--- Datos del trabajador ---</p>
+      <p>Run: ${empleado.run}</p>
+      <p>Nombre: ${nombreCompleto}</p>
       <p>Fecha Salida: ${fechaDeHoy}</p>
       <p>Horario Salida: ${horarioSalida}</p>
-      <p>Siendo el ${fechaDeHoy} a las ${horaActual} horas, usted no registra Marcación de Salida</p>
+      <p>Siendo el ${fechaDeHoy} a las ${horaActual} horas, usted no registra Marcación de Salida.</p>
       `;
     }
 
@@ -953,9 +961,9 @@ export class MarcasService {
           const diffMs = entradaDate.getTime() - ahora.getTime();
           const diffTotalMinutos = diffMs / 60000;
 
-          // Escenario POST-TURNO: Pasaron más de 29 minutos desde la hora límite 
-          // limitamos a revisar si pasaron entre 29 y 120 minutos tarde.
-          if (diffTotalMinutos <= -29 && diffTotalMinutos >= -120) {
+          // Escenario POST-TURNO: Pasaron más de 30 minutos desde la hora límite 
+          // limitamos a revisar si pasaron entre 30 y 120 minutos tarde.
+          if (diffTotalMinutos <= -30 && diffTotalMinutos >= -120) {
             const alertaExistente = await this.marcaRepository.manager.findOne(Alerta, {
               where: {
                 empleado: { empleado_id: empleado.empleado_id },
@@ -997,8 +1005,8 @@ export class MarcasService {
           const diffMsSalida = salidaDate.getTime() - ahora.getTime();
           const diffTotalMinutosSalida = diffMsSalida / 60000;
 
-          // Si faltan entre 0 y 31 minutos para la salida
-          if (diffTotalMinutosSalida >= 0 && diffTotalMinutosSalida <= 31) {
+          // Si faltan entre 0 y 30 minutos para la salida
+          if (diffTotalMinutosSalida >= 0 && diffTotalMinutosSalida <= 30) {
             const alertaSalidaExistente = await this.marcaRepository.manager.findOne(Alerta, {
               where: {
                 empleado: { empleado_id: empleado.empleado_id },

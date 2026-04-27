@@ -8,12 +8,15 @@ import { BuscarEmpresaDto } from './dto/search-empresa.dto';
 import { log } from 'util';
 import * as fs from 'fs';
 import { join } from 'path';
+import { User } from 'src/users/user.entity';
 
 @Injectable()
 export class EmpresasService {
   constructor(
     @InjectRepository(Empresa)
-    private empresaRepository: Repository<Empresa>
+    private empresaRepository: Repository<Empresa>,
+    @InjectRepository(User)
+    private userRepository: Repository<User>
   ) { }
 
   async obtenerTodasLasEmpresas(usuarioId: number, usuario: string): Promise<BuscarEmpresaDto> {
@@ -21,9 +24,16 @@ export class EmpresasService {
       relations: ['estado', 'departamentos'],
       order: { empresa_id: 'asc' }
     });
+    const usuarioLogueado = await this.userRepository.findOne({
+      where: { usuario_id: usuarioId },
+      relations: ['perfil']
+    });
+    if(!usuarioLogueado){
+      throw new NotFoundException('Usuario no encontrado');
+    }
 
     if (allEmpresas.length > 0) {
-      if (usuario == 'superadmin') {
+      if (usuario == 'superadmin' || usuarioLogueado.perfil.perfil_id ==3) {
         return {
           empresas: allEmpresas,
           mensaje: 'Usuario superadmin o fiscalizador, se envian todas las empresas'
