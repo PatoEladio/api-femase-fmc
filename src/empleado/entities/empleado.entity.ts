@@ -1,4 +1,5 @@
 import { ApiProperty } from "@nestjs/swagger";
+import { Alerta } from "src/alertas/entities/alerta.entity";
 import { AsignacionTurnoRotativo } from "src/asignacion_turno_rotativo/entities/asignacion_turno_rotativo.entity";
 import { Ausencia } from "src/ausencias/entities/ausencia.entity";
 import { Cargo } from "src/cargos/entities/cargo.entity";
@@ -6,6 +7,7 @@ import { Cenco } from "src/cencos/cenco.entity";
 import { Empresa } from "src/empresas/empresas.entity";
 import { Estado } from "src/estado/estado.entity";
 import { Marca } from "src/marcas/entities/marca.entity";
+import { Teletrabajo } from "src/teletrabajo/entities/teletrabajo.entity";
 import { Turno } from "src/turno/entities/turno.entity";
 import { User } from "src/users/user.entity";
 import { Vacaciones } from "src/vacaciones/entities/vacaciones.entity";
@@ -139,6 +141,11 @@ export class Empleado {
   @ApiProperty({ description: 'email notificacion', example: "cris@femase.noti.cl" })
   email_noti: string;
 
+  @OneToMany(() => Alerta, (alerta) => alerta.empleado)
+  alertas: Alerta[];
+
+  @OneToMany(() => Teletrabajo, (teletrabajo) => teletrabajo.id_empleado)
+  teletrabajo: Teletrabajo[];
   @Column({ nullable: true })
   @ApiProperty({ description: 'fecha asignacion turno', example: "2024-01-01" })
   fecha_asignacion_turno: Date;

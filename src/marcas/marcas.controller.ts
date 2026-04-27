@@ -6,7 +6,6 @@ import { AuthGuard } from 'src/auth/auth.guard';
 import { DetalleAsistenciaService } from 'src/detalle-asistencia/detalle-asistencia.service';
 
 @Controller('marcas')
-@UseGuards(AuthGuard)
 export class MarcasController {
   constructor(
     private readonly marcasService: MarcasService,
@@ -14,11 +13,13 @@ export class MarcasController {
   ) { }
 
   @Post()
+  @UseGuards(AuthGuard)
   create(@Body() createMarcaDto: CreateMarcaDto) {
     return this.marcasService.create(createMarcaDto);
   }
 
   @Get()
+  @UseGuards(AuthGuard)
   async findAll(@Query("numFicha") numFicha: string, @Query("fechaInicio") fechaInicio: string, @Query("fechaFin") fechaFin: string) {
     if (numFicha && fechaInicio && fechaFin) {
       await this.detalleAsistenciaService.calcularAsistencia(numFicha, fechaInicio, fechaFin);
@@ -26,22 +27,33 @@ export class MarcasController {
     return this.marcasService.findAll(numFicha, fechaInicio, fechaFin);
   }
 
+  @Get('confirmar')
+  async confirmarModificacion(
+    @Query('token') token: string,
+    @Query('accion') accion: string
+  ) {
+    return this.marcasService.confirmarCambio(token, accion);
+  }
+
   @Get(':hashcode')
+  @UseGuards(AuthGuard)
   getMarcasByHash(@Param('hashcode') hashcode: string) {
     return this.marcasService.getMarcasByHash(hashcode);
   }
-
   @Get('id/:id')
+  @UseGuards(AuthGuard)
   findOne(@Param('id') id: string) {
     return this.marcasService.findOne(+id);
   }
 
   @Patch(':id')
+  @UseGuards(AuthGuard)
   update(@Param('id') id: string, @Body() updateMarcaDto: UpdateMarcaDto, @Req() req: any) {
     return this.marcasService.update(+id, updateMarcaDto, req.user.username);
   }
 
   @Delete(':id')
+  @UseGuards(AuthGuard)
   remove(@Param('id') id: string) {
     return this.marcasService.remove(+id);
   }

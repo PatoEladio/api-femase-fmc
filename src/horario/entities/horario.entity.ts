@@ -2,6 +2,7 @@ import { ApiProperty } from "@nestjs/swagger";
 import { AsignacionTurnoRotativo } from "src/asignacion_turno_rotativo/entities/asignacion_turno_rotativo.entity";
 import { DetalleTurno } from "src/detalle-turno/entities/detalle-turno.entity";
 import { Empresa } from "src/empresas/empresas.entity";
+import { Teletrabajo } from "src/teletrabajo/entities/teletrabajo.entity";
 import { Column, Entity, JoinColumn, ManyToMany, ManyToOne, OneToMany, OneToOne, PrimaryGeneratedColumn } from "typeorm";
 
 @Entity({ name: 'horario', schema: 'db_fmc' })
@@ -56,4 +57,7 @@ export class Horario {
 
   @Column()
   nocturno: boolean
+
+  @OneToMany(() => Teletrabajo, (teletrabajo) => teletrabajo.horario_id)
+  teletrabajo: Teletrabajo[];
 }

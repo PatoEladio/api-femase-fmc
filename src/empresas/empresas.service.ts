@@ -6,12 +6,17 @@ import { EmpresaCreadaDto } from './dto/empresa-creada.dto';
 import { UpdateEmpresaDto } from './dto/update-empresa.dto';
 import { BuscarEmpresaDto } from './dto/search-empresa.dto';
 import { log } from 'util';
+import * as fs from 'fs';
+import { join } from 'path';
+import { User } from 'src/users/user.entity';
 
 @Injectable()
 export class EmpresasService {
   constructor(
     @InjectRepository(Empresa)
-    private empresaRepository: Repository<Empresa>
+    private empresaRepository: Repository<Empresa>,
+    @InjectRepository(User)
+    private userRepository: Repository<User>
   ) { }
 
   async obtenerTodasLasEmpresas(usuarioId: number, usuario: string): Promise<BuscarEmpresaDto> {
@@ -19,9 +24,16 @@ export class EmpresasService {
       relations: ['estado', 'departamentos'],
       order: { empresa_id: 'asc' }
     });
+    const usuarioLogueado = await this.userRepository.findOne({
+      where: { usuario_id: usuarioId },
+      relations: ['perfil']
+    });
+    if(!usuarioLogueado){
+      throw new NotFoundException('Usuario no encontrado');
+    }
 
     if (allEmpresas.length > 0) {
-      if (usuario == 'superadmin') {
+      if (usuario == 'superadmin' || usuarioLogueado.perfil.perfil_id ==3) {
         return {
           empresas: allEmpresas,
           mensaje: 'Usuario superadmin o fiscalizador, se envian todas las empresas'
@@ -83,4 +95,48 @@ export class EmpresasService {
       throw new InternalServerErrorException('Error al actualizar la empresa');
     }
   }
+
+  async actualizarHorario(id: number, horario: number) {
+    const empresa = await this.empresaRepository.findOne({ where: { empresa_id: id } });
+    if (!empresa) {
+      throw new NotFoundException('Empresa no encontrada');
+    }
+    empresa.horario = horario;
+    const actualizada = await this.empresaRepository.save(empresa);
+    return {
+      mensaje: 'Horario actualizado con éxito',
+      id: actualizada.empresa_id,
+      horario: actualizada.horario
+    };
+  }
+
+  async actualizarLogo(id: number, filename: string) {
+    const empresa = await this.empresaRepository.findOne({ where: { empresa_id: id } });
+
+    if (!empresa) {
+      throw new NotFoundException('Empresa no encontrada');
+    }
+    if (empresa.urlLogo) {
+      const pathAnterior = join('C:\\Users\\Crign\\OneDrive\\Desktop\\api-femase-fmc\\imgEmpresas', empresa.urlLogo); // CAMBIAR RUTA
+      if (fs.existsSync(pathAnterior)) {
+        fs.unlinkSync(pathAnterior);
+      }
+    }
+    // Actualizamos el nombre del nuevo archivo en la base de datos
+    empresa.urlLogo = filename;
+    await this.empresaRepository.save(empresa);
+    return {
+      mensaje: 'Logo actualizado con éxito',
+      urlLogo: filename
+    };
+  }
+
+  async obtenerLogoEmpresa(id: number) {
+    const empresa = await this.empresaRepository.findOne({ where: { empresa_id: id } });
+    if (!empresa) {
+      throw new NotFoundException('Empresa no encontrada');
+    }
+    return empresa.urlLogo;
+  }
+
 }

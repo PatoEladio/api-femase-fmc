@@ -171,7 +171,7 @@ export class UsersService {
         apellido_materno: '',
         apellido_paterno: '',
         email: correoDT + '@gmail.com', //cambiar a @dt.gob.cl
-        empresa: { empresa_id: 9 },
+        empresa: { empresa_id: 6 }, // CAMBIAR EN CASO DE SER NECESARIO 
         estado: { estado_id: 1 },
         perfil: { perfil_id: 3 },
         run_usuario: correoDT
@@ -256,7 +256,6 @@ export class UsersService {
     usuario.cencos = cencoIds.map(id => ({ cenco_id: id } as Cenco));
     return await this.usersRepository.save(usuario);
   }
-
 
 
   async enviarCencosPorUsuario(usuarioId: number) {

@@ -17,7 +17,7 @@ export class AuthService {
     username: string,
     pass: string,
     req: Request
-  ): Promise<{ token: string, username: string, profile: string, profile_id: number, empresa_id: number, empresa: string, num_ficha: string }> {
+  ): Promise<{ token: string, username: string, profile: string, profile_id: number, empresa_id: number, empresa: string, num_ficha: string, rut: string }> {
 
     const user = await this.usersService.searchActiveUser(username);
 
@@ -42,7 +42,16 @@ export class AuthService {
       throw new UnauthorizedException('Credenciales incorrectas');
     }
 
-    const payload = { sub: user.usuario_id, username: user.username, profile: user.perfil.perfil_id, num_ficha: user.empleado.num_ficha, nombre_completo: user.empleado.nombres + ' ' + user.empleado.apellido_paterno + ' ' + user.empleado.apellido_materno, empresa: user.empresa.nombre_empresa };
+    const payload = { 
+      sub: user.usuario_id, 
+      username: user.username, 
+      profile: user.perfil?.perfil_id, 
+      num_ficha: user.empleado?.num_ficha || null, 
+      nombre_completo: user.empleado ? `${user.empleado.nombres} ${user.empleado.apellido_paterno} ${user.empleado.apellido_materno}` : user.username, 
+      empresa: user.empresa?.nombre_empresa || null, 
+      rut: user.empleado?.run || null, 
+      empresa_id: user.empresa?.empresa_id || null
+    };
 
     // Registrar la sesión activa
     const ip = req.headers['x-forwarded-for'] as string || req.ip || 'Desconocida';
@@ -52,11 +61,12 @@ export class AuthService {
     return {
       token: await this.jwtService.signAsync(payload),
       username: user.username,
-      profile_id: user.perfil.perfil_id,
-      profile: user.perfil.nombre_perfil,
-      empresa_id: user.empresa.empresa_id,
-      empresa: user.empresa.nombre_empresa,
-      num_ficha: user.empleado.num_ficha
+      profile_id: user.perfil?.perfil_id || 0,
+      profile: user.perfil?.nombre_perfil || '',
+      empresa_id: user.empresa?.empresa_id || 0,
+      empresa: user.empresa?.nombre_empresa || '',
+      num_ficha: user.empleado?.num_ficha || '',
+      rut: user.empleado?.run || '',
     };
   }
 }

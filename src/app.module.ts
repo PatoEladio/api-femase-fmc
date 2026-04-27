@@ -65,18 +65,26 @@ import { AutorizaHorasExtra } from './autoriza_horas_extras/entities/autoriza_ho
 import { RegistroEventoModule } from './registro_evento/registro_evento.module';
 import { DetalleAsistenciaModule } from './detalle-asistencia/detalle-asistencia.module';
 import { DetalleAsistencia } from './detalle-asistencia/entities/detalle-asistencia.entity';
+import { ScheduleModule } from '@nestjs/schedule';
+import { AlertasModule } from './alertas/alertas.module';
+import { Alerta } from './alertas/entities/alerta.entity';
+import { TeletrabajoModule } from './teletrabajo/teletrabajo.module';
+import { Teletrabajo } from './teletrabajo/entities/teletrabajo.entity';
 import { AuditoriaTurno } from './detalle-turno/entities/auditoria-turno.entity';
+import { HorasLegalesModule } from './horas_legales/horas_legales.module';
+import { HorasLegale } from './horas_legales/entities/horas_legale.entity';
 
 @Module({
   imports: [
+    ScheduleModule.forRoot(),
     ConfigModule.forRoot(),
     TypeOrmModule.forRoot({
       type: 'postgres',
       host: 'localhost',
       port: 5432,
       username: 'postgres',
-      password: 'Admin',
-      database: 'postgres',
+      password: 'superadmin',
+      database: 'femase',
       synchronize: false,
       entities: [
         User,
@@ -108,24 +116,28 @@ import { AuditoriaTurno } from './detalle-turno/entities/auditoria-turno.entity'
         Ausencia,
         AutorizaHorasExtra,
         DetalleAsistencia,
-        AuditoriaTurno
+        Alerta,
+        Teletrabajo,
+        AuditoriaTurno,
+        HorasLegale
       ]
     }),
     MailerModule.forRoot({
       transport: {
-        host: 'smtp.gmail.com',
-        port: 587,
-        secure: false,
+        host: 'mail.femase.cl',
+        port: 465,
+        secure: true, // true para el puerto 465 (SSL), false para el 587 (TLS)
         auth: {
-          user: 'soportefemasetest@gmail.com',
-          pass: 'mskobvyknfujvshj'
+          user: 'no_reply@femase.cl',
+          pass: process.env.MAIL_PASSWORD
         },
         tls: {
+
           rejectUnauthorized: false
         }
       },
       defaults: {
-        from: '"Soporte FEMASE" <soportefemasetest@gmail.com>'
+        from: '"no-reply" <no_reply@femase.cl>'
       }
     }),
     AuthModule,
@@ -158,7 +170,10 @@ import { AuditoriaTurno } from './detalle-turno/entities/auditoria-turno.entity'
     AusenciasModule,
     AutorizaHorasExtrasModule,
     RegistroEventoModule,
-    DetalleAsistenciaModule
+    DetalleAsistenciaModule,
+    AlertasModule,
+    TeletrabajoModule,
+    HorasLegalesModule
   ],
   providers: [PerfilesService],
   controllers: [PerfilesController],
