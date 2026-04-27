@@ -107,7 +107,7 @@ export class MarcasService {
               <li><strong>Hashcode:</strong> ${nuevaMarca.hashcode}</li>
               <li><strong>Dirección:</strong> ${empleadoInfo.cenco.direccion}</li>
             </ul>
-            <p>Sistema exepcional de jordana: No Aplica</p>
+            <p>Sistema excepcional de jordana: No Aplica</p>
             <p>Resolución Exenta: No Aplica</p>
             <p>Geolocalización: No Aplica</p>
             <p>Empleador:</p>
@@ -508,7 +508,7 @@ export class MarcasService {
               <p style="margin-bottom: 0; margin-top: 15px; font-size: 13px; color: #6c757d;">* Si no respondes en 48 horas, el cambio se aprobará automáticamente.</p>
             </div>
 
-            <p>Sistema exepcional de jordana: No Aplica</p>
+            <p>Sistema excepcional de jordana: No Aplica</p>
             <p>Resolución Exenta: No Aplica</p>
             <p>Geolocalización: No Aplica</p>
             <p>Empleador:</p>
@@ -643,7 +643,7 @@ export class MarcasService {
               <li><strong>Dirección:</strong> ${empleadoInfo.cenco.direccion}</li>
               <li><strong>Comentario:</strong> ${marca.comentario}</li>
             </ul>
-            <p>Sistema exepcional de jordana: No Aplica</p>
+            <p>Sistema excepcional de jordana: No Aplica</p>
             <p>Resolución Exenta: No Aplica</p>
             <p>Geolocalización: No Aplica</p>
             <p>Empleador:</p>
