@@ -131,6 +131,17 @@ export class UsersService {
     usuario.reset_token_expires = null;
 
     await this.usersRepository.save(usuario);
+    const nombres = usuario.nombres + ' ' + usuario.apellido_paterno + ' ' + usuario.apellido_materno;
+
+    this.mailerService.sendMail({
+      to: usuario.email,
+      subject: 'Contraseña actualizada',
+      html: `
+        <div style="font-family: Arial, sans-serif; color: #333;">
+        <h2>Hola, ${nombres}</h2>
+        <p>Tu contraseña ha sido actualizada correctamente.</p>
+        </div>`,
+    });
 
     return { message: 'Contraseña actualizada correctamente' };
   }
