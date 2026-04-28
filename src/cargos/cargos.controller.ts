@@ -25,4 +25,9 @@ export class CargosController {
   update(@Param('id') id: string, @Body() updateCargoDto: UpdateCargoDto) {
     return this.cargosService.update(+id, updateCargoDto);
   }
+
+  @Get('por-empresa/:empresaId')
+  cargosPorEmpresa(@Param('empresaId') empresaId: string) {
+    return this.cargosService.cargosPorEmpresa(+empresaId);
+  }
 }

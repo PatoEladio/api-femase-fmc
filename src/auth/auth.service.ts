@@ -17,7 +17,7 @@ export class AuthService {
     username: string,
     pass: string,
     req: Request
-  ): Promise<{ token: string, username: string, profile: string, profile_id: number, empresa_id: number, empresa: string, num_ficha: string, rut: string }> {
+  ): Promise<{ token: string, username: string, profile: string, profile_id: number, empresa_id: number, empresa: string, num_ficha: string, rut: string , rut_usuario: string}> {
 
     const user = await this.usersService.searchActiveUser(username);
 
@@ -50,7 +50,8 @@ export class AuthService {
       nombre_completo: user.empleado ? `${user.empleado.nombres} ${user.empleado.apellido_paterno} ${user.empleado.apellido_materno}` : user.username, 
       empresa: user.empresa?.nombre_empresa || null, 
       rut: user.empleado?.run || null, 
-      empresa_id: user.empresa?.empresa_id || null
+      empresa_id: user.empresa?.empresa_id || null,
+      rut_usuario: user.run_usuario
     };
 
     // Registrar la sesión activa
@@ -67,6 +68,7 @@ export class AuthService {
       empresa: user.empresa?.nombre_empresa || '',
       num_ficha: user.empleado?.num_ficha || '',
       rut: user.empleado?.run || '',
+      rut_usuario: user.run_usuario
     };
   }
 }

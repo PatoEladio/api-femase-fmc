@@ -54,4 +54,9 @@ export class CencosController {
     const usuarioId = req.user.sub;
     return this.cencoService.buscarCencosPorUsuario(usuarioId);
   }
+
+  @Get('por-departamento/:departamentoId')
+  async buscarCencosPorDepartamento(@Param('departamentoId') departamentoId: string) {
+    return this.cencoService.findByDepartamentoId(+departamentoId);
+  }
 }

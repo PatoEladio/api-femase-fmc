@@ -24,6 +24,14 @@ export class CencosService {
     })
   }
 
+  async findByDepartamentoId(departamentoId: number) {
+    return await this.cencoRepository.find({
+      where: { departamento: { departamento_id: departamentoId } },
+      relations: ['departamento', 'departamento.empresa', 'estado', 'turnos',],
+      order: { cenco_id: 'asc' }
+    })
+  }
+
   async create(createCencoDto: CreateCencoDto) {
     const nuevoCenco = this.cencoRepository.create(createCencoDto);
     return await this.cencoRepository.save(nuevoCenco);

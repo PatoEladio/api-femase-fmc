@@ -58,7 +58,26 @@ export class CargosService {
         mensaje: 'No se han encontrado cargos'
       }
     }
+  }
 
+  async cargosPorEmpresa(empresaId: number): Promise<SearchCargoDto> {
+    const busqueda = await this.cargoRepository.find({
+      relations: ['empresa', 'estado'],
+      where: { empresa: { empresa_id: empresaId } },
+      order: { cargo_id: 'asc' }
+    });
+
+    if (busqueda.length > 0) {
+      return {
+        cargos: busqueda,
+        mensaje: 'Cargos encontrados!'
+      }
+    } else {
+      return {
+        cargos: [],
+        mensaje: 'No se han encontrado cargos'
+      }
+    }
   }
 
   async update(id: number, updateCargoDto: UpdateCargoDto): Promise<any> {

@@ -149,4 +149,8 @@ export class Empleado {
   @Column({ nullable: true })
   @ApiProperty({ description: 'fecha asignacion turno', example: "2024-01-01" })
   fecha_asignacion_turno: Date;
+
+  @Column({ nullable: true })
+  @ApiProperty({ description: 'pin firma', example: 1234 })
+  pin_firma: number;
 }
