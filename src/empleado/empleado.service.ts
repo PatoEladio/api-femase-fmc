@@ -33,7 +33,10 @@ export class EmpleadoService {
         },
       })
       if (existeEmailLaboral) throw new ConflictException('Ya existe el email laboral');
-      
+    }
+    if (nuevoEmpleado.run) {
+      const runLimpio = nuevoEmpleado.run.replace(/\D/g, '');
+      nuevoEmpleado.pin_firma = parseInt(runLimpio.substring(0, 4));
     }
     const guardarNuevoEmpleado = await this.empleadoRepository.save(nuevoEmpleado);
 
@@ -167,7 +170,7 @@ export class EmpleadoService {
       })
       if (existeEmailLaboral) throw new ConflictException('Ya existe el email laboral');
     }
-  
+
 
     try {
       // 1. Guardar cambios en empleado

@@ -17,6 +17,11 @@ export class DepartamentosController {
     return this.departamentoService.buscarTodosLosDepartamentos();
   }
 
+  @Get('porEmpresa/:empresaId')
+  obtenerDeptoPorEmpresa(@Param('empresaId') empresaId: string) {
+    return this.departamentoService.buscarDeptoPorEmpresa(+empresaId);
+  }
+
   @Post('crear')
   crear(@Body() crearDepto: Departamento, @Req() req) {
     const usuario = req.user.username;

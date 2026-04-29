@@ -30,6 +30,24 @@ export class DepartamentosService {
     }
   }
 
+  async buscarDeptoPorEmpresa(empresa_id: number) {
+    const busqueda = await this.departamentoRepository.find({
+      relations: ['estado', 'empresa', 'cencos'],
+      order: { departamento_id: 'ASC' },
+      where: { empresa: { empresa_id } }
+    });
+
+    if (busqueda.length > 0) {
+      return {
+        departamentos: busqueda
+      }
+    } else {
+      return {
+        departamentos: []
+      }
+    }
+  }
+
   async crearDepartamento(departamento: Departamento, usuario: string): Promise<DepartamentoCreatedDto> {
     try {
       const nuevoDepartamento = this.departamentoRepository.create(departamento);

@@ -40,7 +40,7 @@ export class EmpresasService {
         }
       } else {
         const filteredEmpresas = await this.empresaRepository.query(`
-          select e.empresa_id, e.nombre_empresa, e.rut_empresa, e.direccion_empresa, e.estado_id, e.comuna_empresa, e.email_empresa, e.usuario_creador, e.fecha_creacion, e.fecha_actualizacion
+          select e.empresa_id, e.nombre_empresa, e.rut_empresa, e.direccion_empresa, e.estado_id, e.comuna_empresa, e.email_empresa
           from db_fmc.empresa as e
           join db_fmc.usuario as u 
           on u.empresa_id = e.empresa_id
