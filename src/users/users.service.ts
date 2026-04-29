@@ -1,4 +1,4 @@
-import { BadRequestException, Body, ConflictException, HttpException, Injectable, InternalServerErrorException, NotFoundException, Param } from '@nestjs/common';
+import { BadRequestException, Body, ConflictException, HttpException, Injectable, InternalServerErrorException, NotFoundException, Param, UnauthorizedException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { User } from './user.entity';
 import { Repository } from 'typeorm';
@@ -320,5 +320,25 @@ export class UsersService {
     }
     // Retornamos SOLO el arreglo de cencos
     return usuario.cencos;
+  }
+
+  async cambiarpasswors(contrasena_actual: string, contrasena_nueva: string, id: number) {
+    const usuario = await this.usersRepository.findOne({
+      where: {
+        usuario_id: id
+      }
+    })
+    if (!usuario) {
+      throw new NotFoundException('Usuario no encontrado');
+    }
+    const isPasswordValid = await bcrypt.compare(contrasena_actual, usuario.password);
+    if (!isPasswordValid) {
+      throw new UnauthorizedException('Contraseña actual incorrecta');
+    }
+    const salt = await bcrypt.genSalt();
+    const nuevaContrasenaHash = await bcrypt.hash(contrasena_nueva, salt);
+    usuario.password = nuevaContrasenaHash;
+    await this.usersRepository.save(usuario);
+    return { message: 'Contraseña actualizada correctamente' };
   }
 }

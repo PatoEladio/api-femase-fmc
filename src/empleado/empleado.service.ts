@@ -1,4 +1,4 @@
-import { ConflictException, HttpException, Injectable, InternalServerErrorException, NotFoundException } from '@nestjs/common';
+import { BadRequestException, ConflictException, HttpException, Injectable, InternalServerErrorException, NotFoundException } from '@nestjs/common';
 import { CreateEmpleadoDto } from './dto/create-empleado.dto';
 import { UpdateEmpleadoDto } from './dto/update-empleado.dto';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -270,6 +270,24 @@ export class EmpleadoService {
       throw new NotFoundException(`El empleado con empresa ${empresa_id} no existe`);
     }
     return empleados;
+  }
+
+  async cambiarPinFirma(idUser: number, pinActual: number, pinFirma: number) {
+    const usuario = await this.userRepository.findOne({
+      where: { usuario_id: idUser },
+      relations: ['empleado']
+    });
+    if (!usuario) throw new NotFoundException(`El usuario con ID ${idUser} no existe`)
+    const empleado = await this.empleadoRepository.findOne({
+      where: { empleado_id: usuario.empleado.empleado_id },
+    });
+    if (!empleado) throw new NotFoundException(`El empleado con ID ${idUser} no existe`)
+    if (empleado.pin_firma !== pinActual) throw new BadRequestException('El pin actual es incorrecto')
+    empleado.pin_firma = pinFirma;
+    await this.empleadoRepository.save(empleado);
+    return {
+      message: 'Pin de firma cambiado correctamente'
+    }
   }
 
 }
