@@ -60,4 +60,10 @@ export class Horario {
 
   @OneToMany(() => Teletrabajo, (teletrabajo) => teletrabajo.horario_id)
   teletrabajo: Teletrabajo[];
+
+  @Column()
+  hora_inicio_colacion: string;
+
+  @Column()
+  hora_fin_colacion: string;
 }
