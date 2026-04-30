@@ -13,9 +13,9 @@ export class HorarioController {
     return this.horarioService.create(createHorarioDto);
   }
 
-  @Get()
-  findAll() {
-    return this.horarioService.findAll();
+  @Get(":empresa_id")
+  findAll(@Param("empresa_id") empresa_id: string) {
+    return this.horarioService.findAll(+empresa_id);
   }
 
   @Patch(':id')

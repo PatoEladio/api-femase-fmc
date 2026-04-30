@@ -229,7 +229,7 @@ export class UsersService {
       });
 
       const fechaExpiracion = new Date();
-      fechaExpiracion.setMinutes(fechaExpiracion.getMinutes() + 5);
+      fechaExpiracion.setDate(fechaExpiracion.getDate() + 5);
       nuevoUsuario.reset_token_expires = fechaExpiracion;
 
       await this.usersRepository.save(nuevoUsuario);
@@ -343,7 +343,7 @@ export class UsersService {
     return { message: 'Contraseña actualizada correctamente' };
   }
 
-  @Cron('*/5 * * * *')
+  @Cron('0 0 * * *') // Se ejecuta todos los días a la medianoche
   async eliminarCtaFizcalizadora() {
     const ahora = new Date();
     const usuariosAEliminar = await this.usersRepository.find({

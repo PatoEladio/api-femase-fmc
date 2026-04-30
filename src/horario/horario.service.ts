@@ -36,12 +36,17 @@ export class HorarioService {
     }
   }
 
-  findAll() {
+  findAll(empresa_id:number) {
     return this.horarioRepository.find({
       order: {
         horario_id: 'asc'
       },
-      relations: ['empresa']
+      relations: ['empresa'],
+      where: {
+        empresa: {
+          empresa_id: empresa_id
+        }
+      }
     });
   }
 

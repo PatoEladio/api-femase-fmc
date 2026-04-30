@@ -3,7 +3,7 @@ import { ConfigService } from '@nestjs/config';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import { CreateMarcaDto } from './dto/create-marca.dto';
 import { UpdateMarcaDto } from './dto/update-marca.dto';
-import { Between, Repository } from 'typeorm';
+import { Between, In, Repository } from 'typeorm';
 import { Marca } from './entities/marca.entity';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Empleado } from '../empleado/entities/empleado.entity';
@@ -27,7 +27,6 @@ export class MarcasService {
     private readonly feriadosRepository: Repository<Feriado>,
     private readonly mailerService: MailerService,
     @InjectRepository(AutorizaHorasExtra)
-    private readonly autorizaHorasExtrasRepository: Repository<AutorizaHorasExtra>,
     private readonly configService: ConfigService,
   ) { }
 
@@ -61,10 +60,8 @@ export class MarcasService {
       });
 
       if (empleadoInfo && empleadoInfo.email) {
-        const correoEmpleado = empleadoInfo.email;  // CAMBIAR A CORREO LABORAL SIESQUE ES NECESARIO
+        const correoEmpleado = empleadoInfo.email_laboral; 
         const nombreEmpleado = empleadoInfo.nombres + ' ' + empleadoInfo.apellido_paterno + ' ' + empleadoInfo.apellido_materno;
-        const correoCenco = empleadoInfo.cenco.email_notificacion;
-
         let eventoNombre = 'Marca';
         if (nuevaMarca.evento === 1) eventoNombre = 'Entrada';
         if (nuevaMarca.evento === 2) eventoNombre = 'Salida';
@@ -84,6 +81,23 @@ export class MarcasService {
             fechaFormatString = fMarca;
           }
         }
+
+        let fechaParaQuery = '';
+        if (fMarca instanceof Date) {
+          fechaParaQuery = fMarca.toISOString().substring(0, 10);
+        } else if (typeof fMarca === 'string') {
+          fechaParaQuery = (fMarca as string).substring(0, 10);
+        }
+
+        const tieneTeletrabajo = await this.marcaRepository.manager.findOne(Teletrabajo, {
+          where: {
+            id_empleado: { empleado_id: empleadoInfo.empleado_id },
+            fecha_actual: fechaParaQuery as any
+          }
+        });
+
+        const direccionMarca = tieneTeletrabajo ? empleadoInfo.direccion : empleadoInfo.cenco.direccion;
+
         const nombre_empresa = empleadoInfo?.empresa.nombre_empresa;
         const rut_empresa = empleadoInfo?.empresa.rut_empresa;
         const direccion = empleadoInfo?.empresa.direccion_empresa;
@@ -105,7 +119,8 @@ export class MarcasService {
               <li><strong>Nombre:</strong> ${nombreEmpleado}</li>
               <li><strong>Evento:</strong> ${eventoNombre}</li>
               <li><strong>Hashcode:</strong> ${nuevaMarca.hashcode}</li>
-              <li><strong>Dirección:</strong> ${empleadoInfo.cenco.direccion}</li>
+              <li><strong>Dirección Marcación:</strong> ${direccionMarca}</li>
+              
             </ul>
             <p>Sistema excepcional de jordana: No Aplica</p>
             <p>Resolución Exenta: No Aplica</p>
@@ -446,9 +461,8 @@ export class MarcasService {
       });
 
       if (empleadoInfo && empleadoInfo.email && empleadoInfo.cenco.email_notificacion) {
-        const correoEmpleado = empleadoInfo.email;  // CAMBIAR A CORREO LABORAL SIESQUE ES NECESARIO
+        const correoEmpleado = empleadoInfo.email_laboral;  // CAMBIAR A CORREO LABORAL SIESQUE ES NECESARIO
         const nombreEmpleadoCompleto = empleadoInfo.nombres + ' ' + empleadoInfo.apellido_paterno + ' ' + empleadoInfo.apellido_materno;
-        const correoCenco = empleadoInfo.cenco.email_notificacion;
 
         let eventoNombre = 'Marca';
         if (marcaAuditoria.evento === 1) eventoNombre = 'Entrada';
@@ -496,7 +510,7 @@ export class MarcasService {
               <li><strong>Nombre:</strong> ${nombreEmpleadoCompleto}</li>
               <li><strong>Evento:</strong> ${eventoNombre}</li>
               <li><strong>Hashcode:</strong> ${marcaAuditoria.hashcode}</li>
-              <li><strong>Dirección:</strong> ${empleadoInfo.cenco.direccion}</li>
+              <li><strong>Dirección Marcación:</strong> ${empleadoInfo.cenco.direccion}</li>
             </ul>
 
             <div style="margin: 30px 0; padding: 20px; background-color: #f8f9fa; border-left: 5px solid #ffc107; border-radius: 4px;">
@@ -595,7 +609,7 @@ export class MarcasService {
     });
 
     if (empleadoInfo && empleadoInfo.email && empleadoInfo.cenco.email_notificacion) {
-      const correoEmpleado = empleadoInfo.email;  // CAMBIAR A CORREO LABORAL SIESQUE ES NECESARIO
+      const correoEmpleado = empleadoInfo.email_laboral;  // CAMBIAR A CORREO LABORAL SIESQUE ES NECESARIO
       const nombreEmpleado = empleadoInfo.nombres + ' ' + empleadoInfo.apellido_paterno + ' ' + empleadoInfo.apellido_materno;
       const correoCenco = empleadoInfo.cenco.email_notificacion;
 
@@ -640,7 +654,7 @@ export class MarcasService {
               <li><strong>Nombre:</strong> ${nombreEmpleado}</li>
               <li><strong>Evento:</strong> ${eventoNombre}</li>
               <li><strong>Hashcode:</strong> ${marca.hashcode}</li>
-              <li><strong>Dirección:</strong> ${empleadoInfo.cenco.direccion}</li>
+              <li><strong>Dirección Marcación:</strong> ${empleadoInfo.cenco.direccion}</li>
               <li><strong>Comentario:</strong> ${marca.comentario}</li>
             </ul>
             <p>Sistema excepcional de jordana: No Aplica</p>
@@ -905,22 +919,37 @@ export class MarcasService {
       const inicioDia = new Date(ahora.getFullYear(), ahora.getMonth(), ahora.getDate(), 0, 0, 0);
       const finDia = new Date(ahora.getFullYear(), ahora.getMonth(), ahora.getDate(), 23, 59, 59);
 
-      // Agrupamos todos y evitamos multiples queries
       const empleados = await this.marcaRepository.manager.find(Empleado, {
         where: { estado: { estado_id: 1 } },
         relations: ['turno', 'turno.detalle_turno', 'turno.detalle_turno.horario', 'turno.detalle_turno.dia', 'empresa', 'cenco']
       });
 
-      for (const empleado of empleados) {
-        let horarioHoy: any = null;
-        let tieneTeletrabajo = false;
+      if (empleados.length === 0) return;
 
-        if (empleado.permite_rotativo) {
-          const asignaciones = await this.marcaRepository.manager.find(AsignacionTurnoRotativo, {
-            where: { empleado: { empleado_id: empleado.empleado_id } },
-            relations: ['horario']
-          });
-          const asigHoy = asignaciones.find(a => {
+      const empleadoIds = empleados.map(e => e.empleado_id);
+      const numFichas = empleados.map(e => e.num_ficha);
+
+      // --- PRE-CARGA DE DATOS (BATCHING) ---
+      
+      // 1. Asignaciones rotativas
+      const empleadosRotativosIds = empleados.filter(e => e.permite_rotativo).map(e => e.empleado_id);
+      const rotativosMap = new Map();
+      if (empleadosRotativosIds.length > 0) {
+        const asignaciones = await this.marcaRepository.manager.find(AsignacionTurnoRotativo, {
+          where: { empleado: { empleado_id: In(empleadosRotativosIds) } },
+          relations: ['horario', 'empleado']
+        });
+
+        // Agrupamos por empleado en memoria
+        const asigByEmp = new Map();
+        for (const a of asignaciones) {
+          const empId = a.empleado.empleado_id;
+          if (!asigByEmp.has(empId)) asigByEmp.set(empId, []);
+          asigByEmp.get(empId).push(a);
+        }
+
+        for (const [empId, asigs] of asigByEmp.entries()) {
+          const asigHoy = asigs.find(a => {
             let start = '';
             if (a.fecha_inicio_turno instanceof Date) start = a.fecha_inicio_turno.toISOString().substring(0, 10);
             else start = String(a.fecha_inicio_turno).substring(0, 10);
@@ -932,6 +961,62 @@ export class MarcasService {
             return dateKey >= start && dateKey <= end;
           });
           if (asigHoy) {
+            rotativosMap.set(empId, asigHoy);
+          }
+        }
+      }
+
+      // 2. Teletrabajos
+      const teletrabajosHoy = await this.marcaRepository.manager.find(Teletrabajo, {
+        where: {
+          id_empleado: { empleado_id: In(empleadoIds) },
+          fecha_actual: dateKey as any
+        },
+        relations: ['id_empleado']
+      });
+      const teletrabajoSet = new Set(teletrabajosHoy.map(t => t.id_empleado.empleado_id));
+
+      // 3. Alertas de hoy
+      const alertasHoy = await this.marcaRepository.manager.find(Alerta, {
+        where: {
+          empleado: { empleado_id: In(empleadoIds) },
+          tipo: In([2, 3, 4]),
+          fecha: Between(inicioDia, finDia)
+        },
+        relations: ['empleado']
+      });
+      const alertasMap = new Map<number, Set<number>>();
+      for (const alerta of alertasHoy) {
+        const empId = alerta.empleado.empleado_id;
+        if (!alertasMap.has(empId)) alertasMap.set(empId, new Set());
+        alertasMap.get(empId)!.add(alerta.tipo);
+      }
+
+      // 4. Marcas de hoy
+      const marcasHoy = await this.marcaRepository.find({
+        where: {
+          num_ficha: In(numFichas),
+          evento: In([1, 2]),
+          fecha_marca: dateKey as any
+        }
+      });
+      const marcasMap = new Map<string, Set<number>>();
+      for (const marca of marcasHoy) {
+        if (!marcasMap.has(marca.num_ficha)) marcasMap.set(marca.num_ficha, new Set());
+        marcasMap.get(marca.num_ficha)!.add(marca.evento);
+      }
+
+      const nuevasAlertasAInsertar: Alerta[] = [];
+      const correosAEnviar: { empleado: Empleado; tipo: number }[] = [];
+
+      // --- EVALUACIÓN EN MEMORIA ---
+      for (const empleado of empleados) {
+        let horarioHoy: any = null;
+        let tieneTeletrabajo = false;
+
+        if (empleado.permite_rotativo) {
+          const asigHoy = rotativosMap.get(empleado.empleado_id);
+          if (asigHoy) {
             horarioHoy = asigHoy.horario;
             if (asigHoy.teletrabajo) tieneTeletrabajo = true;
           }
@@ -942,17 +1027,13 @@ export class MarcasService {
               horarioHoy = dtDia.horario;
             }
           }
-          // Verificar teletrabajo para turno normal
-          const existeTeletrabajo = await this.marcaRepository.manager.findOne(Teletrabajo, {
-            where: {
-              id_empleado: { empleado_id: empleado.empleado_id },
-              fecha_actual: dateKey as any
-            }
-          });
-          if (existeTeletrabajo) {
+          if (teletrabajoSet.has(empleado.empleado_id)) {
             tieneTeletrabajo = true;
           }
         }
+
+        const empAlertasHoy = alertasMap.get(empleado.empleado_id) || new Set<number>();
+        const empMarcasHoy = marcasMap.get(empleado.num_ficha) || new Set<number>();
 
         if (horarioHoy && horarioHoy.hora_entrada) {
           const horaParts = horarioHoy.hora_entrada.split(':');
@@ -961,43 +1042,25 @@ export class MarcasService {
           const diffMs = entradaDate.getTime() - ahora.getTime();
           const diffTotalMinutos = diffMs / 60000;
 
-          // Escenario POST-TURNO: Pasaron más de 30 minutos desde la hora límite 
-          // limitamos a revisar si pasaron entre 30 y 120 minutos tarde.
           if (diffTotalMinutos <= -30 && diffTotalMinutos >= -120) {
-            const alertaExistente = await this.marcaRepository.manager.findOne(Alerta, {
-              where: {
-                empleado: { empleado_id: empleado.empleado_id },
-                tipo: 2,
-                fecha: Between(inicioDia, finDia)
-              }
-            });
-
-            if (!alertaExistente) {
-              // Validar si existe marca de ENTRADA en el día para despachar correo
-              const marcasHoy = await this.marcaRepository.find({
-                where: {
-                  num_ficha: empleado.num_ficha,
-                  evento: 1,
-                  fecha_marca: dateKey as any
-                }
-              });
-
-              if (!marcasHoy || marcasHoy.length === 0) {
+            if (!empAlertasHoy.has(2)) {
+              if (!empMarcasHoy.has(1)) {
                 if (empleado.email || empleado.email_laboral) {
-                  await this.enviarCorreoAlerta(empleado, 2);
-                  const nuevaAlerta = this.marcaRepository.manager.create(Alerta, {
-                    tipo: 2,
-                    empleado: { empleado_id: empleado.empleado_id } as Empleado,
-                    fecha: ahora
-                  });
-                  await this.marcaRepository.manager.save(nuevaAlerta);
+                  correosAEnviar.push({ empleado, tipo: 2 });
+                  nuevasAlertasAInsertar.push(
+                    this.marcaRepository.manager.create(Alerta, {
+                      tipo: 2,
+                      empleado: { empleado_id: empleado.empleado_id } as Empleado,
+                      fecha: ahora
+                    })
+                  );
+                  empAlertasHoy.add(2); // Evita duplicar procesamientos si existieran
                 }
               }
             }
           }
         }
 
-        // Verificación para teletrabajo: mandar correo 30 min antes de la hora de salida
         if (tieneTeletrabajo && horarioHoy && horarioHoy.hora_salida) {
           const horaPartsSalida = horarioHoy.hora_salida.split(':');
           const salidaDate = new Date(ahora.getFullYear(), ahora.getMonth(), ahora.getDate(), parseInt(horaPartsSalida[0]), parseInt(horaPartsSalida[1]), parseInt(horaPartsSalida[2] || '0'), 0);
@@ -1005,31 +1068,23 @@ export class MarcasService {
           const diffMsSalida = salidaDate.getTime() - ahora.getTime();
           const diffTotalMinutosSalida = diffMsSalida / 60000;
 
-          // Si faltan entre 0 y 30 minutos para la salida
           if (diffTotalMinutosSalida >= 0 && diffTotalMinutosSalida <= 30) {
-            const alertaSalidaExistente = await this.marcaRepository.manager.findOne(Alerta, {
-              where: {
-                empleado: { empleado_id: empleado.empleado_id },
-                tipo: 3,
-                fecha: Between(inicioDia, finDia)
-              }
-            });
-
-            if (!alertaSalidaExistente) {
+            if (!empAlertasHoy.has(3)) {
               if (empleado.email || empleado.email_laboral) {
-                await this.enviarCorreoAlerta(empleado, 3);
-                const nuevaAlertaSalida = this.marcaRepository.manager.create(Alerta, {
-                  tipo: 3,
-                  empleado: { empleado_id: empleado.empleado_id } as Empleado,
-                  fecha: ahora
-                });
-                await this.marcaRepository.manager.save(nuevaAlertaSalida);
+                correosAEnviar.push({ empleado, tipo: 3 });
+                nuevasAlertasAInsertar.push(
+                  this.marcaRepository.manager.create(Alerta, {
+                    tipo: 3,
+                    empleado: { empleado_id: empleado.empleado_id } as Empleado,
+                    fecha: ahora
+                  })
+                );
+                empAlertasHoy.add(3);
               }
             }
           }
         }
 
-        // Verificación para falta de marca de salida (30 min después de la salida)
         if (horarioHoy && horarioHoy.hora_salida) {
           const horaPartsSalida = horarioHoy.hora_salida.split(':');
           const salidaDate = new Date(ahora.getFullYear(), ahora.getMonth(), ahora.getDate(), parseInt(horaPartsSalida[0]), parseInt(horaPartsSalida[1]), parseInt(horaPartsSalida[2] || '0'), 0);
@@ -1037,38 +1092,42 @@ export class MarcasService {
           const diffMsSalida = salidaDate.getTime() - ahora.getTime();
           const diffTotalMinutosSalida = diffMsSalida / 60000;
 
-          // Si pasaron entre 30 y 120 minutos desde la salida y no hay marca de término
           if (diffTotalMinutosSalida <= -30 && diffTotalMinutosSalida >= -120) {
-            const alertaSalidaAviso = await this.marcaRepository.manager.findOne(Alerta, {
-              where: {
-                empleado: { empleado_id: empleado.empleado_id },
-                tipo: 4,
-                fecha: Between(inicioDia, finDia)
-              }
-            });
-
-            if (!alertaSalidaAviso) {
-              const marcasSalidaHoy = await this.marcaRepository.find({
-                where: {
-                  num_ficha: empleado.num_ficha,
-                  evento: 2,
-                  fecha_marca: dateKey as any
-                }
-              });
-
-              if (!marcasSalidaHoy || marcasSalidaHoy.length === 0) {
+            if (!empAlertasHoy.has(4)) {
+              if (!empMarcasHoy.has(2)) {
                 if (empleado.email || empleado.email_laboral) {
-                  await this.enviarCorreoAlerta(empleado, 4);
-                  const nuevaAlerta4 = this.marcaRepository.manager.create(Alerta, {
-                    tipo: 4,
-                    empleado: { empleado_id: empleado.empleado_id } as Empleado,
-                    fecha: ahora
-                  });
-                  await this.marcaRepository.manager.save(nuevaAlerta4);
+                  correosAEnviar.push({ empleado, tipo: 4 });
+                  nuevasAlertasAInsertar.push(
+                    this.marcaRepository.manager.create(Alerta, {
+                      tipo: 4,
+                      empleado: { empleado_id: empleado.empleado_id } as Empleado,
+                      fecha: ahora
+                    })
+                  );
+                  empAlertasHoy.add(4);
                 }
               }
             }
           }
+        }
+      }
+
+      // --- INSERCIÓN Y ENVÍO EN LOTE ---
+      if (nuevasAlertasAInsertar.length > 0) {
+        await this.marcaRepository.manager.save(Alerta, nuevasAlertasAInsertar);
+      }
+
+      if (correosAEnviar.length > 0) {
+        // Enviar correos en lotes (Promise.all) para no saturar SMTP
+        const BATCH_SIZE = 10;
+        for (let i = 0; i < correosAEnviar.length; i += BATCH_SIZE) {
+          const chunk = correosAEnviar.slice(i, i + BATCH_SIZE);
+          await Promise.all(
+            chunk.map(c => 
+              this.enviarCorreoAlerta(c.empleado, c.tipo)
+                .catch(err => this.logger.error(`Error enviando correo a ${c.empleado.empleado_id}:`, err))
+            )
+          );
         }
       }
     } catch (error) {

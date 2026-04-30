@@ -54,11 +54,16 @@ export class TurnoService {
   }
 
 
-  findAll() {
+  findAll(empresa_id: number) {
     return this.turnoRepository.find({
       relations: ['empresa', 'estado', "detalle_turno.horario", "detalle_turno.dia"],
       order: {
         turno_id: 'asc'
+      },
+      where: {
+        empresa: {
+          empresa_id: empresa_id
+        }
       }
     });
   }
