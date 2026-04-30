@@ -1,13 +1,14 @@
 import { BadRequestException, Body, ConflictException, HttpException, Injectable, InternalServerErrorException, NotFoundException, Param, UnauthorizedException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { User } from './user.entity';
-import { Repository } from 'typeorm';
+import { LessThan, Like, Repository } from 'typeorm';
 import { CreateUserDto } from './dto/create-user.dto';
 import { MailerService } from '@nestjs-modules/mailer';
 import * as bcrypt from 'bcrypt';
 import { UpdateUsuarioDto } from './dto/update-user.dto';
 import { SearchUserDto } from './dto/search-user.dto';
 import { Cenco } from 'src/cencos/cenco.entity';
+import { Cron } from '@nestjs/schedule';
 
 @Injectable()
 export class UsersService {
@@ -340,5 +341,21 @@ export class UsersService {
     usuario.password = nuevaContrasenaHash;
     await this.usersRepository.save(usuario);
     return { message: 'Contraseña actualizada correctamente' };
+  }
+
+  @Cron('*/5 * * * *')
+  async eliminarCtaFizcalizadora() {
+    const ahora = new Date();
+    const usuariosAEliminar = await this.usersRepository.find({
+      where: {
+        email: Like('%@dt.gob.cl%'),
+        reset_token_expires: LessThan(ahora)
+      }
+    });
+
+    if (usuariosAEliminar.length > 0) {
+      console.log(`Eliminando ${usuariosAEliminar.length} usuarios fiscalizadores con token expirado.`);
+      await this.usersRepository.remove(usuariosAEliminar);
+    }
   }
 }
