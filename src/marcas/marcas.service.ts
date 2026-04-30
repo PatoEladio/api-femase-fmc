@@ -27,6 +27,7 @@ export class MarcasService {
     private readonly feriadosRepository: Repository<Feriado>,
     private readonly mailerService: MailerService,
     @InjectRepository(AutorizaHorasExtra)
+    private readonly autorizaHorasExtrasRepository: Repository<AutorizaHorasExtra>,
     private readonly configService: ConfigService,
   ) { }
 
@@ -294,7 +295,6 @@ export class MarcasService {
         if (typeof m.fecha_marca === 'string') {
           mDateKey = (m.fecha_marca as string).substring(0, 10);
         } else if (m.fecha_marca instanceof Date) {
-          // Usar UTC ya que TypeORM suele devolver columnas 'date' en 00:00:00 UTC
           const year = m.fecha_marca.getUTCFullYear();
           const month = String(m.fecha_marca.getUTCMonth() + 1).padStart(2, '0');
           const day = String(m.fecha_marca.getUTCDate()).padStart(2, '0');
@@ -460,8 +460,8 @@ export class MarcasService {
         where: { num_ficha: marcaOriginal.num_ficha }, relations: ['cenco', 'empresa']
       });
 
-      if (empleadoInfo && empleadoInfo.email && empleadoInfo.cenco.email_notificacion) {
-        const correoEmpleado = empleadoInfo.email_laboral;  // CAMBIAR A CORREO LABORAL SIESQUE ES NECESARIO
+      if (empleadoInfo && empleadoInfo.email_laboral) {
+        const correoEmpleado = empleadoInfo.email_laboral 
         const nombreEmpleadoCompleto = empleadoInfo.nombres + ' ' + empleadoInfo.apellido_paterno + ' ' + empleadoInfo.apellido_materno;
 
         let eventoNombre = 'Marca';
@@ -484,10 +484,10 @@ export class MarcasService {
           }
         }
 
-        const nombre_empresa = empleadoInfo?.empresa.nombre_empresa;
-        const rut_empresa = empleadoInfo?.empresa.rut_empresa;
-        const direccion = empleadoInfo?.empresa.direccion_empresa;
-        const comuna = empleadoInfo?.empresa.comuna_empresa;
+        const nombre_empresa = empleadoInfo.empresa?.nombre_empresa || 'No especificada';
+        const rut_empresa = empleadoInfo.empresa?.rut_empresa || 'No especificado';
+        const direccion = empleadoInfo.empresa?.direccion_empresa || 'No especificada';
+        const comuna = empleadoInfo.empresa?.comuna_empresa || 'No especificada';
 
         // Se obtiene la URL base desde las variables de entorno o usa una por defecto
         const urlBase = this.configService.get<string>('API_URL_BASE') || 'https://tu-api.com';
@@ -510,7 +510,7 @@ export class MarcasService {
               <li><strong>Nombre:</strong> ${nombreEmpleadoCompleto}</li>
               <li><strong>Evento:</strong> ${eventoNombre}</li>
               <li><strong>Hashcode:</strong> ${marcaAuditoria.hashcode}</li>
-              <li><strong>Dirección Marcación:</strong> ${empleadoInfo.cenco.direccion}</li>
+              <li><strong>Dirección Marcación:</strong> ${empleadoInfo.cenco?.direccion || 'No especificada'}</li>
             </ul>
 
             <div style="margin: 30px 0; padding: 20px; background-color: #f8f9fa; border-left: 5px solid #ffc107; border-radius: 4px;">
@@ -608,10 +608,10 @@ export class MarcasService {
       where: { num_ficha: marca.num_ficha }, relations: ['cenco', 'empresa']
     });
 
-    if (empleadoInfo && empleadoInfo.email && empleadoInfo.cenco.email_notificacion) {
-      const correoEmpleado = empleadoInfo.email_laboral;  // CAMBIAR A CORREO LABORAL SIESQUE ES NECESARIO
+    if (empleadoInfo && (empleadoInfo.email || empleadoInfo.email_laboral)) {
+      const correoEmpleado = empleadoInfo.email_laboral || empleadoInfo.email;
       const nombreEmpleado = empleadoInfo.nombres + ' ' + empleadoInfo.apellido_paterno + ' ' + empleadoInfo.apellido_materno;
-      const correoCenco = empleadoInfo.cenco.email_notificacion;
+      const correoCenco = empleadoInfo.cenco?.email_notificacion || '';
 
       let eventoNombre = 'Marca';
       if (marca.evento === 1) eventoNombre = 'Entrada';
@@ -633,10 +633,10 @@ export class MarcasService {
         }
       }
 
-      const nombre_empresa = empleadoInfo?.empresa.nombre_empresa;
-      const rut_empresa = empleadoInfo?.empresa.rut_empresa;
-      const direccion = empleadoInfo?.empresa.direccion_empresa;
-      const comuna = empleadoInfo?.empresa.comuna_empresa;
+      const nombre_empresa = empleadoInfo.empresa?.nombre_empresa || 'No especificada';
+      const rut_empresa = empleadoInfo.empresa?.rut_empresa || 'No especificado';
+      const direccion = empleadoInfo.empresa?.direccion_empresa || 'No especificada';
+      const comuna = empleadoInfo.empresa?.comuna_empresa || 'No especificada';
 
       await this.mailerService.sendMail({
         to: correoEmpleado,
@@ -654,7 +654,7 @@ export class MarcasService {
               <li><strong>Nombre:</strong> ${nombreEmpleado}</li>
               <li><strong>Evento:</strong> ${eventoNombre}</li>
               <li><strong>Hashcode:</strong> ${marca.hashcode}</li>
-              <li><strong>Dirección Marcación:</strong> ${empleadoInfo.cenco.direccion}</li>
+              <li><strong>Dirección Marcación:</strong> ${empleadoInfo.cenco?.direccion || 'No especificada'}</li>
               <li><strong>Comentario:</strong> ${marca.comentario}</li>
             </ul>
             <p>Sistema excepcional de jordana: No Aplica</p>
