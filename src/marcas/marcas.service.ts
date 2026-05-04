@@ -61,7 +61,7 @@ export class MarcasService {
       });
 
       if (empleadoInfo && empleadoInfo.email) {
-        const correoEmpleado = empleadoInfo.email_laboral; 
+        const correoEmpleado = empleadoInfo.email_laboral;
         const nombreEmpleado = empleadoInfo.nombres + ' ' + empleadoInfo.apellido_paterno + ' ' + empleadoInfo.apellido_materno;
         let eventoNombre = 'Marca';
         if (nuevaMarca.evento === 1) eventoNombre = 'Entrada';
@@ -461,7 +461,7 @@ export class MarcasService {
       });
 
       if (empleadoInfo && empleadoInfo.email_laboral) {
-        const correoEmpleado = empleadoInfo.email_laboral 
+        const correoEmpleado = empleadoInfo.email_laboral
         const nombreEmpleadoCompleto = empleadoInfo.nombres + ' ' + empleadoInfo.apellido_paterno + ' ' + empleadoInfo.apellido_materno;
 
         let eventoNombre = 'Marca';
@@ -930,7 +930,7 @@ export class MarcasService {
       const numFichas = empleados.map(e => e.num_ficha);
 
       // --- PRE-CARGA DE DATOS (BATCHING) ---
-      
+
       // 1. Asignaciones rotativas
       const empleadosRotativosIds = empleados.filter(e => e.permite_rotativo).map(e => e.empleado_id);
       const rotativosMap = new Map();
@@ -1123,7 +1123,7 @@ export class MarcasService {
         for (let i = 0; i < correosAEnviar.length; i += BATCH_SIZE) {
           const chunk = correosAEnviar.slice(i, i + BATCH_SIZE);
           await Promise.all(
-            chunk.map(c => 
+            chunk.map(c =>
               this.enviarCorreoAlerta(c.empleado, c.tipo)
                 .catch(err => this.logger.error(`Error enviando correo a ${c.empleado.empleado_id}:`, err))
             )

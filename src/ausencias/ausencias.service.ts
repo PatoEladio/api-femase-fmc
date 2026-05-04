@@ -26,7 +26,7 @@ export class AusenciasService {
   }
 
   async update(id: number, updateAusenciaDto: UpdateAusenciaDto) {
-    const existe = await this.ausenciaRepository.findOneBy({id});
+    const existe = await this.ausenciaRepository.findOneBy({ id });
     if (!existe) {
       throw new HttpException(
         `No se encontraron registros para la ausencia con id ${id}`,
@@ -48,13 +48,13 @@ export class AusenciasService {
 
   async findAll(numFicha: string, fecha_inicio?: Date, fecha_fin?: Date) {
     const where: any = {
-      num_ficha: numFicha 
+      num_ficha: numFicha
     };
 
     if (fecha_inicio && fecha_fin) {
       where.fecha_fin = Between(fecha_inicio, fecha_fin);
     }
-    
+
     const existe = await this.ausenciaRepository.find({
       order: {
         id: "ASC"

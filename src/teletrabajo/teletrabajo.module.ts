@@ -10,8 +10,8 @@ import { AsignacionTurnoRotativo } from 'src/asignacion_turno_rotativo/entities/
 import { Empresa } from 'src/empresas/empresas.entity';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Teletrabajo, Empleado, Horario, DetalleTurno, AsignacionTurnoRotativo,Empresa])],
+  imports: [TypeOrmModule.forFeature([Teletrabajo, Empleado, Horario, DetalleTurno, AsignacionTurnoRotativo, Empresa])],
   controllers: [TeletrabajoController],
   providers: [TeletrabajoService],
 })
-export class TeletrabajoModule {}
+export class TeletrabajoModule { }

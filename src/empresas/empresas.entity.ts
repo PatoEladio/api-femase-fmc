@@ -1,8 +1,10 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { Cargo } from 'src/cargos/entities/cargo.entity';
 import { Departamento } from 'src/departamentos/departamento.entity';
+import { Documento } from 'src/documento/entities/documento.entity';
 import { Empleado } from 'src/empleado/entities/empleado.entity';
 import { Estado } from 'src/estado/estado.entity';
+import { Firma } from 'src/firmas/entities/firma.entity';
 import { HorasLegale } from 'src/horas_legales/entities/horas_legale.entity';
 import { ProveedorCorreo } from 'src/proveedor-correo/entities/proveedor-correo.entity';
 import { Turno } from 'src/turno/entities/turno.entity';
@@ -61,11 +63,11 @@ export class Empresa {
 
   @Column()
   @ApiProperty({ description: "telefono_contacto", example: 22223333 })
-  telefono_contacto:string
+  telefono_contacto: string
 
   @Column()
   @ApiProperty({ description: "email notificacion", example: "[EMAIL_ADDRESS]" })
-  email_noti:string
+  email_noti: string
 
   @OneToOne(() => HorasLegale)
   @ApiProperty({ description: "horas legales", example: 44 })
@@ -74,9 +76,15 @@ export class Empresa {
 
   @Column()
   @ApiProperty({ description: "horas máximas laborales", example: 45 })
-  horario:number
+  horario: number
 
-  @Column({nullable:true})
+  @Column({ nullable: true })
   @ApiProperty({ description: "url logo empresa", example: "https://ejemplo.com/logo.png" })
-  urlLogo:string
+  urlLogo: string
+
+  @OneToMany(() => Documento, (documento) => documento.empresa)
+  documentos: Documento[];
+
+  @OneToMany(() => Firma, (firma) => firma.empresa)
+  firmas: Firma[];
 }

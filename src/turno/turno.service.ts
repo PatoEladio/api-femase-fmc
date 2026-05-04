@@ -267,7 +267,7 @@ export class TurnoService {
 
       if (huboCambio) {
         const diaNombre = { 1: 'Lunes', 2: 'Martes', 3: 'Miércoles', 4: 'Jueves', 5: 'Viernes', 6: 'Sábado', 7: 'Domingo' }[codDia];
-        
+
         const baseLogData = {
           hora_entrada: ant?.entrada || null,
           hora_salida: ant?.salida || null,
