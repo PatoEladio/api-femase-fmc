@@ -61,4 +61,9 @@ export class UsersController {
     const { contrasena_actual, contrasena_nueva } = body;
     return await this.userService.cambiarpasswors(contrasena_actual, contrasena_nueva, +idUser);
   }
+
+  @Get('obtener-admin/:idEmpresa')
+  async obtenerAdminPorEmpresa(@Param('idEmpresa') idEmpresa: string){
+    return await this.userService.obtenerAdminPorEmpresa(+idEmpresa);
+  }
 }

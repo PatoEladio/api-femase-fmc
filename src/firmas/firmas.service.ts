@@ -38,9 +38,26 @@ export class FirmasService {
       await this.mailerService.sendMail({
         to: empleado.email_laboral,
         subject: "Nueva Solicitud de firma",
-        html: `<p>Se ha creado una nueva solicitud de firma</p>      
-      <p>Favor de revisar la solicitud en tu portal para aprobar o rechazar la solicitud</p>
-      <p> LINK DE LA PAGINA </p>`
+        html: `
+        <div style="font-family: Arial, sans-serif; color: #333; max-width: 600px; margin: 0 auto; border: 1px solid #ddd; border-radius: 8px; overflow: hidden;">
+          <div style="background-color: #0088cc; padding: 20px; color: white; text-align: center;">
+            <h2 style="margin: 0; font-size: 20px;">Nueva Solicitud de Firma</h2>
+          </div>
+          <div style="padding: 30px; text-align: center;">
+            <h3 style="color: #0088cc; margin-top: 0;">Estimado(a):</h3>
+            <p style="font-size: 16px; margin-bottom: 20px;">
+              Se ha creado una nueva solicitud de firma.
+            </p>
+            <div style="text-align: center; margin: 0 auto; line-height: 1.6;">
+              <p style="margin: 5px 0;">Favor de revisar la solicitud en su portal para aprobar o rechazar la solicitud.</p>
+            </div>
+            <div style="margin-top: 30px;">
+              <p style="font-size: 14px; color: #0088cc;">Puede revisar la solicitud en el sistema:</p>
+              <p><a href="http://localhost:5173/dashboard" style="display: inline-block; padding: 10px 20px; background-color: #0088cc; color: white; text-decoration: none; border-radius: 5px; font-weight: bold; margin-top: 10px;">Presione aquí</a></p>
+            </div>
+            <p style="margin-top: 30px; font-size: 14px; color: #0088cc;">Gracias por su atención y que tenga un buen día</p>
+          </div>
+        </div>`
 
       });
     } catch (error) {
@@ -106,7 +123,42 @@ export class FirmasService {
           to: usuarioEmpleador.email,
           cc: [empleado.email],
           subject: "Firma aprobada",
-          html: `<p>El empleado ${empleado.nombres + ' ' + empleado.apellido_paterno + ' ' + empleado.apellido_materno} ha aprobado la solicitud de firma</p>`
+          html: `
+        <div style="font-family: Arial, sans-serif; color: #333; max-width: 600px; margin: 0 auto; border: 1px solid #ddd; border-radius: 8px; overflow: hidden;">
+          <div style="background-color: #0088cc; padding: 20px; color: white; text-align: center;">
+            <h2 style="margin: 0; font-size: 20px;">Firma Aprobada</h2>
+          </div>
+          <div style="padding: 30px; text-align: center;">
+            <h3 style="color: #0088cc; margin-top: 0;">Estimado Empleador:</h3>
+            <p style="font-size: 16px; margin-bottom: 20px;">
+              El empleado <strong>${empleado?.nombres || ''} ${empleado?.apellido_paterno || ''} ${empleado?.apellido_materno || ''}</strong> ha aprobado la solicitud de firma.
+            </p>
+            <p style="margin-top: 30px; font-size: 14px; color: #0088cc;">Gracias por su atención y que tenga un buen día</p>
+          </div>
+        </div>`
+        });
+      }
+    }else if(updateFirmaDto.estado === "R"){
+      if (usuarioEmpleador && usuarioEmpleador.email) {
+        await this.mailerService.sendMail({
+          to: usuarioEmpleador.email,
+          subject: "Firma rechazada",
+          html: `
+        <div style="font-family: Arial, sans-serif; color: #333; max-width: 600px; margin: 0 auto; border: 1px solid #ddd; border-radius: 8px; overflow: hidden;">
+          <div style="background-color: #0088cc; padding: 20px; color: white; text-align: center;">
+            <h2 style="margin: 0; font-size: 20px;">Firma Rechazada</h2>
+          </div>
+          <div style="padding: 30px; text-align: center;">
+            <h3 style="color: #0088cc; margin-top: 0;">Estimado Empleador:</h3>
+            <p style="font-size: 16px; margin-bottom: 20px;">
+              El empleado <strong>${empleado?.nombres || ''} ${empleado?.apellido_paterno || ''} ${empleado?.apellido_materno || ''}</strong> ha rechazado la solicitud de firma.
+            </p>
+            <div style="text-align: center; margin: 0 auto; line-height: 1.6;">
+              <p style="margin: 5px 0;"><strong style="color: #601445;">Motivo:</strong> <span style="color: #601445;">${updateFirmaDto.motivo}</span></p>
+            </div>
+            <p style="margin-top: 30px; font-size: 14px; color: #0088cc;">Gracias por su atención y que tenga un buen día</p>
+          </div>
+        </div>`
         });
       }
     }

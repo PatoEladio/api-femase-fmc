@@ -77,6 +77,10 @@ import { FirmasModule } from './firmas/firmas.module';
 import { Firma } from './firmas/entities/firma.entity';
 import { Empleado } from './empleado/entities/empleado.entity';
 import { EmpleadoModule } from './empleado/empleado.module';
+import { SolicitudesModule } from './solicitudes/solicitudes.module';
+import { Solicitude } from './solicitudes/entities/solicitude.entity';
+import { RegistroConexionesModule } from './registro_conexiones/registro_conexiones.module';
+import { RegistroConexione } from './registro_conexiones/entities/registro_conexione.entity';
 
 @Module({
   imports: [
@@ -125,7 +129,9 @@ import { EmpleadoModule } from './empleado/empleado.module';
         AuditoriaTurno,
         HorasLegale,
         Documento,
-        Firma
+        Firma,
+        Solicitude,
+        RegistroConexione
       ]
     }),
     MailerModule.forRoot({
@@ -181,7 +187,9 @@ import { EmpleadoModule } from './empleado/empleado.module';
     TeletrabajoModule,
     HorasLegalesModule,
     DocumentoModule,
-    FirmasModule
+    FirmasModule,
+    SolicitudesModule,
+    RegistroConexionesModule
   ],
   providers: [PerfilesService],
   controllers: [PerfilesController],

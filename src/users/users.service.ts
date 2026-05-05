@@ -358,4 +358,18 @@ export class UsersService {
       await this.usersRepository.remove(usuariosAEliminar);
     }
   }
+
+  async obtenerAdminPorEmpresa(idEmpresa:number){
+    return this.usersRepository.find({
+      where:{
+        empresa:{
+          empresa_id:idEmpresa
+        },
+        perfil:{
+          perfil_id:1 //ADMINISTRADOR
+        }
+      },
+      relations:['empresa','perfil']
+    })
+  }
 }

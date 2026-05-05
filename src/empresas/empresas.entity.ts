@@ -7,6 +7,7 @@ import { Estado } from 'src/estado/estado.entity';
 import { Firma } from 'src/firmas/entities/firma.entity';
 import { HorasLegale } from 'src/horas_legales/entities/horas_legale.entity';
 import { ProveedorCorreo } from 'src/proveedor-correo/entities/proveedor-correo.entity';
+import { Solicitude } from 'src/solicitudes/entities/solicitude.entity';
 import { Turno } from 'src/turno/entities/turno.entity';
 import { User } from 'src/users/user.entity';
 import { Entity, Column, PrimaryGeneratedColumn, OneToOne, JoinColumn, ManyToMany, CreateDateColumn, UpdateDateColumn, OneToMany } from 'typeorm';
@@ -87,4 +88,5 @@ export class Empresa {
 
   @OneToMany(() => Firma, (firma) => firma.empresa)
   firmas: Firma[];
+
 }
