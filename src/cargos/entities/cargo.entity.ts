@@ -46,6 +46,6 @@ export class Cargo {
 
   @Column()
   @ApiProperty({ description: "tipo_cargo", example: 1 })
-  tipo_cargo:number
+  tipo_cargo: number
 
 }

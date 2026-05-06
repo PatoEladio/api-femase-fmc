@@ -21,7 +21,7 @@ export class DetalleAsistenciaService {
     private readonly feriadosRepository: Repository<Feriado>,
     @InjectRepository(Ausencia)
     private readonly ausenciasRepository: Repository<Ausencia>,
-  ) {}
+  ) { }
 
   create(createDetalleAsistenciaDto: CreateDetalleAsistenciaDto) {
     return 'This action adds a new detalleAsistencia';
@@ -119,17 +119,17 @@ export class DetalleAsistenciaService {
     for (const reg of Array.from(registrosMap.values())) {
       if (reg.marcasDia && reg.marcasDia.length > 0) {
         reg.marcasDia.sort((a: any, b: any) => String(a.hora_marca).localeCompare(String(b.hora_marca)));
-        
+
         if (reg.marcasDia.length === 1) {
-            const m = reg.marcasDia[0];
-            if (m.evento === 2) {
-                reg.salida = String(m.hora_marca);
-            } else {
-                reg.entrada = String(m.hora_marca);
-            }
+          const m = reg.marcasDia[0];
+          if (m.evento === 2) {
+            reg.salida = String(m.hora_marca);
+          } else {
+            reg.entrada = String(m.hora_marca);
+          }
         } else {
-            reg.entrada = String(reg.marcasDia[0].hora_marca);
-            reg.salida = String(reg.marcasDia[reg.marcasDia.length - 1].hora_marca);
+          reg.entrada = String(reg.marcasDia[0].hora_marca);
+          reg.salida = String(reg.marcasDia[reg.marcasDia.length - 1].hora_marca);
         }
       }
 
@@ -202,7 +202,7 @@ export class DetalleAsistenciaService {
       }
 
       const parts = reg.fecha.split(' ')[1].split('-');
-      const formattedDate = `${parts[2]}-${parts[1]}-${parts[0]}`; 
+      const formattedDate = `${parts[2]}-${parts[1]}-${parts[0]}`;
 
       let justifMs = 0;
       const ausenciaList = ausencias.filter(aus => {
@@ -257,23 +257,23 @@ export class DetalleAsistenciaService {
       reg.entradaTeorica = entTeo;
       reg.salidaTeorica = salTeo;
 
-      const dateObj = new Date(formattedDate + 'T12:00:00.000'); 
+      const dateObj = new Date(formattedDate + 'T12:00:00.000');
 
       let savedId: number | null = null;
 
       if ((reg.marcasDia && reg.marcasDia.length > 0) || ausenciaList.length > 0) {
         let dbRecord = await this.detalleAsistenciaRepository.findOne({
           where: {
-              empleado: { num_ficha: numFicha },
-              fecha_marca: new Date(formattedDate)
+            empleado: { num_ficha: numFicha },
+            fecha_marca: new Date(formattedDate)
           }
         });
 
         if (!dbRecord) {
           dbRecord = this.detalleAsistenciaRepository.create({
-              empleado: empleado,
-              num_ficha: numFicha,
-              fecha_marca: new Date(formattedDate)
+            empleado: empleado,
+            num_ficha: numFicha,
+            fecha_marca: new Date(formattedDate)
           });
         }
 
@@ -293,11 +293,11 @@ export class DetalleAsistenciaService {
         const saved = await this.detalleAsistenciaRepository.save(dbRecord);
         savedId = saved.id;
       }
-      
+
       reg.id = savedId;
       resultadosGuardados.push(reg);
     }
-    
+
     return { registros: resultadosGuardados, empleado };
   }
 

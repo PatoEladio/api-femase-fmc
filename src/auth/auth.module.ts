@@ -7,12 +7,14 @@ import { jwtConstants } from './constants';
 import { PassportModule } from '@nestjs/passport';
 import { JwtStrategy } from './jwt.strategy';
 import { SesionActivaModule } from 'src/sesion-activa/sesion-activa.module';
+import { RegistroConexionesModule } from 'src/registro_conexiones/registro_conexiones.module';
 
 @Module({
   imports: [
     PassportModule,
     UsersModule,
     SesionActivaModule,
+    RegistroConexionesModule,
     JwtModule.register({
       global: true,
       secret: jwtConstants.secret,

@@ -54,11 +54,16 @@ export class TurnoService {
   }
 
 
-  findAll() {
+  findAll(empresa_id: number) {
     return this.turnoRepository.find({
       relations: ['empresa', 'estado', "detalle_turno.horario", "detalle_turno.dia"],
       order: {
         turno_id: 'asc'
+      },
+      where: {
+        empresa: {
+          empresa_id: empresa_id
+        }
       }
     });
   }
@@ -75,6 +80,40 @@ export class TurnoService {
 
     try {
       const actualizada = await this.turnoRepository.save(result);
+
+      if (updateTurnoDto.empresa) {
+        const nuevaEmpresaId = typeof updateTurnoDto.empresa === 'object'
+          ? (updateTurnoDto.empresa as any).empresa_id
+          : updateTurnoDto.empresa;
+
+        // 1. Desasignar Empleados de otra empresa
+        const empleadosConTurno = await this.empleadoRepository.find({
+          where: { turno: { turno_id: id } },
+          relations: ['empresa', 'turno']
+        });
+
+        const empleadosADesasignar = empleadosConTurno.filter(emp => emp.empresa?.empresa_id !== Number(nuevaEmpresaId));
+
+        if (empleadosADesasignar.length > 0) {
+          empleadosADesasignar.forEach(emp => emp.turno = null);
+          await this.empleadoRepository.save(empleadosADesasignar);
+        }
+
+        // 2. Desasignar Cencos de otra empresa
+        const cencosConTurno = await this.cencoRepository.find({
+          where: { turnos: { turno_id: id } },
+          relations: ['turnos', 'departamento', 'departamento.empresa']
+        });
+
+        const cencosADesasignar = cencosConTurno.filter(cenco => cenco.departamento?.empresa?.empresa_id !== Number(nuevaEmpresaId));
+
+        if (cencosADesasignar.length > 0) {
+          for (const cenco of cencosADesasignar) {
+            cenco.turnos = cenco.turnos.filter(t => t.turno_id !== id);
+            await this.cencoRepository.save(cenco);
+          }
+        }
+      }
 
       return {
         mensaje: 'Registro actualizado con éxito',
@@ -232,7 +271,7 @@ export class TurnoService {
       if (huboCambio) {
         console.log(`[DEBUG] Cambio detectado en dia ${codDia}!`);
         const diaNombre = { 1: 'Lunes', 2: 'Martes', 3: 'Miércoles', 4: 'Jueves', 5: 'Viernes', 6: 'Sábado', 7: 'Domingo' }[codDia];
-        
+
         const baseLogData = {
           hora_entrada: ant?.entrada || null,
           hora_salida: ant?.salida || null,

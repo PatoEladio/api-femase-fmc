@@ -1,13 +1,14 @@
-import { BadRequestException, Body, ConflictException, HttpException, Injectable, InternalServerErrorException, NotFoundException, Param } from '@nestjs/common';
+import { BadRequestException, Body, ConflictException, HttpException, Injectable, InternalServerErrorException, NotFoundException, Param, UnauthorizedException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { User } from './user.entity';
-import { Repository } from 'typeorm';
+import { LessThan, Like, Repository } from 'typeorm';
 import { CreateUserDto } from './dto/create-user.dto';
 import { MailerService } from '@nestjs-modules/mailer';
 import * as bcrypt from 'bcrypt';
 import { UpdateUsuarioDto } from './dto/update-user.dto';
 import { SearchUserDto } from './dto/search-user.dto';
 import { Cenco } from 'src/cencos/cenco.entity';
+import { Cron } from '@nestjs/schedule';
 
 @Injectable()
 export class UsersService {
@@ -302,5 +303,55 @@ export class UsersService {
     }
     // Retornamos SOLO el arreglo de cencos
     return usuario.cencos;
+  }
+
+  async cambiarpasswors(contrasena_actual: string, contrasena_nueva: string, id: number) {
+    const usuario = await this.usersRepository.findOne({
+      where: {
+        usuario_id: id
+      }
+    })
+    if (!usuario) {
+      throw new NotFoundException('Usuario no encontrado');
+    }
+    const isPasswordValid = await bcrypt.compare(contrasena_actual, usuario.password);
+    if (!isPasswordValid) {
+      throw new UnauthorizedException('Contraseña actual incorrecta');
+    }
+    const salt = await bcrypt.genSalt();
+    const nuevaContrasenaHash = await bcrypt.hash(contrasena_nueva, salt);
+    usuario.password = nuevaContrasenaHash;
+    await this.usersRepository.save(usuario);
+    return { message: 'Contraseña actualizada correctamente' };
+  }
+
+  @Cron('0 0 * * *') // Se ejecuta todos los días a la medianoche
+  async eliminarCtaFizcalizadora() {
+    const ahora = new Date();
+    const usuariosAEliminar = await this.usersRepository.find({
+      where: {
+        email: Like('%@dt.gob.cl%'),
+        reset_token_expires: LessThan(ahora)
+      }
+    });
+
+    if (usuariosAEliminar.length > 0) {
+      console.log(`Eliminando ${usuariosAEliminar.length} usuarios fiscalizadores con token expirado.`);
+      await this.usersRepository.remove(usuariosAEliminar);
+    }
+  }
+
+  async obtenerAdminPorEmpresa(idEmpresa: number) {
+    return this.usersRepository.find({
+      where: {
+        empresa: {
+          empresa_id: idEmpresa
+        },
+        perfil: {
+          perfil_id: 1 //ADMINISTRADOR
+        }
+      },
+      relations: ['empresa', 'perfil']
+    })
   }
 }

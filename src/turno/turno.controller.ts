@@ -16,9 +16,9 @@ export class TurnoController {
     return this.turnoService.create(createTurnoDto, usuario);
   }
 
-  @Get()
-  findAll() {
-    return this.turnoService.findAll();
+  @Get(':empresa_id')
+  findAll(@Param("empresa_id") empresa_id: string) {
+    return this.turnoService.findAll(+empresa_id);
   }
 
   @Patch('actualizar/:id')

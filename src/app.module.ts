@@ -28,8 +28,6 @@ import { ConfigModule } from '@nestjs/config';
 import { HorarioModule } from './horario/horario.module';
 import { Horario } from './horario/entities/horario.entity';
 import { Turno } from './turno/entities/turno.entity';
-import { EmpleadoModule } from './empleado/empleado.module';
-import { Empleado } from './empleado/entities/empleado.entity';
 import { AfpModule } from './afp/afp.module';
 import { Afp } from './afp/entities/afp.entity';
 import { ErrorRechazoModule } from './error-rechazo/error-rechazo.module';
@@ -73,7 +71,6 @@ import { Teletrabajo } from './teletrabajo/entities/teletrabajo.entity';
 import { AuditoriaTurno } from './detalle-turno/entities/auditoria-turno.entity';
 import { HorasLegalesModule } from './horas_legales/horas_legales.module';
 import { HorasLegale } from './horas_legales/entities/horas_legale.entity';
-import { TurnoFlexibleModule } from './turno-flexible/turno-flexible.module';
 
 @Module({
   imports: [
@@ -120,7 +117,11 @@ import { TurnoFlexibleModule } from './turno-flexible/turno-flexible.module';
         Alerta,
         Teletrabajo,
         AuditoriaTurno,
-        HorasLegale
+        HorasLegale,
+        Documento,
+        Firma,
+        Solicitude,
+        RegistroConexione
       ]
     }),
     MailerModule.forRoot({
@@ -174,8 +175,7 @@ import { TurnoFlexibleModule } from './turno-flexible/turno-flexible.module';
     DetalleAsistenciaModule,
     AlertasModule,
     TeletrabajoModule,
-    HorasLegalesModule,
-    TurnoFlexibleModule
+    HorasLegalesModule
   ],
   providers: [PerfilesService],
   controllers: [PerfilesController],

@@ -55,4 +55,15 @@ export class UsersController {
   async buscarCencosPorUsuario(@Param('usuarioId') id: string) {
     return this.userService.enviarCencosPorUsuario(+id);
   }
+
+  @Put('cambiar-password/:idUser')
+  async cambiarPassword(@Param('idUser') idUser: string, @Body() body: any) {
+    const { contrasena_actual, contrasena_nueva } = body;
+    return await this.userService.cambiarpasswors(contrasena_actual, contrasena_nueva, +idUser);
+  }
+
+  @Get('obtener-admin/:idEmpresa')
+  async obtenerAdminPorEmpresa(@Param('idEmpresa') idEmpresa: string){
+    return await this.userService.obtenerAdminPorEmpresa(+idEmpresa);
+  }
 }

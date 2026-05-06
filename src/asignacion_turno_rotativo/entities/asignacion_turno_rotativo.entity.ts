@@ -17,11 +17,11 @@ export class AsignacionTurnoRotativo {
     horario: Horario;
 
     @Column()
-    fecha_inicio_turno:Date
+    fecha_inicio_turno: Date
 
     @Column()
-    fecha_fin_turno:Date
+    fecha_fin_turno: Date
 
-    @Column({default:false})
-    teletrabajo:boolean
+    @Column({ default: false })
+    teletrabajo: boolean
 }
