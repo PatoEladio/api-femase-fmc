@@ -14,6 +14,7 @@ export class DocumentoController {
 
   @Get()
   findAll(@Query('empresa_id') empresa_id: string) {
+    if (isNaN(+empresa_id)) return [];
     return this.documentoService.findAll(+empresa_id);
   }
 

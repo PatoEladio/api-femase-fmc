@@ -28,6 +28,7 @@ export class CargosController {
 
   @Get('por-empresa/:empresaId')
   cargosPorEmpresa(@Param('empresaId') empresaId: string) {
+    if (isNaN(+empresaId)) return [];
     return this.cargosService.cargosPorEmpresa(+empresaId);
   }
 }
