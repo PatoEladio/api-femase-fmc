@@ -4,20 +4,22 @@ import { UsersService } from 'src/users/users.service';
 import { SesionActivaService } from 'src/sesion-activa/sesion-activa.service';
 import { Request } from 'express';
 import * as bcrypt from 'bcrypt';
+import { RegistroConexionesService } from 'src/registro_conexiones/registro_conexiones.service';
 
 @Injectable()
 export class AuthService {
   constructor(
     private usersService: UsersService,
     private jwtService: JwtService,
-    private sesionActivaService: SesionActivaService
+    private sesionActivaService: SesionActivaService,
+    private registroConexionesService: RegistroConexionesService
   ) { }
 
   async signIn(
     username: string,
     pass: string,
     req: Request
-  ): Promise<{ token: string, username: string, profile: string, profile_id: number, empresa_id: number, empresa: string, num_ficha: string, rut: string , rut_usuario: string}> {
+  ): Promise<{ token: string, username: string, profile: string, profile_id: number, empresa_id: number, empresa: string, num_ficha: string, rut: string, rut_usuario: string, usuario_id: number }> {
 
     const user = await this.usersService.searchActiveUser(username);
 
@@ -42,22 +44,34 @@ export class AuthService {
       throw new UnauthorizedException('Credenciales incorrectas');
     }
 
-    const payload = { 
-      sub: user.usuario_id, 
-      username: user.username, 
-      profile: user.perfil?.perfil_id, 
-      num_ficha: user.empleado?.num_ficha || null, 
-      nombre_completo: user.empleado ? `${user.empleado.nombres} ${user.empleado.apellido_paterno} ${user.empleado.apellido_materno}` : user.username, 
-      empresa: user.empresa?.nombre_empresa || null, 
-      rut: user.empleado?.run || null, 
+    const payload = {
+      sub: user.usuario_id,
+      username: user.username,
+      profile: user.perfil?.perfil_id,
+      num_ficha: user.empleado?.num_ficha || null,
+      nombre_completo: user.empleado ? `${user.empleado.nombres} ${user.empleado.apellido_paterno} ${user.empleado.apellido_materno}` : user.username,
+      empresa: user.empresa?.nombre_empresa || null,
+      rut: user.empleado?.run || null,
       empresa_id: user.empresa?.empresa_id || null,
-      rut_usuario: user.run_usuario
+      rut_usuario: user.run_usuario,
+      usuario_id: user.usuario_id
     };
 
     // Registrar la sesión activa
     const ip = req.headers['x-forwarded-for'] as string || req.ip || 'Desconocida';
     const userAgent = req.headers['user-agent'] || '';
     await this.sesionActivaService.registrarSesion(user, ip, userAgent);
+
+    //Registrar la conexion
+    this.registroConexionesService.create({
+      fecha: new Date(),
+      hora: new Date().toTimeString().split(' ')[0],
+      correo: user.empleado?.email_laboral || user.email,
+      rut: user.empleado?.run || user.run_usuario,
+      ip: ip,
+      empresa: user.empleado?.empresa?.empresa_id || user.empresa?.empresa_id
+    });
+    
 
     return {
       token: await this.jwtService.signAsync(payload),
@@ -68,7 +82,10 @@ export class AuthService {
       empresa: user.empresa?.nombre_empresa || '',
       num_ficha: user.empleado?.num_ficha || '',
       rut: user.empleado?.run || '',
-      rut_usuario: user.run_usuario
+      rut_usuario: user.run_usuario,
+      usuario_id: user.usuario_id
     };
+
+
   }
 }

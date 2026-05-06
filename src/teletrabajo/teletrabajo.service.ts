@@ -38,7 +38,7 @@ export class TeletrabajoService {
       throw new NotFoundException("La fecha de inicio debe ser menor a la fecha de fin");
     }
 
-    if(!empleado.turno && !empleado.permite_rotativo) {
+    if (!empleado.turno && !empleado.permite_rotativo) {
       throw new NotFoundException("El empleado no tiene turno asignado");
     }
 
@@ -115,10 +115,10 @@ export class TeletrabajoService {
     // --- CASO: TURNO ROTATIVO ---
     else if (empleado?.permite_rotativo && !empleado?.turno) {
       const datos = await this.asignacionTurnoRotativoRepository.find({
-        where: { empleado: { empleado_id: idEmpleado } },relations: { horario: true }
+        where: { empleado: { empleado_id: idEmpleado } }, relations: { horario: true }
       });
 
-      if(datos.length === 0){
+      if (datos.length === 0) {
         throw new NotFoundException("El empleado no tiene turno rotativo asignado");
       }
       let fechaValidacion = new Date(fechaActual);
@@ -159,7 +159,7 @@ export class TeletrabajoService {
           });
           totalExitos++;
         }
-        
+
         fechaValidacion.setDate(fechaValidacion.getDate() + 1);
         fechaValidacion.setHours(0, 0, 0, 0);
       }
@@ -179,7 +179,7 @@ export class TeletrabajoService {
       message: `Procesamiento completado. Se asignaron ${totalExitos} días correctamente.`
     };
   }
-  
+
 
   async tieneTeletrabajo(runEmpleado: string) {
     const empleados = await this.empleadoRepository.find({

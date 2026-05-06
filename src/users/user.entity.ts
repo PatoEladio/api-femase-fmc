@@ -4,8 +4,10 @@ import { Cenco } from 'src/cencos/cenco.entity';
 import { Empleado } from 'src/empleado/entities/empleado.entity';
 import { Empresa } from 'src/empresas/empresas.entity';
 import { Estado } from 'src/estado/estado.entity';
+import { Firma } from 'src/firmas/entities/firma.entity';
 import { Perfil } from 'src/perfiles/perfil.entity';
 import { SesionActiva } from 'src/sesion-activa/entities/sesion-activa.entity';
+import { Solicitude } from 'src/solicitudes/entities/solicitude.entity';
 import { Entity, Column, PrimaryGeneratedColumn, OneToOne, JoinColumn, ManyToMany, JoinTable, OneToMany } from 'typeorm';
 
 @Entity({ name: 'usuario', schema: 'db_fmc' })
@@ -92,4 +94,10 @@ export class User {
 
   @OneToMany(() => SesionActiva, (sesionActiva) => sesionActiva.user)
   sesionActivas: SesionActiva[];
+
+  @OneToMany(() => Firma, (firma) => firma.usuario)
+  firmas: Firma[];
+
+  @OneToMany(() => Solicitude, (solicitude) => solicitude.usuario)
+  solicitudes: Solicitude[];
 }

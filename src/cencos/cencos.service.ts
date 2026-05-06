@@ -7,6 +7,7 @@ import { UpdateCencoDTO } from './dto/update-cenco.dto';
 import { SearchCencoDto } from './dto/search-cenco.dto';
 import { CreateCencoDto } from './dto/create-cenco.dto';
 import { Turno } from 'src/turno/entities/turno.entity';
+import { Empleado } from 'src/empleado/entities/empleado.entity';
 
 @Injectable()
 export class CencosService {
@@ -45,6 +46,9 @@ export class CencosService {
 
     if (!cenco) {
       throw new NotFoundException(`El centro de costo con ID ${id} no existe`);
+    }
+    if (updateDto.email_notificacion) {
+      await this.cencoRepository.manager.update(Empleado, { cenco: { cenco_id: id } }, { email_noti: updateDto.email_notificacion })
     }
 
     try {

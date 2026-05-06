@@ -6,7 +6,9 @@ import { Cargo } from "src/cargos/entities/cargo.entity";
 import { Cenco } from "src/cencos/cenco.entity";
 import { Empresa } from "src/empresas/empresas.entity";
 import { Estado } from "src/estado/estado.entity";
+import { Firma } from "src/firmas/entities/firma.entity";
 import { Marca } from "src/marcas/entities/marca.entity";
+import { Solicitude } from "src/solicitudes/entities/solicitude.entity";
 import { Teletrabajo } from "src/teletrabajo/entities/teletrabajo.entity";
 import { Turno } from "src/turno/entities/turno.entity";
 import { User } from "src/users/user.entity";
@@ -146,6 +148,12 @@ export class Empleado {
 
   @OneToMany(() => Teletrabajo, (teletrabajo) => teletrabajo.id_empleado)
   teletrabajo: Teletrabajo[];
+
+  @OneToMany(() => Firma, (firma) => firma.empleado)
+  firmas: Firma[];
+
+  @OneToMany(() => Solicitude, (solicitude) => solicitude.empleado)
+  solicitudes: Solicitude[];
 
   @Column({ nullable: true })
   @ApiProperty({ description: 'fecha asignacion turno', example: "2024-01-01" })

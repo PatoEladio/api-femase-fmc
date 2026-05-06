@@ -53,4 +53,9 @@ export class EmpleadoController {
   remove(@Param('id') id: string) {
     return this.empleadoService.remove(+id);
   }
+
+  @Patch('cambiar-pin/:idUser/:pinActual/:pinFirma')
+  cambiarPinFirma(@Param('idUser') idUser: string, @Param('pinActual') pinActual: string, @Param('pinFirma') pinFirma: string) {
+    return this.empleadoService.cambiarPinFirma(+idUser, +pinActual, +pinFirma);
+  }
 }
