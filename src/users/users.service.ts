@@ -174,9 +174,6 @@ export class UsersService {
     }
   }
 
-
-
-
   async crearUsuarioDT(correoDT: string) {
     try {
       const emailDT = correoDT + '@gmail.com';
@@ -184,19 +181,14 @@ export class UsersService {
       const salt = await bcrypt.genSalt();
       const claveHash = await bcrypt.hash(nuevoPassword, salt);
 
-      const existe = await this.usersRepository.findOne({
+      let usuario = await this.usersRepository.findOne({
         where: { username: correoDT }
       });
 
-
-      if (existe) {
-        existe.password = claveHash;
-        await this.usersRepository.save(existe);
-      } else {
-        console.log("Aca");
-        const nuevoUsuario = this.usersRepository.create({
+      if (!usuario) {
+        console.log("Creando nuevo usuario fiscalizador");
+        usuario = this.usersRepository.create({
           username: correoDT,
-          password: claveHash,
           nombres: correoDT + " - Fiscalizacion",
           apellido_materno: '',
           apellido_paterno: '',
@@ -209,14 +201,14 @@ export class UsersService {
 
         const fechaExpiracion = new Date();
         fechaExpiracion.setMinutes(fechaExpiracion.getMinutes() + 5);
-        nuevoUsuario.reset_token_expires = fechaExpiracion;
-
-        await this.usersRepository.save(nuevoUsuario);
+        usuario.reset_token_expires = fechaExpiracion;
       }
 
-      try {
-        console.log("correo");
+      usuario.password = claveHash;
+      await this.usersRepository.save(usuario);
 
+      try {
+        console.log("Enviando correo a:", emailDT);
         await this.mailerService.sendMail({
           to: emailDT,
           subject: 'Generación de cuenta fiscalizadora',
@@ -235,6 +227,7 @@ export class UsersService {
         });
         return { message: 'Usuario procesado correctamente y clave enviada al correo' };
       } catch (error) {
+        console.error("Error mailer:", error);
         throw new HttpException('Error al enviar el correo', 500);
       }
     } catch (error) {
