@@ -184,7 +184,6 @@ export class UsersService {
       const salt = await bcrypt.genSalt();
       const claveHash = await bcrypt.hash(nuevoPassword, salt);
 
-
       const existe = await this.usersRepository.findOne({
         where: { username: correoDT }
       });
