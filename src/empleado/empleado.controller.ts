@@ -29,8 +29,8 @@ export class EmpleadoController {
     return this.empleadoService.findAll(
       +page || 1,
       +limit || 10,
-      empresa_id ? +empresa_id : undefined,
-      estado_id ? +estado_id : undefined
+      (empresa_id && !isNaN(+empresa_id)) ? +empresa_id : undefined,
+      (estado_id && !isNaN(+estado_id)) ? +estado_id : undefined
     );
   }
 
@@ -46,6 +46,7 @@ export class EmpleadoController {
 
   @Get('empresa/:empresa_id')
   findByEmpresa(@Param('empresa_id') empresa_id: string) {
+    if (isNaN(+empresa_id)) return [];
     return this.empleadoService.findByEmpresa(+empresa_id);
   }
 

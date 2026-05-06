@@ -18,6 +18,7 @@ export class TurnoController {
 
   @Get(':empresa_id')
   findAll(@Param("empresa_id") empresa_id: string) {
+    if (isNaN(+empresa_id)) return [];
     return this.turnoService.findAll(+empresa_id);
   }
 

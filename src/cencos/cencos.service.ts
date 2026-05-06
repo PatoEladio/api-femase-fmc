@@ -28,7 +28,7 @@ export class CencosService {
   async findByDepartamentoId(departamentoId: number) {
     return await this.cencoRepository.find({
       where: { departamento: { departamento_id: departamentoId } },
-      relations: ['departamento', 'departamento.empresa', 'estado', 'turnos',],
+      relations: ['dispositivos', 'departamento', 'departamento.empresa', 'estado', 'turnos',],
       order: { cenco_id: 'asc' }
     })
   }
