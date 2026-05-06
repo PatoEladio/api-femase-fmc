@@ -15,6 +15,7 @@ import { AutorizaHorasExtra } from 'src/autoriza_horas_extras/entities/autoriza_
 import { AsignacionTurnoRotativo } from '../asignacion_turno_rotativo/entities/asignacion_turno_rotativo.entity';
 import { Alerta } from 'src/alertas/entities/alerta.entity';
 import { Teletrabajo } from '../teletrabajo/entities/teletrabajo.entity';
+import { TurnoFlexible } from 'src/turno-flexible/entities/turno-flexible.entity';
 
 @Injectable()
 export class MarcasService {
@@ -29,6 +30,8 @@ export class MarcasService {
     @InjectRepository(AutorizaHorasExtra)
     private readonly autorizaHorasExtrasRepository: Repository<AutorizaHorasExtra>,
     private readonly configService: ConfigService,
+    @InjectRepository(TurnoFlexible)
+    private readonly turnoFlexibleRepository: Repository<TurnoFlexible>,
   ) { }
 
   private readonly logger = new Logger(MarcasService.name);
@@ -48,7 +51,7 @@ export class MarcasService {
     }
     const nuevaMarca = this.marcaRepository.create(createMarcaDto);
 
-    nuevaMarca.hashcode = crypto.createHash('md5').update(JSON.stringify(nuevaMarca.evento + ';' + nuevaMarca.fecha_marca + ';' + nuevaMarca.hora_marca + ';' + nuevaMarca.num_ficha + ';' + nuevaMarca.id_tipo_marca + ';' + nuevaMarca.info_adicional + ';' + nuevaMarca.comentario)).digest('hex');
+    nuevaMarca.hashcode = crypto.createHash('md5').update(JSON.stringify(nuevaMarca.evento + ';' + nuevaMarca.fecha_marca + ';' + nuevaMarca.hora_marca + ';' + nuevaMarca.num_ficha + ';' + nuevaMarca.id_tipo_marca)).digest('hex');
     const guardar = await this.marcaRepository.save(nuevaMarca);
 
     if (!guardar) {
@@ -60,40 +63,51 @@ export class MarcasService {
         where: { num_ficha: nuevaMarca.num_ficha }, relations: ['cenco', 'empresa']
       });
 
-      if (empleadoInfo && empleadoInfo.email) {
-        const correoEmpleado = empleadoInfo.email;  // CAMBIAR A CORREO LABORAL SIESQUE ES NECESARIO
-        const nombreEmpleado = empleadoInfo.nombres + ' ' + empleadoInfo.apellido_paterno + ' ' + empleadoInfo.apellido_materno;
-        const correoCenco = empleadoInfo.cenco.email_notificacion;
-
-        let eventoNombre = 'Marca';
-        if (nuevaMarca.evento === 1) eventoNombre = 'Entrada';
-        if (nuevaMarca.evento === 2) eventoNombre = 'Salida';
-
-        let fMarca = nuevaMarca.fecha_marca;
-        let fechaFormatString = '';
-        if (fMarca instanceof Date) {
-          const day = String(fMarca.getDate()).padStart(2, '0');
-          const month = String(fMarca.getMonth() + 1).padStart(2, '0');
-          const year = fMarca.getFullYear();
-          fechaFormatString = `${day}/${month}/${year}`;
-        } else if (typeof fMarca === 'string') {
-          const parts = (fMarca as string).substring(0, 10).split('-');
-          if (parts.length === 3) {
-            fechaFormatString = `${parts[2]}/${parts[1]}/${parts[0]}`;
-          } else {
-            fechaFormatString = fMarca;
-          }
+      if (empleadoInfo) {
+        if (empleadoInfo.tiene_turno_flexible) {
+          const flexibleMark = this.turnoFlexibleRepository.create({
+            fecha: nuevaMarca.fecha_marca,
+            hora_marca: nuevaMarca.hora_marca,
+            evento: nuevaMarca.evento,
+            num_ficha: empleadoInfo
+          });
+          await this.turnoFlexibleRepository.save(flexibleMark);
         }
-        const nombre_empresa = empleadoInfo?.empresa.nombre_empresa;
-        const rut_empresa = empleadoInfo?.empresa.rut_empresa;
-        const direccion = empleadoInfo?.empresa.direccion_empresa;
-        const comuna = empleadoInfo?.empresa.comuna_empresa;
 
-        await this.mailerService.sendMail({
-          to: correoEmpleado,
-          cc: empleadoInfo.email_noti,
-          subject: 'Nueva Marca Registrada',
-          html: `
+        if (empleadoInfo.email) {
+          const correoEmpleado = empleadoInfo.email;  // CAMBIAR A CORREO LABORAL SIESQUE ES NECESARIO
+          const nombreEmpleado = empleadoInfo.nombres + ' ' + empleadoInfo.apellido_paterno + ' ' + empleadoInfo.apellido_materno;
+          const correoCenco = empleadoInfo.cenco.email_notificacion;
+
+          let eventoNombre = 'Marca';
+          if (nuevaMarca.evento === 1) eventoNombre = 'Entrada';
+          if (nuevaMarca.evento === 2) eventoNombre = 'Salida';
+
+          let fMarca = nuevaMarca.fecha_marca;
+          let fechaFormatString = '';
+          if (fMarca instanceof Date) {
+            const day = String(fMarca.getDate()).padStart(2, '0');
+            const month = String(fMarca.getMonth() + 1).padStart(2, '0');
+            const year = fMarca.getFullYear();
+            fechaFormatString = `${day}/${month}/${year}`;
+          } else if (typeof fMarca === 'string') {
+            const parts = (fMarca as string).substring(0, 10).split('-');
+            if (parts.length === 3) {
+              fechaFormatString = `${parts[2]}/${parts[1]}/${parts[0]}`;
+            } else {
+              fechaFormatString = fMarca;
+            }
+          }
+          const nombre_empresa = empleadoInfo?.empresa.nombre_empresa;
+          const rut_empresa = empleadoInfo?.empresa.rut_empresa;
+          const direccion = empleadoInfo?.empresa.direccion_empresa;
+          const comuna = empleadoInfo?.empresa.comuna_empresa;
+
+          await this.mailerService.sendMail({
+            to: correoEmpleado,
+            cc: empleadoInfo.email_noti,
+            subject: 'Nueva Marca Registrada',
+            html: `
           <div style="font-family: Arial, sans-serif; color: #333;">
             <h2>Hola, ${nombreEmpleado}</h2>
             <p>Se ha creado una nueva marca en el sistema con los siguientes detalles:</p>
@@ -122,7 +136,8 @@ export class MarcasService {
             <p>Rut: NO APLICA</p>
             <p>Si no reconoces esta marca o tienes dudas, puedes contactar al administrador.</p>
           </div>`,
-        });
+          });
+        }
       }
     } catch (error) {
       console.error('Error al enviar correo de nueva marca:', error);
@@ -167,11 +182,7 @@ export class MarcasService {
             turno_id: true,
             detalle_turno: {
               id_detalle_turno: true,
-              horario: {
-                hora_entrada: true,
-                hora_salida: true,
-                colacion: true,
-              },
+              horario: true,
             },
           }
         },

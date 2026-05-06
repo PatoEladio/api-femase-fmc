@@ -178,87 +178,69 @@ export class UsersService {
 
   async crearUsuarioDT(correoDT: string) {
     try {
-      const existe = await this.usersRepository.findOne({
-        where: {
-          username: correoDT
-        }
-      })
-      if (existe) {
-        const nuevoPassword = Math.random().toString(36).substring(2, 9);
-        const salt = await bcrypt.genSalt();
-        const claveHash = nuevoPassword;
-        existe.password = await bcrypt.hash(claveHash, salt);
-        await this.usersRepository.save(existe);
-
-        try {
-          await this.mailerService.sendMail({
-            to: correoDT + '@gmail.com',
-            subject: 'Generación de cuenta fiscalizadora',
-            template: './recuperacion', // Si usas templates
-            context: {
-              nombre: correoDT,
-            },
-            html: `
-        <div style="font-family: Arial, sans-serif; color: #333;">
-        <h2>Hola, ${correoDT}</h2>
-        <p>Has solicitado crear una cuenta fiscalizadora. Su contraseña es:</p>
-        <h1 style="color: #007bff; letter-spacing: 5px;">${nuevoPassword}</h1>
-        <p>Si no solicitaste esto, puedes ignorar este correo.</p>
-        </div>`,
-          });
-          return { message: 'Usuario creado correctamente y código enviado al correo' };
-        } catch (error) {
-          throw new HttpException('Error al enviar el correo', 500);
-        }
-      }
-      const nuevoPassword = Math.random().toString(36).substring(2, 9);
+      const emailDT = correoDT + '@gmail.com';
+      const nuevoPassword = "Femase" + Math.random().toString(36).substring(2, 9);
       const salt = await bcrypt.genSalt();
-      const claveHash = nuevoPassword;
-      const nuevoUsuario = this.usersRepository.create({
-        username: correoDT,
-        password: await bcrypt.hash(claveHash, salt),
-        nombres: correoDT + " - Fiscalizacion",
-        apellido_materno: '',
-        apellido_paterno: '',
-        email: correoDT + '@gmail.com', //cambiar a @dt.gob.cl
-        empresa: { empresa_id: 6 }, // CAMBIAR EN CASO DE SER NECESARIO 
-        estado: { estado_id: 1 },
-        perfil: { perfil_id: 3 }, // CAMBIAR EN CASO DE SER NECESARIO 
-        run_usuario: correoDT
+      const claveHash = await bcrypt.hash(nuevoPassword, salt);
+
+
+      const existe = await this.usersRepository.findOne({
+        where: { username: correoDT }
       });
 
-      const fechaExpiracion = new Date();
-      fechaExpiracion.setMinutes(fechaExpiracion.getMinutes() + 5);
-      nuevoUsuario.reset_token_expires = fechaExpiracion;
 
-      await this.usersRepository.save(nuevoUsuario);
+      if (existe) {
+        existe.password = claveHash;
+        await this.usersRepository.save(existe);
+      } else {
+        console.log("Aca");
+        const nuevoUsuario = this.usersRepository.create({
+          username: correoDT,
+          password: claveHash,
+          nombres: correoDT + " - Fiscalizacion",
+          apellido_materno: '',
+          apellido_paterno: '',
+          email: emailDT,
+          empresa: { empresa_id: 6 },
+          estado: { estado_id: 1 },
+          perfil: { perfil_id: 3 },
+          run_usuario: correoDT
+        });
+
+        const fechaExpiracion = new Date();
+        fechaExpiracion.setMinutes(fechaExpiracion.getMinutes() + 5);
+        nuevoUsuario.reset_token_expires = fechaExpiracion;
+
+        await this.usersRepository.save(nuevoUsuario);
+      }
 
       try {
+        console.log("correo");
+
         await this.mailerService.sendMail({
-          to: correoDT + '@gmail.com', //Cambiar a @dt.gob.cl
+          to: emailDT,
           subject: 'Generación de cuenta fiscalizadora',
-          template: './recuperacion', // Si usas templates
+          template: './recuperacion',
           context: {
             nombre: correoDT,
+            password: nuevoPassword
           },
           html: `
-        <div style="font-family: Arial, sans-serif; color: #333;">
-        <h2>Hola, ${correoDT}</h2>
-        <p>Has solicitado crear una cuenta fiscalizadora. Su contraseña es:</p>
-        <h1 style="color: #007bff; letter-spacing: 5px;">${nuevoPassword}</h1>
-        <p>Si no solicitaste esto, puedes ignorar este correo.</p>
-        </div>`,
+            <div style="font-family: Arial, sans-serif; color: #333;">
+              <h2>Hola, ${correoDT}</h2>
+              <p>Has solicitado crear una cuenta fiscalizadora. Su contraseña es:</p>
+              <h1 style="color: #007bff; letter-spacing: 5px;">${nuevoPassword}</h1>
+              <p>Si no solicitaste esto, puedes ignorar este correo.</p>
+            </div>`,
         });
-        return { message: 'Usuario creado correctamente y código enviado al correo' };
+        return { message: 'Usuario procesado correctamente y clave enviada al correo' };
       } catch (error) {
         throw new HttpException('Error al enviar el correo', 500);
       }
     } catch (error) {
-
       if (error.name === 'ValidationError') {
         throw new BadRequestException('Los datos proporcionados no son válidos');
       }
-
       throw new InternalServerErrorException('Error crítico al crear el usuario en la base de datos');
     }
   }

@@ -146,6 +146,7 @@ export class Empleado {
 
   @OneToMany(() => Teletrabajo, (teletrabajo) => teletrabajo.id_empleado)
   teletrabajo: Teletrabajo[];
+
   @Column({ nullable: true })
   @ApiProperty({ description: 'fecha asignacion turno', example: "2024-01-01" })
   fecha_asignacion_turno: Date;
@@ -153,4 +154,8 @@ export class Empleado {
   @Column({ nullable: true })
   @ApiProperty({ description: 'pin firma', example: 1234 })
   pin_firma: number;
+
+  @Column({ nullable: true, default: false })
+  @ApiProperty({ description: 'Indica si el empleado tiene turno flexible', example: true })
+  tiene_turno_flexible: boolean;
 }

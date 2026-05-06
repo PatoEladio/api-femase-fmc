@@ -73,6 +73,7 @@ import { Teletrabajo } from './teletrabajo/entities/teletrabajo.entity';
 import { AuditoriaTurno } from './detalle-turno/entities/auditoria-turno.entity';
 import { HorasLegalesModule } from './horas_legales/horas_legales.module';
 import { HorasLegale } from './horas_legales/entities/horas_legale.entity';
+import { TurnoFlexibleModule } from './turno-flexible/turno-flexible.module';
 
 @Module({
   imports: [
@@ -83,8 +84,8 @@ import { HorasLegale } from './horas_legales/entities/horas_legale.entity';
       host: 'localhost',
       port: 5432,
       username: 'postgres',
-      password: 'superadmin',
-      database: 'femase',
+      password: 'Admin',
+      database: 'postgres',
       synchronize: false,
       entities: [
         User,
@@ -173,7 +174,8 @@ import { HorasLegale } from './horas_legales/entities/horas_legale.entity';
     DetalleAsistenciaModule,
     AlertasModule,
     TeletrabajoModule,
-    HorasLegalesModule
+    HorasLegalesModule,
+    TurnoFlexibleModule
   ],
   providers: [PerfilesService],
   controllers: [PerfilesController],

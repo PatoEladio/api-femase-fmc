@@ -179,6 +179,7 @@ export class TurnoService {
     if (!turno) {
       throw new NotFoundException('El Turno solicitado no existe.');
     }
+    console.log(`[DEBUG] Turno ${id_turno} tiene ${turno.empleados?.length || 0} empleados asignados.`);
 
     // --- LOGICA DE AUDITORIA ---
     // 1. Obtener detalles antiguos
@@ -220,6 +221,8 @@ export class TurnoService {
       const ant = mapaAntiguo.get(codDia);
       const nue = mapaNuevo.get(codDia);
 
+      console.log(`[DEBUG] Dia ${codDia}: ant:`, ant, 'nue:', nue);
+
       // Si hay cambio: solo si existía un horario anterior (para ignorar asignaciones iniciales)
       const huboCambio = ant && (
         !nue ||
@@ -227,6 +230,7 @@ export class TurnoService {
       );
 
       if (huboCambio) {
+        console.log(`[DEBUG] Cambio detectado en dia ${codDia}!`);
         const diaNombre = { 1: 'Lunes', 2: 'Martes', 3: 'Miércoles', 4: 'Jueves', 5: 'Viernes', 6: 'Sábado', 7: 'Domingo' }[codDia];
         
         const baseLogData = {
@@ -263,6 +267,7 @@ export class TurnoService {
 
     if (logsAuditoria.length > 0) {
       await this.auditoriaTurnoRepository.save(logsAuditoria);
+      console.log(`[DEBUG] Se guardaron ${logsAuditoria.length} registros de auditoría.`);
     }
     // --- FIN LOGICA DE AUDITORIA ---
 
