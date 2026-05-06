@@ -57,6 +57,7 @@ export class CencosController {
 
   @Get('por-departamento/:departamentoId')
   async buscarCencosPorDepartamento(@Param('departamentoId') departamentoId: string) {
+    if (isNaN(+departamentoId)) return [];
     return this.cencoService.findByDepartamentoId(+departamentoId);
   }
 }

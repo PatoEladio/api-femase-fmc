@@ -19,6 +19,7 @@ export class DepartamentosController {
 
   @Get('porEmpresa/:empresaId')
   obtenerDeptoPorEmpresa(@Param('empresaId') empresaId: string) {
+    if (isNaN(+empresaId)) return [];
     return this.departamentoService.buscarDeptoPorEmpresa(+empresaId);
   }
 

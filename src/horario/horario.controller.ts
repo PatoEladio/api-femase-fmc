@@ -15,6 +15,7 @@ export class HorarioController {
 
   @Get(":empresa_id")
   findAll(@Param("empresa_id") empresa_id: string) {
+    if (isNaN(+empresa_id)) return [];
     return this.horarioService.findAll(+empresa_id);
   }
 

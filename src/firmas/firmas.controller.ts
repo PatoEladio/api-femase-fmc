@@ -14,6 +14,7 @@ export class FirmasController {
 
   @Get()
   findAll(@Query('empresa_id') empresa_id: string, @Query('usuario_id') usuario_id: string) {
+    if (isNaN(+empresa_id) || isNaN(+usuario_id)) return [];
     return this.firmasService.findAll(+empresa_id, +usuario_id);
   }
 
